@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createCompanyNote, deleteCompanyNote } from "@/lib/actions/company-notes";
+import { createCompanyNote, deleteCompanyNote, toggleNoteVisibility } from "@/lib/actions/company-notes";
 import {
   StickyNote,
   ChevronDown,
@@ -9,12 +9,15 @@ import {
   Trash2,
   Loader2,
   X,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 interface Note {
   id: string;
   subject: string;
   content: string;
+  visible_to_customer: boolean;
   created_at: string;
 }
 
@@ -31,25 +34,27 @@ export default function NotesSection({
   const [saving, setSaving] = useState(false);
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
+  const [visibleToCustomer, setVisibleToCustomer] = useState(false);
 
   async function handleCreate() {
     if (!subject.trim()) return;
     setSaving(true);
 
-    const result = await createCompanyNote(companyId, subject.trim(), content.trim());
+    const result = await createCompanyNote(companyId, subject.trim(), content.trim(), visibleToCustomer);
     if (result.success) {
-      // Optimistic: add to top
       setNotes((prev) => [
         {
           id: crypto.randomUUID(),
           subject: subject.trim(),
           content: content.trim(),
+          visible_to_customer: visibleToCustomer,
           created_at: new Date().toISOString(),
         },
         ...prev,
       ]);
       setSubject("");
       setContent("");
+      setVisibleToCustomer(false);
       setShowForm(false);
     }
     setSaving(false);
@@ -113,15 +118,27 @@ export default function NotesSection({
                 className="w-full rounded border border-gray-200 px-3 py-2 text-sm text-swing-navy placeholder:text-swing-navy/30 focus:border-swing-navy/30 focus:outline-none"
               />
             </div>
-            <button
-              type="button"
-              onClick={handleCreate}
-              disabled={saving || !subject.trim()}
-              className="flex cursor-pointer items-center gap-1.5 rounded bg-swing-gold px-4 py-2 text-xs font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark disabled:opacity-50"
-            >
-              {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-              {saving ? "Speichert..." : "Notiz speichern"}
-            </button>
+            <div className="flex items-center justify-between">
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-swing-navy/50">
+                <input
+                  type="checkbox"
+                  checked={visibleToCustomer}
+                  onChange={(e) => setVisibleToCustomer(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-gray-300 accent-swing-gold"
+                />
+                <Eye size={12} />
+                Für Händler sichtbar
+              </label>
+              <button
+                type="button"
+                onClick={handleCreate}
+                disabled={saving || !subject.trim()}
+                className="flex cursor-pointer items-center gap-1.5 rounded bg-swing-gold px-4 py-2 text-xs font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark disabled:opacity-50"
+              >
+                {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                {saving ? "Speichert..." : "Notiz speichern"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -155,6 +172,11 @@ export default function NotesSection({
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-swing-navy">
                     {note.subject}
                   </span>
+                  {note.visible_to_customer && (
+                    <span className="shrink-0 rounded bg-swing-gold/15 px-1.5 py-0.5 text-[9px] font-bold text-swing-gold-dark">
+                      Händler
+                    </span>
+                  )}
                   <span className="shrink-0 text-[11px] text-swing-navy/40">
                     {new Date(note.created_at).toLocaleDateString("de-DE", {
                       day: "2-digit",
@@ -173,7 +195,27 @@ export default function NotesSection({
                     ) : (
                       <p className="text-sm italic text-swing-navy/30">Kein Inhalt</p>
                     )}
-                    <div className="mt-2 flex justify-end">
+                    <div className="mt-2 flex justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const newVal = !note.visible_to_customer;
+                          setNotes((prev) =>
+                            prev.map((n) =>
+                              n.id === note.id ? { ...n, visible_to_customer: newVal } : n
+                            )
+                          );
+                          await toggleNoteVisibility(note.id, companyId, newVal);
+                        }}
+                        className={`flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-[11px] transition-colors ${
+                          note.visible_to_customer
+                            ? "text-swing-gold-dark hover:bg-swing-gold/10"
+                            : "text-swing-navy/40 hover:bg-gray-100"
+                        }`}
+                      >
+                        {note.visible_to_customer ? <Eye size={11} /> : <EyeOff size={11} />}
+                        {note.visible_to_customer ? "Sichtbar" : "Verborgen"}
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(note.id)}

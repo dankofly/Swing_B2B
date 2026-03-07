@@ -3,14 +3,12 @@ import {
   Package,
   Users,
   FileText,
-  AlertTriangle,
-  ArrowUpRight,
   ArrowRight,
   Inbox,
   Activity,
   Settings,
-  Clock,
-  ShoppingCart,
+  Warehouse,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -19,78 +17,39 @@ export const dynamic = "force-dynamic";
 export default async function AdminDashboard() {
   const supabase = createAdminClient();
 
+  // Get first day of current month for monthly query
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
   const [
-    { count: productCount },
-    { count: comingSoonCount },
-    { count: preorderCount },
-    { count: companyCount },
-    { count: openInquiries },
-    { count: lowStock },
+    { count: activeProducts },
+    { count: comingSoonProducts },
+    { count: preorderProducts },
+    { count: inStockSizes },
+    { count: lowStockSizes },
+    { count: noStockSizes },
+    { count: newInquiries },
+    { count: inProgressInquiries },
+    { count: shippedInquiries },
+    { count: completedMonthly },
+    { count: dealerCount },
+    { count: importerCount },
+    { count: importerNetworkCount },
   ] = await Promise.all([
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_coming_soon", true),
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_preorder", true),
-    supabase.from("companies").select("*", { count: "exact", head: true }),
-    supabase
-      .from("inquiries")
-      .select("*", { count: "exact", head: true })
-      .in("status", ["new", "in_progress"]),
-    supabase
-      .from("product_sizes")
-      .select("*", { count: "exact", head: true })
-      .lte("stock_quantity", 5),
+    supabase.from("product_sizes").select("*", { count: "exact", head: true }).gt("stock_quantity", 5),
+    supabase.from("product_sizes").select("*", { count: "exact", head: true }).gt("stock_quantity", 0).lte("stock_quantity", 5),
+    supabase.from("product_sizes").select("*", { count: "exact", head: true }).eq("stock_quantity", 0),
+    supabase.from("inquiries").select("*", { count: "exact", head: true }).eq("status", "new"),
+    supabase.from("inquiries").select("*", { count: "exact", head: true }).eq("status", "in_progress"),
+    supabase.from("inquiries").select("*", { count: "exact", head: true }).eq("status", "shipped"),
+    supabase.from("inquiries").select("*", { count: "exact", head: true }).eq("status", "completed").gte("created_at", monthStart),
+    supabase.from("companies").select("*", { count: "exact", head: true }).eq("company_type", "dealer"),
+    supabase.from("companies").select("*", { count: "exact", head: true }).eq("company_type", "importer"),
+    supabase.from("companies").select("*", { count: "exact", head: true }).eq("company_type", "importer_network"),
   ]);
-
-  const stats = [
-    {
-      label: "Aktive Produkte",
-      value: productCount ?? 0,
-      icon: Package,
-      accent: "border-l-blue-500",
-      iconColor: "text-blue-500",
-      href: "/admin/produkte",
-    },
-    {
-      label: "Coming Soon",
-      value: comingSoonCount ?? 0,
-      icon: Clock,
-      accent: "border-l-purple-500",
-      iconColor: "text-purple-500",
-      href: "/admin/produkte",
-    },
-    {
-      label: "Vorbestellung",
-      value: preorderCount ?? 0,
-      icon: ShoppingCart,
-      accent: "border-l-orange-500",
-      iconColor: "text-orange-500",
-      href: "/admin/produkte",
-    },
-    {
-      label: "Händler",
-      value: companyCount ?? 0,
-      icon: Users,
-      accent: "border-l-emerald-500",
-      iconColor: "text-emerald-500",
-      href: "/admin/kunden",
-    },
-    {
-      label: "Offene Anfragen",
-      value: openInquiries ?? 0,
-      icon: FileText,
-      accent: "border-l-swing-gold",
-      iconColor: "text-swing-gold",
-      href: "/admin/anfragen",
-    },
-    {
-      label: "Niedriger Bestand",
-      value: lowStock ?? 0,
-      icon: AlertTriangle,
-      accent: "border-l-red-500",
-      iconColor: "text-red-500",
-      href: "/admin/lager",
-    },
-  ];
 
   const { data: recentInquiries } = await supabase
     .from("inquiries")
@@ -142,40 +101,129 @@ export default async function AdminDashboard() {
               Dashboard
             </h1>
           </div>
-          <p className="hidden text-right text-xs font-medium text-white/25 sm:block">
-            {new Date().toLocaleDateString("de-DE", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </p>
+          <div className="hidden text-right sm:block">
+            <div className="flex gap-5">
+              {[
+                { label: "SWING HQ", tz: "Europe/Vienna" },
+                { label: "Tokyo", tz: "Asia/Tokyo" },
+                { label: "New York", tz: "America/New_York" },
+                { label: "Sydney", tz: "Australia/Sydney" },
+              ].map((clock) => (
+                <div key={clock.label} className="text-center">
+                  <span className="block text-[9px] font-semibold uppercase tracking-[0.15em] text-white/25">
+                    {clock.label}
+                  </span>
+                  <span className="block text-sm font-bold tabular-nums text-white/60">
+                    {now.toLocaleTimeString("de-DE", { timeZone: clock.tz, hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-xs font-bold text-white/30">
+              {now.toLocaleDateString("de-DE", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
+          </div>
         </div>
       </div>
 
       {/* KPI instrument cards */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        {stats.map((stat, i) => (
-          <Link
-            key={stat.label}
-            href={stat.href}
-            className={`card card-interactive group relative overflow-hidden border-l-[3px] p-5 fade-in-up fade-in-up-delay-${i + 1} ${stat.accent}`}
-          >
-            <div className="flex items-start justify-between">
-              <stat.icon size={16} strokeWidth={2} className={`${stat.iconColor} opacity-60`} />
-              <ArrowUpRight
-                size={13}
-                className="text-transparent transition-all duration-200 group-hover:text-swing-navy/30"
-              />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {/* Produkte */}
+        <Link href="/admin/produkte" className="card card-interactive overflow-hidden border-l-[3px] border-l-blue-500 p-5 fade-in-up fade-in-up-delay-1">
+          <div className="flex items-center gap-2">
+            <Package size={16} className="text-blue-500 opacity-60" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-swing-navy/60">Produkte</span>
+          </div>
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Aktiv</span>
+              <span className="text-sm font-bold text-swing-navy">{activeProducts ?? 0}</span>
             </div>
-            <p className="kpi-value mt-4 text-3xl font-extrabold tracking-tight text-swing-navy">
-              {stat.value}
-            </p>
-            <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-swing-gray-dark/35">
-              {stat.label}
-            </p>
-          </Link>
-        ))}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Coming Soon</span>
+              <span className="text-sm font-bold text-purple-600">{comingSoonProducts ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Vorbestellung</span>
+              <span className="text-sm font-bold text-orange-600">{preorderProducts ?? 0}</span>
+            </div>
+          </div>
+        </Link>
+
+        {/* Bestand */}
+        <Link href="/admin/lager" className="card card-interactive overflow-hidden border-l-[3px] border-l-emerald-500 p-5 fade-in-up fade-in-up-delay-2">
+          <div className="flex items-center gap-2">
+            <Warehouse size={16} className="text-emerald-500 opacity-60" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-swing-navy/60">Bestand</span>
+          </div>
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Auf Lager</span>
+              <span className="text-sm font-bold text-emerald-600">{inStockSizes ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Niedriger Bestand</span>
+              <span className="text-sm font-bold text-amber-600">{lowStockSizes ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Kein Bestand</span>
+              <span className="text-sm font-bold text-red-600">{noStockSizes ?? 0}</span>
+            </div>
+          </div>
+        </Link>
+
+        {/* Anfragen */}
+        <Link href="/admin/anfragen" className="card card-interactive overflow-hidden border-l-[3px] border-l-swing-gold p-5 fade-in-up fade-in-up-delay-3">
+          <div className="flex items-center gap-2">
+            <MessageSquare size={16} className="text-swing-gold opacity-60" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-swing-navy/60">Anfragen</span>
+          </div>
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Offen</span>
+              <span className="text-sm font-bold text-blue-600">{newInquiries ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">In Bearbeitung</span>
+              <span className="text-sm font-bold text-yellow-600">{inProgressInquiries ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Im Versand</span>
+              <span className="text-sm font-bold text-purple-600">{shippedInquiries ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Versendet (Monat)</span>
+              <span className="text-sm font-bold text-green-600">{completedMonthly ?? 0}</span>
+            </div>
+          </div>
+        </Link>
+
+        {/* Kunden */}
+        <Link href="/admin/kunden" className="card card-interactive overflow-hidden border-l-[3px] border-l-swing-navy p-5 fade-in-up fade-in-up-delay-4">
+          <div className="flex items-center gap-2">
+            <Users size={16} className="text-swing-navy opacity-60" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-swing-navy/60">Kunden</span>
+          </div>
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Händler</span>
+              <span className="text-sm font-bold text-swing-navy">{dealerCount ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Importeure</span>
+              <span className="text-sm font-bold text-swing-navy">{importerCount ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-swing-gray-dark/50">Importeure mit Netzw.</span>
+              <span className="text-sm font-bold text-swing-navy">{importerNetworkCount ?? 0}</span>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Recent inquiries */}

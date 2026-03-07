@@ -22,6 +22,7 @@ import { getCompanyPriceUploads } from "@/lib/actions/price-uploads";
 import { getCompanyInquiries } from "@/lib/actions/inquiries";
 import { getCompanyNotes } from "@/lib/actions/company-notes";
 import CompanyStats from "./CompanyStats";
+import LocalClock from "./LocalClock";
 
 export const dynamic = "force-dynamic";
 
@@ -145,30 +146,42 @@ export default async function KundenDetailPage({
 
           <div className="divide-y divide-gray-100">
             {/* Address */}
-            <div className="px-5 py-4">
-              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">Adresse</p>
-              {(company.address_street || company.address || company.address_city) ? (
-                <div className="text-sm leading-relaxed text-swing-navy">
-                  {company.address_street && <div>{company.address_street}</div>}
-                  {(company.address_zip || company.address_city) && (
-                    <div>{[company.address_zip, company.address_city].filter(Boolean).join(" ")}</div>
-                  )}
-                  {company.address_country && (
-                    <div className="text-swing-navy/50">{company.address_country}</div>
-                  )}
-                  {!company.address_street && company.address && (
-                    <div className="whitespace-pre-line">{company.address}</div>
-                  )}
-                </div>
-              ) : (
+            <div className="px-5 py-2.5">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">Adresse</p>
+              {(company.address_street || company.address || company.address_city) ? (() => {
+                let street = company.address_street as string | undefined;
+                let zipCity = [company.address_zip, company.address_city].filter(Boolean).join(" ");
+                const country = company.address_country as string | undefined;
+
+                if (!street && company.address) {
+                  const raw = (company.address as string).replace(/\r\n/g, "\n");
+                  const parts = raw.includes("\n")
+                    ? raw.split("\n").map((s: string) => s.trim()).filter(Boolean)
+                    : raw.split(",").map((s: string) => s.trim()).filter(Boolean);
+                  if (parts.length >= 2) {
+                    street = parts[0];
+                    zipCity = parts.slice(1).join(", ");
+                  } else {
+                    street = parts[0] ?? "";
+                  }
+                }
+
+                return (
+                  <div className="text-sm leading-relaxed text-swing-navy">
+                    {street && <div>{street}</div>}
+                    {zipCity && <div>{zipCity}</div>}
+                    {country && <div>{country}</div>}
+                  </div>
+                );
+              })() : (
                 <p className="text-sm italic text-swing-navy/30">Keine Adresse</p>
               )}
             </div>
 
-            {/* Contact */}
-            <div className="px-5 py-4">
-              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">Kontakt</p>
-              <div className="space-y-2">
+            {/* Kontakt */}
+            <div className="px-5 py-2.5">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">Kontakt</p>
+              <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <Mail size={13} className="shrink-0 text-swing-navy/25" />
                   <a href={`mailto:${company.contact_email}`} className="text-sm text-swing-navy hover:text-swing-gold-dark">
@@ -197,54 +210,31 @@ export default async function KundenDetailPage({
               </div>
             </div>
 
-            {/* VAT ID */}
-            {company.vat_id && (
-              <div className="px-5 py-4">
-                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">UID-Nummer</p>
-                <p className="text-sm font-medium tabular-nums text-swing-navy">{company.vat_id}</p>
-              </div>
-            )}
+            {/* UID */}
+            <div className="px-5 py-2.5">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">UID-Nummer</p>
+              <p className="text-sm tabular-nums text-swing-navy">{company.vat_id || "—"}</p>
+            </div>
 
-            {/* Map */}
-            {(company.address_city || company.address_street) && (() => {
-              const q = [company.address_street, company.address_zip, company.address_city, company.address_country]
-                .filter(Boolean)
-                .join(", ");
-              return (
-                <div>
-                  <iframe
-                    title={`Standort ${company.name}`}
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
-                    width="100%"
-                    height="160"
-                    className="border-0"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    allowFullScreen={false}
-                  />
-                </div>
-              );
-            })()}
-          </div>
-
-          {/* Footer: Kunde seit + Users */}
-          <div className="border-t border-gray-100 px-5 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/25">
-              Kunde seit{" "}
-              <span className="normal-case tracking-normal font-normal text-swing-gray-dark/35">
+            {/* Kunde seit */}
+            <div className="px-5 py-2.5">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">Kunde seit</p>
+              <p className="text-sm text-swing-navy">
                 {new Date(company.created_at).toLocaleDateString("de-DE", {
                   day: "2-digit",
                   month: "long",
                   year: "numeric",
                 })}
-              </span>
-            </p>
+              </p>
+            </div>
+
+            {/* Benutzer */}
             {company.profiles && company.profiles.length > 0 && (
-              <div className="mt-3 border-t border-gray-100 pt-3">
-                <h4 className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/25">
+              <div className="px-5 py-2.5">
+                <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">
                   <Users size={11} />
                   Benutzer
-                </h4>
+                </p>
                 <div className="space-y-1.5">
                   {company.profiles.map(
                     (p: { id: string; email: string; full_name: string | null; role: string }) => (
@@ -257,6 +247,7 @@ export default async function KundenDetailPage({
                 </div>
               </div>
             )}
+
           </div>
         </div>
 
@@ -273,25 +264,48 @@ export default async function KundenDetailPage({
           </div>
         </div>
 
-        {/* Card 3: Preislisten */}
-        <div className="card overflow-hidden lg:col-span-1">
+        {/* Card 3: Preislisten + Karte */}
+        <div className="card flex flex-col overflow-hidden lg:col-span-1">
           <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/60 px-5 py-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-swing-navy text-white">
               <FileText size={14} strokeWidth={1.75} />
             </div>
             <h3 className="text-sm font-bold text-swing-navy">Preislisten</h3>
           </div>
-          <div className="p-5">
+          <div className="flex-1 p-5">
             <PriceListSection
               companyId={company.id}
               uploads={priceUploads}
               categories={[
-                ...(company.sells_paragliders ? [{ key: "paragliders", label: "Gleitschirme" }] : []),
-                ...(company.sells_miniwings ? [{ key: "miniwings", label: "Miniwings" }] : []),
-                ...(company.sells_parakites ? [{ key: "parakites", label: "Parakites" }] : []),
+                { key: "paragliders", label: "Gleitschirme" },
+                { key: "miniwings", label: "Miniwings" },
               ]}
             />
           </div>
+          {(company.address_city || company.address_street || company.address) && (() => {
+            const q = company.address_street
+              ? [company.address_street, company.address_zip, company.address_city, company.address_country].filter(Boolean).join(", ")
+              : (company.address as string) || "";
+            return (
+              <div className="border-t border-gray-100">
+                <iframe
+                  title={`Standort ${company.name}`}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                  width="100%"
+                  height="180"
+                  className="border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  allowFullScreen={false}
+                />
+                {company.address_country && (
+                  <div className="px-4 py-2">
+                    <LocalClock country={company.address_country as string} />
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
       </div>

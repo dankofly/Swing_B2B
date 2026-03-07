@@ -8,10 +8,10 @@ import {
   FileText,
   Trash2,
   Loader2,
-  ExternalLink,
   Check,
   X,
   AlertTriangle,
+  Eye,
 } from "lucide-react";
 
 interface PriceUpload {
@@ -121,7 +121,6 @@ export default function PriceListSection({
     setUploadingCategory(null);
     e.target.value = "";
 
-    // If parsing produced results, show preview; otherwise reload to update uploads list
     if (!didParse) {
       window.location.reload();
     }
@@ -160,49 +159,6 @@ export default function PriceListSection({
     if (result.success) {
       setUploads((prev) => prev.filter((u) => u.id !== id));
     }
-  }
-
-  function renderUploadRow(upload: PriceUpload) {
-    return (
-      <div
-        key={upload.id}
-        className="flex items-center justify-between rounded bg-gray-50 px-3 py-2"
-      >
-        <div className="flex items-center gap-2">
-          <FileText size={14} className="shrink-0 text-red-500" />
-          <div>
-            <p className="text-xs font-medium text-swing-navy">
-              {upload.file_name || `${upload.file_type.toUpperCase()} Preisliste`}
-            </p>
-            <p className="text-[10px] text-swing-gray-dark/40">
-              {new Date(upload.created_at).toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <a
-            href={upload.file_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded p-1.5 text-swing-navy/40 transition-colors hover:bg-gray-200 hover:text-swing-navy"
-          >
-            <ExternalLink size={13} />
-          </a>
-          <button
-            onClick={() => handleDelete(upload.id)}
-            className="cursor-pointer rounded p-1.5 text-swing-navy/40 transition-colors hover:bg-red-100 hover:text-red-600"
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
-      </div>
-    );
   }
 
   // If we have a parse result, show the preview overlay
@@ -365,31 +321,51 @@ export default function PriceListSection({
         </div>
       )}
 
-      {categories.length === 0 ? (
-        <p className="text-sm text-swing-gray-dark/40">
-          Keine Produktkategorien ausgewählt
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {categories.map((cat) => {
-            const catUploads = uploads.filter((u) => u.category === cat.key);
-            const isUploading = uploadingCategory === cat.key;
+      <div className="space-y-2.5">
+        {categories.map((cat) => {
+          const catUploads = uploads.filter((u) => u.category === cat.key);
+          const latestUpload = catUploads[0]; // most recent
+          const isUploading = uploadingCategory === cat.key;
 
-            return (
-              <div key={cat.key}>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-swing-navy/70">
-                    {cat.label}
-                  </span>
+          return (
+            <div key={cat.key}>
+              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">
+                {cat.label}
+              </p>
+
+              {latestUpload ? (
+                <div className="flex items-center gap-1.5">
+                  {/* View button - full width */}
+                  <a
+                    href={latestUpload.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-1 items-center gap-2 rounded bg-swing-navy/5 px-3 py-2 text-xs text-swing-navy transition-colors hover:bg-swing-navy/10"
+                  >
+                    <Eye size={13} className="shrink-0 text-swing-navy/40" />
+                    <span className="flex-1 truncate">
+                      {latestUpload.file_name || "Preisliste.pdf"}
+                    </span>
+                    <span className="shrink-0 text-[10px] text-swing-navy/30">
+                      {new Date(latestUpload.created_at).toLocaleDateString("de-DE", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </a>
+
+                  {/* Replace upload */}
                   <label
-                    className={`flex cursor-pointer items-center gap-1.5 rounded bg-swing-gold px-2.5 py-1 text-[11px] font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark ${isUploading ? "opacity-50" : ""}`}
+                    className={`flex shrink-0 cursor-pointer items-center gap-1 rounded bg-swing-gold/15 px-2 py-2 text-[10px] font-semibold text-swing-navy transition-colors hover:bg-swing-gold/30 ${isUploading ? "opacity-50" : ""}`}
                   >
                     {isUploading ? (
                       <Loader2 size={11} className="animate-spin" />
                     ) : (
                       <Upload size={11} />
                     )}
-                    {isUploading ? "Lädt..." : "Hochladen"}
                     <input
                       type="file"
                       accept=".pdf,.csv"
@@ -398,22 +374,43 @@ export default function PriceListSection({
                       className="hidden"
                     />
                   </label>
-                </div>
 
-                {catUploads.length === 0 ? (
-                  <p className="text-xs text-swing-gray-dark/30">
-                    Keine Preisliste
-                  </p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {catUploads.map(renderUploadRow)}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  {/* Delete */}
+                  <button
+                    onClick={() => handleDelete(latestUpload.id)}
+                    className="shrink-0 cursor-pointer rounded p-2 text-swing-navy/20 transition-colors hover:bg-red-50 hover:text-red-500"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ) : (
+                <label
+                  className={`flex cursor-pointer items-center justify-center gap-2 rounded border border-dashed border-swing-navy/15 px-3 py-2.5 text-xs text-swing-navy/40 transition-colors hover:border-swing-gold hover:bg-swing-gold/5 hover:text-swing-navy/60 ${isUploading ? "opacity-50" : ""}`}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" />
+                      Wird hochgeladen...
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={13} />
+                      PDF Preisliste hochladen
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept=".pdf,.csv"
+                    onChange={(e) => handleUpload(e, cat.key)}
+                    disabled={isUploading || parsing}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
