@@ -75,6 +75,7 @@ export default async function AdminDashboard() {
       id,
       status,
       created_at,
+      company_id,
       company:companies(name),
       user:profiles(full_name, email)
     `)
@@ -189,7 +190,7 @@ export default async function AdminDashboard() {
                 return (
                   <Link
                     key={inquiry.id}
-                    href="/admin/anfragen"
+                    href={inquiry.company_id ? `/admin/kunden/${inquiry.company_id}` : "/admin/anfragen"}
                     className="block cursor-pointer px-5 py-4 transition-colors duration-150 hover:bg-swing-gold/4 sm:grid sm:grid-cols-[1fr_7rem_5rem_9rem] sm:items-center sm:gap-3 sm:px-6 sm:py-3.5"
                   >
                     {/* Mobile layout */}
