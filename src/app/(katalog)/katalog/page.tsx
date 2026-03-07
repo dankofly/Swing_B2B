@@ -149,51 +149,55 @@ export default async function KatalogPage({
       </div>
 
       {/* Filter Bar */}
-      <div className="card p-5 sm:p-6">
-        <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[7rem_1fr] sm:items-center sm:gap-x-4 sm:gap-y-3">
-          {/* Row 1: Kategorie */}
+      <div className="card overflow-hidden">
+        {/* Row 1: Kategorie — horizontally scrollable on mobile */}
+        <div className="space-y-1 px-4 pt-4 sm:grid sm:grid-cols-[7rem_1fr] sm:items-center sm:gap-x-4 sm:space-y-0 sm:px-6 sm:pt-5">
           <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
             <SlidersHorizontal size={13} />
             Kategorie
           </span>
-          <div className="flex flex-wrap gap-1.5">
-            <Link
-              href={filterUrl(allParams, "kategorie", undefined)}
-              className={`cursor-pointer rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-150 active:scale-[0.96] ${
-                !kategorie
-                  ? "bg-swing-navy text-white shadow-sm"
-                  : "text-swing-navy/60 hover:bg-gray-50 hover:text-swing-navy"
-              }`}
-            >
-              Alle
-            </Link>
-            {MAIN_CATEGORIES.map((slug) => {
-              const cat = catMap[slug];
-              if (!cat) return null;
-              return (
-                <Link
-                  key={cat.id}
-                  href={filterUrl(allParams, "kategorie", slug)}
-                  className={`cursor-pointer rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-150 active:scale-[0.96] ${
-                    kategorie === slug
-                      ? "bg-swing-navy text-white shadow-sm"
-                      : "text-swing-navy/60 hover:bg-gray-50 hover:text-swing-navy"
-                  }`}
-                >
-                  {cat.name}
-                </Link>
-              );
-            })}
+          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <div className="flex gap-1.5 pb-1 sm:flex-wrap sm:pb-0">
+              <Link
+                href={filterUrl(allParams, "kategorie", undefined)}
+                className={`shrink-0 cursor-pointer rounded-lg px-3.5 py-2.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] sm:text-sm sm:py-2 ${
+                  !kategorie
+                    ? "bg-swing-navy text-white shadow-sm"
+                    : "text-swing-navy/60 hover:bg-gray-50 hover:text-swing-navy"
+                }`}
+              >
+                Alle
+              </Link>
+              {MAIN_CATEGORIES.map((slug) => {
+                const cat = catMap[slug];
+                if (!cat) return null;
+                return (
+                  <Link
+                    key={cat.id}
+                    href={filterUrl(allParams, "kategorie", slug)}
+                    className={`shrink-0 cursor-pointer whitespace-nowrap rounded-lg px-3.5 py-2.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] sm:text-sm sm:py-2 ${
+                      kategorie === slug
+                        ? "bg-swing-navy text-white shadow-sm"
+                        : "text-swing-navy/60 hover:bg-gray-50 hover:text-swing-navy"
+                    }`}
+                  >
+                    {cat.name}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
+        </div>
 
-          {/* Sub-categories for Gleitschirme */}
-          {isGleitschirmeActive && (
-            <>
-              <div className="hidden sm:block" />
-              <div className="flex flex-wrap items-center gap-1.5 border-t border-gray-50 pt-2.5 sm:border-0 sm:pt-0">
+        {/* Sub-categories for Gleitschirme */}
+        {isGleitschirmeActive && (
+          <div className="space-y-1 border-t border-gray-50 px-4 pt-3 sm:grid sm:grid-cols-[7rem_1fr] sm:items-center sm:gap-x-4 sm:space-y-0 sm:border-0 sm:px-6 sm:pt-0">
+            <div className="hidden sm:block" />
+            <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+              <div className="flex gap-1.5 pb-1 sm:flex-wrap sm:pb-0">
                 <Link
                   href={filterUrl(allParams, "sub", undefined)}
-                  className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] ${
+                  className={`shrink-0 cursor-pointer rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150 active:scale-[0.96] sm:py-1.5 ${
                     !sub
                       ? "bg-swing-navy/10 text-swing-navy font-semibold"
                       : "text-swing-navy/60 hover:bg-gray-50"
@@ -208,7 +212,7 @@ export default async function KatalogPage({
                     <Link
                       key={cat.id}
                       href={filterUrl(allParams, "sub", slug)}
-                      className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] ${
+                      className={`shrink-0 cursor-pointer rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150 active:scale-[0.96] sm:py-1.5 ${
                         sub === slug
                           ? "bg-swing-navy/10 text-swing-navy font-semibold"
                           : "text-swing-navy/60 hover:bg-gray-50"
@@ -219,20 +223,22 @@ export default async function KatalogPage({
                   );
                 })}
               </div>
-            </>
-          )}
+            </div>
+          </div>
+        )}
 
-          {/* Divider */}
-          <div className="border-t border-gray-50 sm:col-span-2" />
+        {/* Divider */}
+        <div className="mx-4 border-t border-gray-50 sm:mx-6" />
 
-          {/* Row 2: EN-Klasse */}
+        {/* Row 2: EN-Klasse */}
+        <div className="space-y-1 px-4 pt-3 sm:grid sm:grid-cols-[7rem_1fr] sm:items-center sm:gap-x-4 sm:space-y-0 sm:px-6 sm:pt-3">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
             EN-Klasse
           </span>
           <div className="flex flex-wrap gap-1.5">
             <Link
               href={filterUrl(allParams, "en", undefined)}
-              className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] ${
+              className={`cursor-pointer rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-150 active:scale-[0.96] sm:py-1.5 sm:px-3 ${
                 !en
                   ? "bg-swing-gold/15 text-swing-navy font-semibold"
                   : "text-swing-navy/60 hover:bg-gray-50"
@@ -244,7 +250,7 @@ export default async function KatalogPage({
               <Link
                 key={cls}
                 href={filterUrl(allParams, "en", cls)}
-                className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] ${
+                className={`cursor-pointer rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-150 active:scale-[0.96] sm:py-1.5 sm:px-3 ${
                   en === cls
                     ? "bg-swing-gold/15 text-swing-navy font-semibold"
                     : "text-swing-navy/60 hover:bg-gray-50"
@@ -254,15 +260,17 @@ export default async function KatalogPage({
               </Link>
             ))}
           </div>
+        </div>
 
-          {/* Row 3: Gewicht */}
+        {/* Row 3: Gewicht */}
+        <div className="space-y-1 px-4 pb-4 pt-2 sm:grid sm:grid-cols-[7rem_1fr] sm:items-center sm:gap-x-4 sm:space-y-0 sm:px-6 sm:pb-5 sm:pt-2">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
             Gewicht
           </span>
           <div className="flex flex-wrap gap-1.5">
             <Link
               href={filterUrl(allParams, "gewicht", undefined)}
-              className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] ${
+              className={`cursor-pointer rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-150 active:scale-[0.96] sm:py-1.5 sm:px-3 ${
                 !gewicht
                   ? "bg-swing-gold/15 text-swing-navy font-semibold"
                   : "text-swing-navy/60 hover:bg-gray-50"
@@ -274,7 +282,7 @@ export default async function KatalogPage({
               <Link
                 key={cls}
                 href={filterUrl(allParams, "gewicht", cls)}
-                className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] ${
+                className={`cursor-pointer rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-150 active:scale-[0.96] sm:py-1.5 sm:px-3 ${
                   gewicht === cls
                     ? "bg-swing-gold/15 text-swing-navy font-semibold"
                     : "text-swing-navy/60 hover:bg-gray-50"
@@ -288,7 +296,7 @@ export default async function KatalogPage({
 
         {/* Active filter count badge */}
         {activeCount > 0 && (
-          <div className="mt-3 border-t border-gray-50 pt-3 sm:grid sm:grid-cols-[7rem_1fr] sm:gap-x-4">
+          <div className="border-t border-gray-50 px-4 py-3 sm:grid sm:grid-cols-[7rem_1fr] sm:gap-x-4 sm:px-6">
             <div className="hidden sm:block" />
             <div className="flex items-center gap-3">
               <span className="rounded bg-swing-navy/5 px-2.5 py-1 text-[10px] font-bold text-swing-navy/50 tabular-nums">
