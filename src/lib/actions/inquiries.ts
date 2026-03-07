@@ -107,6 +107,9 @@ export async function getAllInquiries() {
       status,
       notes,
       created_at,
+      company_id,
+      tracking_number,
+      shipping_carrier,
       company:companies(name),
       user:profiles(full_name, email),
       items:inquiry_items(

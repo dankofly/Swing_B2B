@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { updateInquiryStatus } from "@/lib/actions/inquiries";
-import { Clock, FileText } from "lucide-react";
+import { updateInquiryStatus, updateInquiryTracking } from "@/lib/actions/inquiries";
+import { ChevronDown, Clock, ExternalLink, FileText, Truck } from "lucide-react";
+import Link from "next/link";
 
 const statusOptions = [
   { value: "new", label: "Eingang", color: "bg-blue-100 text-blue-700" },
@@ -17,6 +18,8 @@ function eur(value: number) {
 
 export default function InquiryList({ inquiries }: { inquiries: any[] }) {
   const [updating, setUpdating] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [trackingData, setTrackingData] = useState<Record<string, { carrier: string; trackingNumber: string }>>({});
 
   async function handleStatusChange(inquiryId: string, status: string) {
     setUpdating(inquiryId);
@@ -27,6 +30,23 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
       );
     } catch (e) {
       alert("Fehler beim Aktualisieren des Status");
+    } finally {
+      setUpdating(null);
+    }
+  }
+
+  function getTracking(id: string) {
+    return trackingData[id] ?? { carrier: "", trackingNumber: "" };
+  }
+
+  async function handleTrackingSave(inquiryId: string) {
+    const { carrier, trackingNumber } = getTracking(inquiryId);
+    if (!trackingNumber.trim()) return;
+    setUpdating(inquiryId);
+    try {
+      await updateInquiryTracking(inquiryId, carrier.trim(), trackingNumber.trim());
+    } catch (e) {
+      alert("Fehler beim Speichern der Trackingnummer");
     } finally {
       setUpdating(null);
     }
@@ -59,10 +79,19 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
           0
         );
 
+        const isExpanded = expandedId === inquiry.id;
+
         return (
           <div key={inquiry.id} className="glass-card overflow-hidden rounded">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-swing-gray/30 px-6 py-4">
+            <div
+              className="flex cursor-pointer flex-wrap items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-swing-gray-light/30"
+              onClick={() => setExpandedId(isExpanded ? null : inquiry.id)}
+            >
               <div className="flex items-center gap-3">
+                <ChevronDown
+                  size={16}
+                  className={`text-swing-gray-dark/40 transition-transform duration-200 ${isExpanded ? "rotate-0" : "-rotate-90"}`}
+                />
                 <span className="text-sm font-semibold text-swing-navy">
                   #{inquiry.id.slice(0, 8).toUpperCase()}
                 </span>
@@ -72,8 +101,19 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
                 <span className="text-xs text-swing-gray-dark/40">
                   {(inquiry.user as any)?.full_name || (inquiry.user as any)?.email}
                 </span>
+                <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${status.color}`}>
+                  {status.label}
+                </span>
               </div>
               <div className="flex items-center gap-3">
+                <span className="text-xs font-medium text-swing-gray-dark/50">
+                  {totalItems} Artikel
+                </span>
+                {totalPrice > 0 && (
+                  <span className="text-xs font-bold text-swing-navy">
+                    {eur(totalPrice)}
+                  </span>
+                )}
                 <div className="flex items-center gap-1 text-xs text-swing-gray-dark/50">
                   <Clock size={12} />
                   {new Date(inquiry.created_at).toLocaleDateString("de-DE", {
@@ -84,9 +124,15 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
                     minute: "2-digit",
                   })}
                 </div>
+              </div>
+            </div>
+
+            {isExpanded && <>
+            <div className="border-t border-swing-gray/30 px-6 py-3">
+              <div className="flex items-center justify-between">
                 <select
                   value={inquiry.status}
-                  onChange={(e) => handleStatusChange(inquiry.id, e.target.value)}
+                  onChange={(e) => { e.stopPropagation(); handleStatusChange(inquiry.id, e.target.value); }}
                   disabled={updating === inquiry.id}
                   className={`rounded px-2.5 py-1 text-xs font-semibold ${status.color} cursor-pointer border-none focus:outline-none focus:ring-2 focus:ring-swing-gold`}
                 >
@@ -96,6 +142,16 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
                     </option>
                   ))}
                 </select>
+                {inquiry.company_id && (
+                  <Link
+                    href={`/admin/kunden/${inquiry.company_id}`}
+                    className="flex items-center gap-1.5 rounded bg-swing-navy/5 px-3 py-1.5 text-xs font-semibold text-swing-navy transition-colors hover:bg-swing-navy/10"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ExternalLink size={12} />
+                    Alle Bestellungen dieses Kunden
+                  </Link>
+                )}
               </div>
             </div>
 
@@ -140,22 +196,67 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
               </table>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-swing-gray/30 px-6 py-3 text-sm">
-              <span className="text-swing-gray-dark/50">
-                {totalItems} Artikel
-              </span>
-              {totalPrice > 0 && (
-                <span className="font-bold text-swing-navy">
-                  Gesamt: {eur(totalPrice)}
-                </span>
-              )}
-            </div>
-
             {inquiry.notes && (
               <div className="border-t border-swing-gray/30 px-6 py-3 text-sm text-swing-gray-dark/50">
                 <span className="font-medium">Anmerkung:</span> {inquiry.notes}
               </div>
             )}
+
+            {inquiry.status === "shipped" && (
+              <div className="flex flex-wrap items-end gap-3 border-t border-swing-gray/30 bg-purple-50/50 px-6 py-4">
+                <Truck size={18} className="mb-1 text-purple-600" />
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-semibold uppercase tracking-widest text-swing-gray-dark/40">
+                    Versanddienstleister
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="z.B. DHL, DPD, UPS"
+                    value={getTracking(inquiry.id).carrier}
+                    onChange={(e) =>
+                      setTrackingData((prev) => ({
+                        ...prev,
+                        [inquiry.id]: { ...getTracking(inquiry.id), carrier: e.target.value },
+                      }))
+                    }
+                    className="rounded border border-swing-gray/50 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-swing-gold"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-semibold uppercase tracking-widest text-swing-gray-dark/40">
+                    Trackingnummer
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Sendungsnummer"
+                    value={getTracking(inquiry.id).trackingNumber}
+                    onChange={(e) =>
+                      setTrackingData((prev) => ({
+                        ...prev,
+                        [inquiry.id]: { ...getTracking(inquiry.id), trackingNumber: e.target.value },
+                      }))
+                    }
+                    className="rounded border border-swing-gray/50 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-swing-gold"
+                  />
+                </div>
+                <button
+                  onClick={() => handleTrackingSave(inquiry.id)}
+                  disabled={updating === inquiry.id || !getTracking(inquiry.id).trackingNumber.trim()}
+                  className="rounded bg-swing-gold px-4 py-1.5 text-sm font-semibold text-swing-navy hover:bg-swing-gold-dark disabled:opacity-50"
+                >
+                  {updating === inquiry.id ? "Speichern…" : "Versendet"}
+                </button>
+              </div>
+            )}
+
+            {inquiry.status === "completed" && inquiry.tracking_number && (
+              <div className="flex items-center gap-2 border-t border-swing-gray/30 bg-green-50/50 px-6 py-3 text-sm text-green-700">
+                <Truck size={14} />
+                <span className="font-medium">{inquiry.shipping_carrier}:</span>
+                <span>{inquiry.tracking_number}</span>
+              </div>
+            )}
+            </>}
           </div>
         );
       })}
