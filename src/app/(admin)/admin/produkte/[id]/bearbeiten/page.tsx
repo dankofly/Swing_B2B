@@ -1,0 +1,67 @@
+import { createAdminClient } from "@/lib/supabase/server";
+import { updateProduct } from "@/lib/actions/products";
+import ProductForm from "@/components/admin/ProductForm";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { notFound } from "next/navigation";
+
+export default async function ProduktBearbeitenPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const supabase = createAdminClient();
+
+  const [{ data: product }, { data: categories }] = await Promise.all([
+    supabase
+      .from("products")
+      .select(`
+        *,
+        sizes:product_sizes(*),
+        colors:product_colors(*)
+      `)
+      .eq("id", id)
+      .single(),
+    supabase.from("categories").select("*").order("sort_order"),
+  ]);
+
+  if (!product) notFound();
+
+  async function handleUpdate(formData: FormData) {
+    "use server";
+    await updateProduct(id, formData);
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Hero */}
+      <div className="dash-hero rounded-xl px-8 py-9">
+        <div className="relative z-10 flex items-center gap-4">
+          <Link
+            href="/admin/produkte"
+            className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white/60 transition-colors hover:bg-white/20 hover:text-white"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
+              Produkt bearbeiten
+            </p>
+            <h1 className="text-3xl font-extrabold tracking-tight text-white">
+              {product.name}
+            </h1>
+          </div>
+        </div>
+      </div>
+
+      <ProductForm
+        action={handleUpdate}
+        categories={categories || []}
+        product={product}
+        sizes={product.sizes}
+        colors={product.colors}
+      />
+    </div>
+  );
+}

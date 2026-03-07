@@ -1,65 +1,96 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, ShieldCheck, Truck, FileText } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="flex min-h-screen flex-col">
+      {/* Hero */}
+      <div className="relative flex flex-1 flex-col items-center justify-center dash-hero px-4 text-center">
+        {/* Decorative rings */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-175 w-175 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-75 w-75 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/4" />
+
+        <div className="relative z-10">
+          <p className="mb-5 text-[11px] font-bold uppercase tracking-[5px] text-swing-gold/50">
+            Paragliders
           </p>
+          <h1 className="swing-h1 mb-3">SWING</h1>
+          <div className="flex items-center justify-center gap-3">
+            <div className="h-px w-12 bg-swing-gold/20" />
+            <p className="text-sm font-extrabold uppercase tracking-[4px] text-white/35">
+              B2B Händlerportal
+            </p>
+            <div className="h-px w-12 bg-swing-gold/20" />
+          </div>
+
+          <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-white/25">
+            Exklusiver Zugang zu individuellen Preisen, Live-Lagerbeständen
+            und direkter Bestellanfrage für autorisierte Händler.
+          </p>
+
+          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
+            <Link
+              href="/login"
+              className="group flex items-center gap-2 rounded-lg bg-swing-gold px-10 py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20"
+            >
+              Anmelden
+              <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <Link
+              href="/register"
+              className="rounded-lg border border-white/10 px-10 py-3.5 text-sm font-semibold tracking-wide text-white/60 transition-all duration-200 hover:border-white/25 hover:text-white/90"
+            >
+              Registrieren
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </div>
+
+      {/* Features strip */}
+      <div className="border-t border-white/6 bg-linear-to-b from-[#0D1F30] to-swing-navy">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 sm:grid-cols-3">
+          {[
+            {
+              icon: ShieldCheck,
+              title: "Individuelle Preise",
+              desc: "Ihre verhandelten EK-Konditionen",
+            },
+            {
+              icon: Truck,
+              title: "Live Lagerbestand",
+              desc: "Echtzeit-Verfügbarkeit aller Größen",
+            },
+            {
+              icon: FileText,
+              title: "Schnelle Anfragen",
+              desc: "Bestellanfrage in wenigen Klicks",
+            },
+          ].map((feat, i) => (
+            <div
+              key={feat.title}
+              className={`flex items-center gap-4 px-8 py-7 ${
+                i < 2 ? "sm:border-r sm:border-white/6" : ""
+              }`}
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-swing-gold/10">
+                <feat.icon size={20} className="text-swing-gold/70" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white/80">{feat.title}</p>
+                <p className="mt-0.5 text-xs text-white/30">{feat.desc}</p>
+              </div>
+            </div>
+          ))}
         </div>
-      </main>
+      </div>
+
+      {/* Footer */}
+      <div className="bg-[#0a1620] py-4 text-center">
+        <p className="text-[11px] text-white/15">
+          SWING Flugsportgeräte GmbH &middot; swing.de
+        </p>
+      </div>
     </div>
   );
 }

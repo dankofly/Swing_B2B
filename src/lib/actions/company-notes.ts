@@ -1,0 +1,49 @@
+"use server";
+
+import { createAdminClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+
+export async function getCompanyNotes(companyId: string) {
+  const supabase = createAdminClient();
+
+  const { data } = await supabase
+    .from("company_notes")
+    .select("id, subject, content, created_at")
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false });
+
+  return data ?? [];
+}
+
+export async function createCompanyNote(
+  companyId: string,
+  subject: string,
+  content: string
+) {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("company_notes").insert({
+    company_id: companyId,
+    subject,
+    content,
+  });
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath(`/admin/kunden/${companyId}`);
+  return { success: true };
+}
+
+export async function deleteCompanyNote(noteId: string, companyId: string) {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("company_notes")
+    .delete()
+    .eq("id", noteId);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath(`/admin/kunden/${companyId}`);
+  return { success: true };
+}
