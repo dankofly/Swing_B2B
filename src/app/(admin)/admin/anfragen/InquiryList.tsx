@@ -92,17 +92,11 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
                   size={16}
                   className={`text-swing-gray-dark/40 transition-transform duration-200 ${isExpanded ? "rotate-0" : "-rotate-90"}`}
                 />
-                <span className="text-sm font-semibold text-swing-navy">
-                  #{inquiry.id.slice(0, 8).toUpperCase()}
-                </span>
-                <span className="text-sm text-swing-gray-dark/60">
+                <span className="text-sm font-bold text-swing-navy">
                   {(inquiry.company as any)?.name ?? "—"}
                 </span>
                 <span className="text-xs text-swing-gray-dark/40">
                   {(inquiry.user as any)?.full_name || (inquiry.user as any)?.email}
-                </span>
-                <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${status.color}`}>
-                  {status.label}
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -124,6 +118,9 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
                     minute: "2-digit",
                   })}
                 </div>
+                <span className={`inline-flex w-28 items-center justify-center rounded px-2 py-0.5 text-[10px] font-semibold ${status.color}`}>
+                  {status.label}
+                </span>
               </div>
             </div>
 
