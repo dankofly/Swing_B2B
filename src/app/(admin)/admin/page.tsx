@@ -9,6 +9,8 @@ import {
   Inbox,
   Activity,
   Settings,
+  Clock,
+  ShoppingCart,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -19,11 +21,15 @@ export default async function AdminDashboard() {
 
   const [
     { count: productCount },
+    { count: comingSoonCount },
+    { count: preorderCount },
     { count: companyCount },
     { count: openInquiries },
     { count: lowStock },
   ] = await Promise.all([
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("products").select("*", { count: "exact", head: true }).eq("is_coming_soon", true),
+    supabase.from("products").select("*", { count: "exact", head: true }).eq("is_preorder", true),
     supabase.from("companies").select("*", { count: "exact", head: true }),
     supabase
       .from("inquiries")
@@ -42,6 +48,22 @@ export default async function AdminDashboard() {
       icon: Package,
       accent: "border-l-blue-500",
       iconColor: "text-blue-500",
+      href: "/admin/produkte",
+    },
+    {
+      label: "Coming Soon",
+      value: comingSoonCount ?? 0,
+      icon: Clock,
+      accent: "border-l-purple-500",
+      iconColor: "text-purple-500",
+      href: "/admin/produkte",
+    },
+    {
+      label: "Vorbestellung",
+      value: preorderCount ?? 0,
+      icon: ShoppingCart,
+      accent: "border-l-orange-500",
+      iconColor: "text-orange-500",
       href: "/admin/produkte",
     },
     {
@@ -98,10 +120,10 @@ export default async function AdminDashboard() {
   });
 
   const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-    new: { label: "Neu", color: "text-blue-700", bg: "bg-blue-50" },
-    in_progress: { label: "In Bearbeitung", color: "text-amber-700", bg: "bg-amber-50" },
-    shipped: { label: "Versendet", color: "text-purple-700", bg: "bg-purple-50" },
-    completed: { label: "Abgeschlossen", color: "text-emerald-700", bg: "bg-emerald-50" },
+    new: { label: "Eingang", color: "text-blue-700", bg: "bg-blue-100" },
+    in_progress: { label: "In Bearbeitung", color: "text-yellow-700", bg: "bg-yellow-100" },
+    shipped: { label: "Versand", color: "text-purple-700", bg: "bg-purple-100" },
+    completed: { label: "Erledigt", color: "text-green-700", bg: "bg-green-100" },
   };
 
   return (
@@ -132,7 +154,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* KPI instrument cards */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {stats.map((stat, i) => (
           <Link
             key={stat.label}
