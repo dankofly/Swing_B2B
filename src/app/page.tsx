@@ -11,11 +11,11 @@ export default function Home() {
         <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8 sm:block" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-75 w-75 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/4" />
 
-        <div className="relative z-10">
-          <p className="mb-5 text-[11px] font-bold uppercase tracking-[3px] text-swing-gold/50 sm:tracking-[5px]">
+        <div className="relative z-10 flex flex-col items-center">
+          <p className="mb-4 text-[11px] font-bold uppercase tracking-[3px] text-swing-gold/50 sm:tracking-[5px]">
             Paragliders
           </p>
-          <h1 className="swing-h1 mb-3">SWING</h1>
+          <h1 className="swing-h1 mb-2">SWING</h1>
           <div className="flex items-center justify-center gap-3">
             <div className="hidden h-px w-12 bg-swing-gold/20 sm:block" />
             <p className="text-xs font-extrabold uppercase tracking-[2px] text-white/35 sm:text-sm sm:tracking-[4px]">
@@ -24,12 +24,12 @@ export default function Home() {
             <div className="hidden h-px w-12 bg-swing-gold/20 sm:block" />
           </div>
 
-          <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-white/25">
+          <p className="mt-5 max-w-sm text-center text-sm leading-relaxed text-white/25 sm:max-w-md">
             Exklusiver Zugang zu individuellen Preisen, Live-Lagerbeständen
             und direkter Bestellanfrage für autorisierte Händler.
           </p>
 
-          <div className="mt-10 flex w-full max-w-xs flex-col items-center gap-3 sm:w-auto sm:max-w-none sm:flex-row">
+          <div className="mt-8 flex w-full max-w-xs flex-col items-center gap-3 sm:w-auto sm:max-w-none sm:flex-row">
             <Link
               href="/login"
               className="group flex w-full items-center justify-center gap-2 rounded-lg bg-swing-gold px-10 py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 sm:w-auto"

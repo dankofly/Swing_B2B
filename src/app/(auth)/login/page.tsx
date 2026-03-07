@@ -36,37 +36,37 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center dash-hero px-4">
-      {/* Decorative rings — largest hidden on mobile */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-150 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5 sm:block" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-100 w-100 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8" />
+      {/* Decorative rings */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-175 w-175 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5 sm:block" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8 sm:block" />
 
-      <div className="relative z-10 w-full max-w-md">
+      <div className="relative z-10 w-full max-w-sm sm:max-w-md">
         {/* Branding */}
-        <div className="mb-10 text-center">
+        <div className="mb-7 text-center">
           <Link href="/" className="group inline-block">
             <span className="text-3xl font-extrabold italic tracking-[4px] text-white transition-colors group-hover:text-swing-gold">
               SWING
             </span>
-            <span className="ml-2.5 inline-block rounded-lg bg-swing-gold px-2.5 py-1 text-[10px] font-extrabold tracking-[3px] text-swing-navy">
-              B2B
+            <span className="ml-1.5 text-sm font-semibold uppercase tracking-[3px] text-white/40">
+              Paragliders
             </span>
           </Link>
-          <p className="mt-3 text-xs font-medium uppercase tracking-[3px] text-white/30">
-            Händlerportal
+          <p className="mt-2 text-xs font-extrabold uppercase tracking-[3px] text-white/30">
+            B2B Händlerportal
           </p>
         </div>
 
         {/* Card */}
-        <div className="card p-8 ">
+        <div className="card p-6 sm:p-8">
           {/* Icon + heading */}
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-swing-navy/5">
-              <Lock size={20} className="text-swing-navy/60" />
+          <div className="mb-6 text-center">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-swing-navy/5">
+              <Lock size={18} className="text-swing-navy/60" />
             </div>
             <h1 className="text-lg font-extrabold uppercase tracking-[2px] text-swing-navy">
               Anmelden
             </h1>
-            <p className="mt-1.5 text-sm text-swing-gray-dark/40">
+            <p className="mt-1 text-sm text-swing-gray-dark/40">
               Zugang zu Ihrem B2B-Katalog
             </p>
           </div>
@@ -133,7 +133,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-8 border-t border-gray-100 pt-6 text-center">
+          <div className="mt-6 border-t border-gray-100 pt-5 text-center">
             <p className="text-sm text-swing-gray-dark/40">
               Noch kein Konto?{" "}
               <Link
@@ -147,7 +147,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer note */}
-        <p className="mt-8 text-center text-[11px] text-white/20">
+        <p className="mt-6 text-center text-[11px] text-white/20">
           SWING Flugsportgeräte GmbH &middot; swing.de
         </p>
       </div>
