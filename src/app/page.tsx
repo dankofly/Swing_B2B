@@ -12,10 +12,7 @@ export default function Home() {
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-75 w-75 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/4" />
 
         <div className="relative z-10 flex flex-col items-center">
-          <p className="mb-4 text-[11px] font-bold uppercase tracking-[3px] text-swing-gold/50 sm:tracking-[5px]">
-            Paragliders
-          </p>
-          <h1 className="swing-h1 mb-2">SWING</h1>
+          <h1 className="swing-h1 mb-2">SWING PARAGLIDERS</h1>
           <div className="flex items-center justify-center gap-3">
             <div className="hidden h-px w-12 bg-swing-gold/20 sm:block" />
             <p className="text-xs font-extrabold uppercase tracking-[2px] text-white/35 sm:text-sm sm:tracking-[4px]">

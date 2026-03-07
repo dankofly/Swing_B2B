@@ -45,10 +45,7 @@ export default function LoginPage() {
         <div className="mb-7 text-center">
           <Link href="/" className="group inline-block">
             <span className="text-3xl font-extrabold italic tracking-[4px] text-white transition-colors group-hover:text-swing-gold">
-              SWING
-            </span>
-            <span className="ml-1.5 text-sm font-semibold uppercase tracking-[3px] text-white/40">
-              Paragliders
+              SWING PARAGLIDERS
             </span>
           </Link>
           <p className="mt-2 text-xs font-extrabold uppercase tracking-[3px] text-white/30">

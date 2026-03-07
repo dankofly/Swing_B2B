@@ -138,14 +138,11 @@ export default function RegisterPage() {
         <div className="mb-10 text-center">
           <Link href="/" className="group inline-block">
             <span className="text-3xl font-extrabold italic tracking-[4px] text-white transition-colors group-hover:text-swing-gold">
-              SWING
-            </span>
-            <span className="ml-2.5 inline-block rounded-lg bg-swing-gold px-2.5 py-1 text-[10px] font-extrabold tracking-[3px] text-swing-navy">
-              B2B
+              SWING PARAGLIDERS
             </span>
           </Link>
-          <p className="mt-3 text-xs font-medium uppercase tracking-[3px] text-white/30">
-            Händlerportal
+          <p className="mt-2 text-xs font-extrabold uppercase tracking-[3px] text-white/30">
+            B2B Händlerportal
           </p>
         </div>
 
