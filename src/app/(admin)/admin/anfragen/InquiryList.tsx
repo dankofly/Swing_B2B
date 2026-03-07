@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { updateInquiryStatus, updateInquiryTracking } from "@/lib/actions/inquiries";
-import { ChevronDown, Clock, ExternalLink, FileText, Truck } from "lucide-react";
+import { ChevronDown, Clock, ExternalLink, FileText, Settings, Truck } from "lucide-react";
 import Link from "next/link";
 
 const statusOptions = [
@@ -121,6 +121,16 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
                 <span className={`inline-flex w-28 items-center justify-center rounded px-2 py-0.5 text-[10px] font-semibold ${status.color}`}>
                   {status.label}
                 </span>
+                {inquiry.company_id && (
+                  <Link
+                    href={`/admin/kunden/${inquiry.company_id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="rounded-lg p-1.5 text-swing-gray-dark/30 transition-colors hover:bg-swing-navy/5 hover:text-swing-navy"
+                    title="Kundendetail öffnen"
+                  >
+                    <Settings size={14} />
+                  </Link>
+                )}
               </div>
             </div>
 
