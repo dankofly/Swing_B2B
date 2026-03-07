@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { updateInquiryStatus, updateInquiryNotes, updateInquiryTracking } from "@/lib/actions/inquiries";
 import {
   Inbox,
@@ -42,7 +42,20 @@ export default function KanbanBoard({
   inquiries: Inquiry[];
 }) {
   const [inquiries, setInquiries] = useState(initialInquiries);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("inquiry");
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (expandedId) {
+      const el = document.getElementById(`inquiry-${expandedId}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, []);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [savingField, setSavingField] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -110,6 +123,7 @@ export default function KanbanBoard({
         return (
           <div
             key={inquiry.id}
+            id={`inquiry-${inquiry.id}`}
             className="rounded border border-gray-200 bg-white transition-shadow hover:shadow-sm"
           >
             {/* Row header — always visible */}
@@ -137,7 +151,7 @@ export default function KanbanBoard({
                 </span>
               </span>
 
-              {inquiry.shipping_carrier && inquiry.tracking_number && (
+              {inquiry.status === "completed" && inquiry.shipping_carrier && inquiry.tracking_number && (
                 <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-swing-navy/50">
                   <Truck size={12} />
                   <span className="font-semibold">{inquiry.shipping_carrier}</span>
@@ -157,15 +171,15 @@ export default function KanbanBoard({
                 </span>
               )}
 
-              <span className={`shrink-0 rounded px-2 py-0.5 text-[11px] font-semibold ${badge.bg} ${badge.text}`}>
-                {badge.label}
-              </span>
-
               <span className="w-24 shrink-0 text-right text-sm font-semibold text-swing-navy">
                 {totalValue(inquiry.items).toLocaleString("de-DE", {
                   style: "currency",
                   currency: "EUR",
                 })}
+              </span>
+
+              <span className={`inline-flex w-28 shrink-0 items-center justify-center rounded px-2 py-0.5 text-[11px] font-semibold ${badge.bg} ${badge.text}`}>
+                {badge.label}
               </span>
             </button>
 
@@ -301,32 +315,12 @@ export default function KanbanBoard({
                     )}
                   </div>
 
-                  {/* Sendung */}
-                  <div className="shrink-0">
-                    <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-swing-navy/40">
-                      Sendungsverfolgung
-                    </label>
-                    {inquiry.tracking_number && inquiry.shipping_carrier ? (
-                      <div className="flex items-center gap-2">
-                        <span className="rounded bg-purple-50 px-2 py-1.5 text-xs font-semibold text-purple-700">
-                          {inquiry.shipping_carrier}
-                        </span>
-                        <span className="font-mono text-xs text-swing-navy">
-                          {inquiry.tracking_number}
-                        </span>
-                        <button
-                          type="button"
-                          className="rounded p-1 text-swing-navy/30 hover:bg-gray-100 hover:text-swing-navy/60"
-                          onClick={() => {
-                            navigator.clipboard.writeText(inquiry.tracking_number);
-                            setCopiedId(inquiry.id);
-                            setTimeout(() => setCopiedId(null), 2000);
-                          }}
-                        >
-                          {copiedId === inquiry.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                        </button>
-                      </div>
-                    ) : (
+                  {/* Sendung — Eingabe nur bei "shipped", Anzeige nur bei "completed" */}
+                  {inquiry.status === "shipped" && (
+                    <div className="shrink-0">
+                      <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-swing-navy/40">
+                        Sendungsverfolgung
+                      </label>
                       <div className="flex items-center gap-1.5">
                         <select
                           defaultValue={inquiry.shipping_carrier ?? ""}
@@ -384,8 +378,34 @@ export default function KanbanBoard({
                           {savingField === `tracking-${inquiry.id}` ? "..." : "Versenden"}
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                  {inquiry.status === "completed" && inquiry.tracking_number && (
+                    <div className="shrink-0">
+                      <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-swing-navy/40">
+                        Sendungsverfolgung
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-green-50 px-2 py-1.5 text-xs font-semibold text-green-700">
+                          {inquiry.shipping_carrier}
+                        </span>
+                        <span className="font-mono text-xs text-swing-navy">
+                          {inquiry.tracking_number}
+                        </span>
+                        <button
+                          type="button"
+                          className="rounded p-1 text-swing-navy/30 hover:bg-gray-100 hover:text-swing-navy/60"
+                          onClick={() => {
+                            navigator.clipboard.writeText(inquiry.tracking_number);
+                            setCopiedId(inquiry.id);
+                            setTimeout(() => setCopiedId(null), 2000);
+                          }}
+                        >
+                          {copiedId === inquiry.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

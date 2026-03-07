@@ -123,10 +123,10 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
                 </span>
                 {inquiry.company_id && (
                   <Link
-                    href={`/admin/kunden/${inquiry.company_id}`}
+                    href={`/admin/kunden/${inquiry.company_id}?inquiry=${inquiry.id}`}
                     onClick={(e) => e.stopPropagation()}
                     className="rounded-lg p-1.5 text-swing-gray-dark/30 transition-colors hover:bg-swing-navy/5 hover:text-swing-navy"
-                    title="Kundendetail öffnen"
+                    title="Bestellung beim Kunden öffnen"
                   >
                     <Settings size={14} />
                   </Link>
