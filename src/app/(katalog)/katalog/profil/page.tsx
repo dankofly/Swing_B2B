@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { User } from "lucide-react";
 import ProfileForm from "./ProfileForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProfilPage() {
   const supabase = await createClient();
   const {

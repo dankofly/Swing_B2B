@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import KundenForm from "../../KundenForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function KundenBearbeitenPage({
   params,
 }: {

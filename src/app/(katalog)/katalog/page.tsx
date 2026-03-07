@@ -3,6 +3,8 @@ import { Search, ChevronRight, SlidersHorizontal, PackageOpen } from "lucide-rea
 import Link from "next/link";
 import type { Product, Category } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 const CLASSIFICATIONS = ["N-LITE", "D-LITE", "U-LITE"];
 const EN_CLASSES = ["EN-A", "EN-B", "EN-C", "EN-D"];
 
@@ -104,13 +106,13 @@ export default async function KatalogPage({
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="dash-hero rounded-xl px-8 py-9">
+      <div className="dash-hero rounded-xl px-5 py-7 sm:px-8 sm:py-9">
         <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
               Katalog
             </p>
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
               Produktkatalog
             </h1>
             <p className="mt-1.5 text-sm text-white/40 tabular-nums">

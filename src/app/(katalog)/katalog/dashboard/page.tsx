@@ -11,6 +11,8 @@ import {
   Compass,
 } from "lucide-react";
 import Link from "next/link";
+
+export const dynamic = "force-dynamic";
 import { getMyInquiries } from "@/lib/actions/inquiries";
 import { getCompanyPriceUploads } from "@/lib/actions/price-uploads";
 import InquiryBoard from "@/components/katalog/InquiryBoard";

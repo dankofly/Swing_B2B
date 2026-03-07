@@ -92,7 +92,7 @@ export default function RegisterPage() {
   if (success) {
     return (
       <div className="flex min-h-screen items-center justify-center dash-hero px-4">
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-150 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-150 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5 sm:block" />
 
         <div className="relative z-10 w-full max-w-md">
           <div className="card p-10 text-center ">
@@ -130,8 +130,8 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center dash-hero px-4 py-12">
       {/* Decorative rings */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-200 w-200 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-200 w-200 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5 sm:block" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8 sm:block" />
 
       <div className="relative z-10 w-full max-w-lg">
         {/* Branding */}

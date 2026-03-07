@@ -2,6 +2,8 @@ import { getMyInquiries } from "@/lib/actions/inquiries";
 import { FileText } from "lucide-react";
 import InquiryBoard from "@/components/katalog/InquiryBoard";
 
+export const dynamic = "force-dynamic";
+
 export default async function MeineAnfragenPage() {
   const inquiries = await getMyInquiries();
 

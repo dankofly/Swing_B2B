@@ -23,6 +23,8 @@ import { getCompanyInquiries } from "@/lib/actions/inquiries";
 import { getCompanyNotes } from "@/lib/actions/company-notes";
 import CompanyStats from "./CompanyStats";
 
+export const dynamic = "force-dynamic";
+
 const COMPANY_TYPE_LABELS: Record<string, string> = {
   dealer: "Händler",
   importer: "Importeur",

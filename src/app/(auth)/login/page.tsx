@@ -36,8 +36,8 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center dash-hero px-4">
-      {/* Decorative rings */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-150 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5" />
+      {/* Decorative rings — largest hidden on mobile */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-150 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5 sm:block" />
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-100 w-100 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8" />
 
       <div className="relative z-10 w-full max-w-md">

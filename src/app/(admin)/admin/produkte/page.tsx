@@ -4,6 +4,8 @@ import { Plus, Pencil, Eye, EyeOff, Package } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { DeleteProductButton, ToggleActiveButton } from "./ProductActions";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProduktePage() {
   const supabase = createAdminClient();
 
@@ -20,22 +22,23 @@ export default async function ProduktePage() {
   return (
     <div className="space-y-8">
       {/* Hero */}
-      <div className="dash-hero rounded-xl px-8 py-9">
-        <div className="relative z-10 flex items-end justify-between">
+      <div className="dash-hero rounded-xl px-5 py-7 sm:px-8 sm:py-9">
+        <div className="relative z-10 flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
               Verwaltung
             </p>
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
               Produkte
             </h1>
           </div>
           <Link
             href="/admin/produkte/neu"
-            className="flex items-center gap-2 rounded-lg bg-swing-gold px-5 py-2.5 text-sm font-bold text-swing-navy transition-colors hover:bg-swing-gold-dark"
+            className="flex shrink-0 items-center gap-2 rounded-lg bg-swing-gold px-4 py-2.5 text-sm font-bold text-swing-navy transition-colors hover:bg-swing-gold-dark sm:px-5"
           >
             <Plus size={16} />
-            Neues Produkt
+            <span className="hidden sm:inline">Neues Produkt</span>
+            <span className="sm:hidden">Neu</span>
           </Link>
         </div>
       </div>
@@ -60,8 +63,9 @@ export default async function ProduktePage() {
           </Link>
         </div>
       ) : (
-        <div className="overflow-hidden card ">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-hidden card">
+          {/* Desktop table */}
+          <table className="hidden w-full text-left text-sm md:table">
             <thead>
               <tr className="bg-gray-50/60 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
                 <th className="px-6 py-3">Produkt</th>
@@ -78,52 +82,21 @@ export default async function ProduktePage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       {product.images?.[0] ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="h-10 w-10 rounded-lg object-cover"
-                        />
+                        <img src={product.images[0]} alt={product.name} className="h-10 w-10 rounded-lg object-cover" />
                       ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 text-xs text-swing-navy/40">
-                          —
-                        </div>
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 text-xs text-swing-navy/40">—</div>
                       )}
-                      <span className="font-medium text-swing-navy">
-                        {product.name}
-                      </span>
+                      <span className="font-medium text-swing-navy">{product.name}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-swing-gray-dark/60">
-                    {product.category?.name || "—"}
-                  </td>
-                  <td className="px-6 py-4 tabular-nums">
-                    {product.sizes?.length || 0} Größen
-                  </td>
-                  <td className="px-6 py-4 tabular-nums">
-                    {product.colors?.length || 0} Farben
-                  </td>
-                  <td className="px-6 py-4">
-                    <ToggleActiveButton
-                      productId={product.id}
-                      isActive={product.is_active}
-                    />
-                  </td>
+                  <td className="px-6 py-4 text-swing-gray-dark/60">{product.category?.name || "—"}</td>
+                  <td className="px-6 py-4 tabular-nums">{product.sizes?.length || 0} Größen</td>
+                  <td className="px-6 py-4 tabular-nums">{product.colors?.length || 0} Farben</td>
+                  <td className="px-6 py-4"><ToggleActiveButton productId={product.id} isActive={product.is_active} /></td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-1">
-                      <Link
-                        href={`/admin/produkte/${product.id}/lager`}
-                        className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10 hover:text-swing-navy"
-                        title="Lagerbestand"
-                      >
-                        <Package size={16} />
-                      </Link>
-                      <Link
-                        href={`/admin/produkte/${product.id}/bearbeiten`}
-                        className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10 hover:text-swing-navy"
-                        title="Bearbeiten"
-                      >
-                        <Pencil size={16} />
-                      </Link>
+                      <Link href={`/admin/produkte/${product.id}/lager`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10 hover:text-swing-navy" title="Lagerbestand"><Package size={16} /></Link>
+                      <Link href={`/admin/produkte/${product.id}/bearbeiten`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10 hover:text-swing-navy" title="Bearbeiten"><Pencil size={16} /></Link>
                       <DeleteProductButton productId={product.id} productName={product.name} />
                     </div>
                   </td>
@@ -131,6 +104,37 @@ export default async function ProduktePage() {
               ))}
             </tbody>
           </table>
+
+          {/* Mobile card layout */}
+          <div className="divide-y divide-gray-50 md:hidden">
+            {(products as (Product & { category: { name: string } | null })[]).map((product) => (
+              <div key={product.id} className="px-5 py-4">
+                <div className="flex items-center gap-3">
+                  {product.images?.[0] ? (
+                    <img src={product.images[0]} alt={product.name} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+                  ) : (
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-xs text-swing-navy/40">—</div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate font-medium text-swing-navy">{product.name}</span>
+                    <span className="text-xs text-swing-gray-dark/50">{product.category?.name || "—"}</span>
+                  </div>
+                  <ToggleActiveButton productId={product.id} isActive={product.is_active} />
+                </div>
+                <div className="mt-2.5 flex items-center justify-between">
+                  <div className="flex gap-3 text-xs text-swing-gray-dark/40 tabular-nums">
+                    <span>{product.sizes?.length || 0} Größen</span>
+                    <span>{product.colors?.length || 0} Farben</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Link href={`/admin/produkte/${product.id}/lager`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10" title="Lagerbestand"><Package size={16} /></Link>
+                    <Link href={`/admin/produkte/${product.id}/bearbeiten`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10" title="Bearbeiten"><Pencil size={16} /></Link>
+                    <DeleteProductButton productId={product.id} productName={product.name} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

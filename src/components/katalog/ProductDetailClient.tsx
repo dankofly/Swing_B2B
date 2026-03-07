@@ -179,109 +179,117 @@ export default function ProductDetailClient({
             )}
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto border-t border-gray-100">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50/60 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
-                  <th className="px-5 py-2.5 text-left">Größe</th>
-                  {hasPrices && (
-                    <>
-                      {uvpBrutto != null && <th className="px-5 py-2.5 text-right">UVP brutto</th>}
-                      <th className="px-5 py-2.5 text-right">Ihr EK netto</th>
-                      <th className="px-5 py-2.5 text-right">Rabatt</th>
-                    </>
-                  )}
-                  <th className="px-5 py-2.5 text-left">Lagerstand</th>
-                  <th className="px-5 py-2.5 text-left">Lieferzeit</th>
-                  <th className="px-5 py-2.5 text-right">Menge</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {sizes.map((size) => {
-                  const ekNetto = priceMap[size.id];
-                  const rabatt = discountMap[size.id] ?? 0;
-                  const stockKey = `${selectedColorName}::${size.size_label}`;
-                  const stock = stockKey in stockMap ? stockMap[stockKey] : size.stock_quantity;
-                  const qty = quantities[size.id] ?? 0;
-
-                  return (
-                    <tr
-                      key={size.id}
-                      className={`transition-colors duration-150 hover:bg-swing-gold/4 ${
-                        qty > 0 ? "bg-swing-gold/3" : ""
-                      }`}
-                    >
-                      <td className="px-5 py-3.5">
-                        <span className="font-bold text-swing-navy">{size.size_label}</span>
-                      </td>
-                      {hasPrices && (
-                        <>
-                          {uvpBrutto != null && (
-                            <td className="px-5 py-3.5 text-right tabular-nums text-swing-navy/50 line-through">
-                              {eur(uvpBrutto)}
+          {/* Sizes — cards on mobile, table on md+ */}
+          <div className="border-t border-gray-100">
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50/60 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
+                    <th className="px-5 py-2.5 text-left">Größe</th>
+                    {hasPrices && (
+                      <>
+                        {uvpBrutto != null && <th className="px-5 py-2.5 text-right">UVP brutto</th>}
+                        <th className="px-5 py-2.5 text-right">Ihr EK netto</th>
+                        <th className="px-5 py-2.5 text-right">Rabatt</th>
+                      </>
+                    )}
+                    <th className="px-5 py-2.5 text-left">Lagerstand</th>
+                    <th className="px-5 py-2.5 text-left">Lieferzeit</th>
+                    <th className="px-5 py-2.5 text-right">Menge</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {sizes.map((size) => {
+                    const ekNetto = priceMap[size.id];
+                    const rabatt = discountMap[size.id] ?? 0;
+                    const stockKey = `${selectedColorName}::${size.size_label}`;
+                    const stock = stockKey in stockMap ? stockMap[stockKey] : size.stock_quantity;
+                    const qty = quantities[size.id] ?? 0;
+                    return (
+                      <tr key={size.id} className={`transition-colors duration-150 hover:bg-swing-gold/4 ${qty > 0 ? "bg-swing-gold/3" : ""}`}>
+                        <td className="px-5 py-3.5"><span className="font-bold text-swing-navy">{size.size_label}</span></td>
+                        {hasPrices && (
+                          <>
+                            {uvpBrutto != null && <td className="px-5 py-3.5 text-right tabular-nums text-swing-navy/50 line-through">{eur(uvpBrutto)}</td>}
+                            <td className="px-5 py-3.5 text-right text-lg font-extrabold tabular-nums text-swing-navy">
+                              {ekNetto != null ? eur(ekNetto) : <span className="text-sm text-swing-navy/30">Auf Anfrage</span>}
                             </td>
-                          )}
-                          <td className="px-5 py-3.5 text-right text-lg font-extrabold tabular-nums text-swing-navy">
-                            {ekNetto != null ? eur(ekNetto) : <span className="text-sm text-swing-navy/30">Auf Anfrage</span>}
-                          </td>
-                          <td className="px-5 py-3.5 text-right">
-                            {rabatt > 0 ? (
-                              <span className="rounded-lg bg-swing-gold/15 px-2.5 py-1 text-[11px] font-bold tabular-nums text-swing-gold-dark">
-                                -{rabatt}%
-                              </span>
-                            ) : (
-                              <span className="text-[11px] text-swing-navy/15">—</span>
-                            )}
-                          </td>
-                        </>
-                      )}
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2">
-                          <span className={`inline-block h-2 w-2 rounded-full ${stockDot(stock)}`} />
-                          <span className={stock > 0 && stock <= 10 ? "font-semibold text-amber-700" : "text-swing-navy/50"}>
-                            {stock > 10
-                              ? "Verfügbar"
-                              : stock > 0
-                                ? `Nur noch ${stock} Stk.`
-                                : "Nicht auf Lager"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5 text-swing-navy/35">
-                        {stock > 0
-                          ? "Sofort"
-                          : size.delivery_days > 0
-                            ? `ca. ${Math.round(size.delivery_days / 7)} ${Math.round(size.delivery_days / 7) === 1 ? "Woche" : "Wochen"}`
-                            : "Auf Anfrage"}
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        <input
-                          type="number"
-                          min={0}
-                          value={qty}
-                          onChange={(e) =>
-                            setQuantities((prev) => ({
-                              ...prev,
-                              [size.id]: Math.max(0, parseInt(e.target.value) || 0),
-                            }))
-                          }
-                          className={`w-16 rounded-lg border bg-white px-2 py-1.5 text-center text-sm tabular-nums transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20 ${
-                            qty > 0
-                              ? "border-swing-gold/40 font-bold text-swing-navy"
-                              : "border-gray-200 text-swing-navy/40"
-                          }`}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                            <td className="px-5 py-3.5 text-right">
+                              {rabatt > 0 ? <span className="rounded-lg bg-swing-gold/15 px-2.5 py-1 text-[11px] font-bold tabular-nums text-swing-gold-dark">-{rabatt}%</span> : <span className="text-[11px] text-swing-navy/15">—</span>}
+                            </td>
+                          </>
+                        )}
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-block h-2 w-2 rounded-full ${stockDot(stock)}`} />
+                            <span className={stock > 0 && stock <= 10 ? "font-semibold text-amber-700" : "text-swing-navy/50"}>
+                              {stock > 10 ? "Verfügbar" : stock > 0 ? `Nur noch ${stock} Stk.` : "Nicht auf Lager"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5 text-swing-navy/35">
+                          {stock > 0 ? "Sofort" : size.delivery_days > 0 ? `ca. ${Math.round(size.delivery_days / 7)} ${Math.round(size.delivery_days / 7) === 1 ? "Woche" : "Wochen"}` : "Auf Anfrage"}
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <input type="number" min={0} value={qty} onChange={(e) => setQuantities((prev) => ({ ...prev, [size.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            className={`w-16 rounded-lg border bg-white px-2 py-1.5 text-center text-sm tabular-nums transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20 ${qty > 0 ? "border-swing-gold/40 font-bold text-swing-navy" : "border-gray-200 text-swing-navy/40"}`} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile card layout */}
+            <div className="divide-y divide-gray-50 md:hidden">
+              {sizes.map((size) => {
+                const ekNetto = priceMap[size.id];
+                const rabatt = discountMap[size.id] ?? 0;
+                const stockKey = `${selectedColorName}::${size.size_label}`;
+                const stock = stockKey in stockMap ? stockMap[stockKey] : size.stock_quantity;
+                const qty = quantities[size.id] ?? 0;
+                return (
+                  <div key={size.id} className={`px-5 py-4 ${qty > 0 ? "bg-swing-gold/3" : ""}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-bold text-swing-navy">{size.size_label}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-block h-2 w-2 rounded-full ${stockDot(stock)}`} />
+                        <span className={`text-xs ${stock > 0 && stock <= 10 ? "font-semibold text-amber-700" : "text-swing-navy/50"}`}>
+                          {stock > 10 ? "Verfügbar" : stock > 0 ? `${stock} Stk.` : "Nicht auf Lager"}
+                        </span>
+                      </div>
+                    </div>
+                    {hasPrices && (
+                      <div className="mt-2 flex items-baseline gap-3">
+                        {ekNetto != null ? (
+                          <span className="text-lg font-extrabold tabular-nums text-swing-navy">{eur(ekNetto)}</span>
+                        ) : (
+                          <span className="text-sm text-swing-navy/30">Auf Anfrage</span>
+                        )}
+                        {uvpBrutto != null && <span className="text-xs tabular-nums text-swing-navy/35 line-through">{eur(uvpBrutto)}</span>}
+                        {rabatt > 0 && <span className="rounded bg-swing-gold/15 px-2 py-0.5 text-[10px] font-bold tabular-nums text-swing-gold-dark">-{rabatt}%</span>}
+                      </div>
+                    )}
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs text-swing-navy/35">
+                        {stock > 0 ? "Sofort lieferbar" : size.delivery_days > 0 ? `ca. ${Math.round(size.delivery_days / 7)} Wo.` : "Auf Anfrage"}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-swing-navy/30">Menge</span>
+                        <input type="number" min={0} value={qty} onChange={(e) => setQuantities((prev) => ({ ...prev, [size.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                          className={`w-16 rounded-lg border bg-white px-2 py-2 text-center text-sm tabular-nums transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20 ${qty > 0 ? "border-swing-gold/40 font-bold text-swing-navy" : "border-gray-200 text-swing-navy/40"}`} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Footer with total + CTA */}
-          <div className="relative flex items-center justify-between border-t border-gray-100 px-5 py-4">
+          <div className="relative flex flex-col gap-3 border-t border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-swing-gold/40" />
             <div>
               {hasPrices && totalQty > 0 && (
@@ -304,7 +312,7 @@ export default function ProductDetailClient({
             <button
               onClick={handleAddToCart}
               disabled={totalQty === 0}
-              className={`btn-gold group flex cursor-pointer items-center gap-2 rounded-lg bg-swing-gold px-6 py-2.5 text-sm font-bold text-swing-navy shadow-sm transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none disabled:hover:bg-swing-gold ${
+              className={`btn-gold group flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-swing-gold px-6 py-3 text-sm font-bold text-swing-navy shadow-sm transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none disabled:hover:bg-swing-gold sm:w-auto sm:py-2.5 ${
                 added ? "bounce-in bg-emerald-500! text-white! hover:bg-emerald-600!" : ""
               }`}
             >

@@ -5,6 +5,8 @@ import { ArrowLeft, Package } from "lucide-react";
 import type { ProductSize, ProductColor } from "@/lib/types";
 import StockMatrixClient from "@/components/admin/StockMatrixClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function LagerPage({
   params,
 }: {

@@ -163,13 +163,13 @@ export default function WarenkorbPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="dash-hero rounded-xl px-8 py-9">
+      <div className="dash-hero rounded-xl px-5 py-7 sm:px-8 sm:py-9">
         <div className="relative z-10 flex items-end justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
               Bestellung
             </p>
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
               Warenkorb
             </h1>
             <p className="mt-1.5 text-sm text-white/40 tabular-nums">
@@ -190,8 +190,8 @@ export default function WarenkorbPage() {
         {/* Cart items */}
         <div className="space-y-4">
           {Object.entries(grouped).map(([key, groupItems]) => (
-            <div key={key} className="overflow-hidden card ">
-              <div className="border-b border-gray-50 px-6 py-3.5">
+            <div key={key} className="overflow-hidden card">
+              <div className="border-b border-gray-50 px-5 py-3.5 sm:px-6">
                 <h3 className="text-[15px] font-bold text-swing-navy">
                   {groupItems[0].productName}{" "}
                   <span className="font-normal text-swing-gray-dark/40">
@@ -199,7 +199,9 @@ export default function WarenkorbPage() {
                   </span>
                 </h3>
               </div>
-              <table className="w-full text-sm">
+
+              {/* Desktop table */}
+              <table className="hidden w-full text-sm sm:table">
                 <thead>
                   <tr className="bg-gray-50/60 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
                     <th className="px-6 py-2.5 text-left">Größe</th>
@@ -212,44 +214,41 @@ export default function WarenkorbPage() {
                 <tbody className="divide-y divide-gray-50">
                   {groupItems.map((item) => (
                     <tr key={`${item.sizeId}-${item.colorId}`} className="hover:bg-swing-gold/4 transition-colors">
-                      <td className="px-6 py-3.5 font-semibold text-swing-navy">
-                        {item.sizeLabel}
-                      </td>
-                      <td className="px-6 py-3.5 text-right text-swing-gray-dark/50 tabular-nums">
-                        {item.unitPrice != null ? eur(item.unitPrice) : "—"}
-                      </td>
+                      <td className="px-6 py-3.5 font-semibold text-swing-navy">{item.sizeLabel}</td>
+                      <td className="px-6 py-3.5 text-right text-swing-gray-dark/50 tabular-nums">{item.unitPrice != null ? eur(item.unitPrice) : "—"}</td>
                       <td className="px-6 py-3.5 text-right">
-                        <input
-                          type="number"
-                          min={1}
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateQuantity(
-                              item.sizeId,
-                              item.colorId,
-                              parseInt(e.target.value) || 0
-                            )
-                          }
-                          className="w-16 rounded-lg border border-gray-150 bg-white px-2 py-1.5 text-center text-sm tabular-nums transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
-                        />
+                        <input type="number" min={1} value={item.quantity} onChange={(e) => updateQuantity(item.sizeId, item.colorId, parseInt(e.target.value) || 0)}
+                          className="w-16 rounded-lg border border-gray-150 bg-white px-2 py-1.5 text-center text-sm tabular-nums transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20" />
                       </td>
-                      <td className="px-6 py-3.5 text-right font-semibold text-swing-navy tabular-nums">
-                        {item.unitPrice != null
-                          ? eur(item.unitPrice * item.quantity)
-                          : "—"}
-                      </td>
+                      <td className="px-6 py-3.5 text-right font-semibold text-swing-navy tabular-nums">{item.unitPrice != null ? eur(item.unitPrice * item.quantity) : "—"}</td>
                       <td className="px-6 py-3.5 text-right">
-                        <button
-                          onClick={() => removeItem(item.sizeId, item.colorId)}
-                          className="cursor-pointer text-swing-navy/15 transition-colors duration-200 hover:text-red-500"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <button onClick={() => removeItem(item.sizeId, item.colorId)} className="cursor-pointer p-1 text-swing-navy/15 transition-colors duration-200 hover:text-red-500"><Trash2 size={16} /></button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
+              {/* Mobile card layout */}
+              <div className="divide-y divide-gray-50 sm:hidden">
+                {groupItems.map((item) => (
+                  <div key={`${item.sizeId}-${item.colorId}`} className="px-5 py-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-bold text-swing-navy">{item.sizeLabel}</span>
+                      <button onClick={() => removeItem(item.sizeId, item.colorId)} className="cursor-pointer p-2 text-swing-navy/20 transition-colors hover:text-red-500"><Trash2 size={16} /></button>
+                    </div>
+                    <div className="mt-1 flex items-baseline gap-3">
+                      {item.unitPrice != null && <span className="text-sm font-semibold tabular-nums text-swing-navy">{eur(item.unitPrice * item.quantity)}</span>}
+                      {item.unitPrice != null && <span className="text-xs tabular-nums text-swing-gray-dark/40">({eur(item.unitPrice)} × {item.quantity})</span>}
+                    </div>
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-swing-navy/30">Menge</span>
+                      <input type="number" min={1} value={item.quantity} onChange={(e) => updateQuantity(item.sizeId, item.colorId, parseInt(e.target.value) || 0)}
+                        className="w-16 rounded-lg border border-gray-150 bg-white px-2 py-2 text-center text-sm tabular-nums transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>

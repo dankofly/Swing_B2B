@@ -6,22 +6,22 @@ export default function Home() {
     <div className="flex min-h-screen flex-col">
       {/* Hero */}
       <div className="relative flex flex-1 flex-col items-center justify-center dash-hero px-4 text-center">
-        {/* Decorative rings */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-175 w-175 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5" />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8" />
+        {/* Decorative rings — largest hidden on mobile to prevent overflow */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-175 w-175 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5 sm:block" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8 sm:block" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-75 w-75 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/4" />
 
         <div className="relative z-10">
-          <p className="mb-5 text-[11px] font-bold uppercase tracking-[5px] text-swing-gold/50">
+          <p className="mb-5 text-[11px] font-bold uppercase tracking-[3px] text-swing-gold/50 sm:tracking-[5px]">
             Paragliders
           </p>
           <h1 className="swing-h1 mb-3">SWING</h1>
           <div className="flex items-center justify-center gap-3">
-            <div className="h-px w-12 bg-swing-gold/20" />
-            <p className="text-sm font-extrabold uppercase tracking-[4px] text-white/35">
+            <div className="hidden h-px w-12 bg-swing-gold/20 sm:block" />
+            <p className="text-xs font-extrabold uppercase tracking-[2px] text-white/35 sm:text-sm sm:tracking-[4px]">
               B2B Händlerportal
             </p>
-            <div className="h-px w-12 bg-swing-gold/20" />
+            <div className="hidden h-px w-12 bg-swing-gold/20 sm:block" />
           </div>
 
           <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-white/25">
@@ -29,17 +29,17 @@ export default function Home() {
             und direkter Bestellanfrage für autorisierte Händler.
           </p>
 
-          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
+          <div className="mt-10 flex w-full max-w-xs flex-col items-center gap-3 sm:w-auto sm:max-w-none sm:flex-row">
             <Link
               href="/login"
-              className="group flex items-center gap-2 rounded-lg bg-swing-gold px-10 py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20"
+              className="group flex w-full items-center justify-center gap-2 rounded-lg bg-swing-gold px-10 py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 sm:w-auto"
             >
               Anmelden
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               href="/register"
-              className="rounded-lg border border-white/10 px-10 py-3.5 text-sm font-semibold tracking-wide text-white/60 transition-all duration-200 hover:border-white/25 hover:text-white/90"
+              className="w-full rounded-lg border border-white/10 px-10 py-3.5 text-center text-sm font-semibold tracking-wide text-white/60 transition-all duration-200 hover:border-white/25 hover:text-white/90 sm:w-auto"
             >
               Registrieren
             </Link>
@@ -69,8 +69,8 @@ export default function Home() {
           ].map((feat, i) => (
             <div
               key={feat.title}
-              className={`flex items-center gap-4 px-8 py-7 ${
-                i < 2 ? "sm:border-r sm:border-white/6" : ""
+              className={`flex items-center gap-4 px-6 py-5 sm:px-8 sm:py-7 ${
+                i < 2 ? "border-b border-white/6 sm:border-b-0 sm:border-r" : ""
               }`}
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-swing-gold/10">

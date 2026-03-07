@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboard() {
   const supabase = createAdminClient();
 
@@ -90,7 +92,7 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-8">
       {/* Hero — cockpit briefing header */}
-      <div className="dash-hero rounded-xl px-8 py-9">
+      <div className="dash-hero rounded-xl px-5 py-7 sm:px-8 sm:py-9">
         <div className="relative z-10 flex items-end justify-between">
           <div>
             <div className="flex items-center gap-2.5">
@@ -99,11 +101,11 @@ export default async function AdminDashboard() {
                 Control Center
               </span>
             </div>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
               Dashboard
             </h1>
           </div>
-          <p className="text-right text-xs font-medium text-white/25">
+          <p className="hidden text-right text-xs font-medium text-white/25 sm:block">
             {new Date().toLocaleDateString("de-DE", {
               weekday: "long",
               day: "numeric",
@@ -173,8 +175,8 @@ export default async function AdminDashboard() {
           </div>
         ) : (
           <>
-            {/* Table header */}
-            <div className="grid grid-cols-[1fr_7rem_5rem_9rem] items-center gap-3 border-t border-gray-100 bg-gray-50/60 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] text-swing-navy/40">
+            {/* Desktop table header */}
+            <div className="hidden items-center gap-3 border-t border-gray-100 bg-gray-50/60 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] text-swing-navy/40 sm:grid sm:grid-cols-[1fr_7rem_5rem_9rem]">
               <span>Händler</span>
               <span className="text-center">Status</span>
               <span className="text-center">Kontakt</span>
@@ -182,36 +184,42 @@ export default async function AdminDashboard() {
             </div>
 
             {/* Rows */}
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 border-t border-gray-100 sm:border-t-0">
               {recentInquiries.map((inquiry: any) => {
                 const status = statusConfig[inquiry.status] ?? statusConfig.new;
                 return (
                   <Link
                     key={inquiry.id}
                     href="/admin/anfragen"
-                    className="grid cursor-pointer grid-cols-[1fr_7rem_5rem_9rem] items-center gap-3 px-6 py-3.5 transition-colors duration-150 hover:bg-swing-gold/4"
+                    className="block cursor-pointer px-5 py-4 transition-colors duration-150 hover:bg-swing-gold/4 sm:grid sm:grid-cols-[1fr_7rem_5rem_9rem] sm:items-center sm:gap-3 sm:px-6 sm:py-3.5"
                   >
-                    <span className="truncate text-sm font-semibold text-swing-navy">
-                      {(inquiry as any).company?.name ?? "—"}
-                    </span>
-                    <div className="flex justify-center">
-                      <span
-                        className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold ${status.bg} ${status.color}`}
-                      >
+                    {/* Mobile layout */}
+                    <div className="flex items-center justify-between sm:contents">
+                      <span className="truncate text-sm font-semibold text-swing-navy">
+                        {(inquiry as any).company?.name ?? "—"}
+                      </span>
+                      <span className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold sm:text-center ${status.bg} ${status.color}`}>
                         {status.label}
                       </span>
                     </div>
-                    <span className="truncate text-center text-xs text-swing-gray-dark/35">
+                    <div className="mt-1 flex items-center gap-2 text-xs text-swing-gray-dark/35 sm:hidden">
+                      <span>{(inquiry as any).user?.full_name?.split(" ")[0] || "—"}</span>
+                      <span>·</span>
+                      <span className="tabular-nums">
+                        {new Date(inquiry.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                      </span>
+                    </div>
+                    {/* Desktop-only columns */}
+                    <div className="hidden sm:flex sm:justify-center">
+                      <span className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold ${status.bg} ${status.color}`}>
+                        {status.label}
+                      </span>
+                    </div>
+                    <span className="hidden truncate text-center text-xs text-swing-gray-dark/35 sm:block">
                       {(inquiry as any).user?.full_name?.split(" ")[0] || "—"}
                     </span>
-                    <span className="text-right text-xs tabular-nums text-swing-gray-dark/35">
-                      {new Date(inquiry.created_at).toLocaleDateString("de-DE", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <span className="hidden text-right text-xs tabular-nums text-swing-gray-dark/35 sm:block">
+                      {new Date(inquiry.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </Link>
                 );

@@ -2,6 +2,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 import PriceUploadClient from "./PriceUploadClient";
 import { FileText } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function PreislistenPage() {
   const supabase = createAdminClient();
 

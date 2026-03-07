@@ -5,6 +5,8 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import type { ProductSize, ProductColor } from "@/lib/types";
 import ProductDetailClient from "@/components/katalog/ProductDetailClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProduktDetailPage({
   params,
 }: {

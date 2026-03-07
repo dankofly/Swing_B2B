@@ -47,7 +47,7 @@ export default function KundenList({ companies }: { companies: Company[] }) {
 
   return (
     <div>
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search
             size={16}
@@ -61,16 +61,19 @@ export default function KundenList({ companies }: { companies: Company[] }) {
             className="w-full rounded border border-swing-gray bg-white/80 py-2.5 pl-9 pr-3 text-sm backdrop-blur-sm transition-all duration-200 focus:border-swing-gold focus:bg-white focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
           />
         </div>
-        <span className="text-sm text-swing-gray-dark/50">
-          {filtered.length} Kunden
-        </span>
-        <Link
-          href="/admin/kunden/neu"
-          className="flex items-center gap-1.5 rounded bg-swing-gold px-4 py-2.5 text-sm font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark"
-        >
-          <Plus size={16} />
-          Neuer Kunde
-        </Link>
+        <div className="flex items-center justify-between gap-3 sm:justify-start">
+          <span className="text-sm text-swing-gray-dark/50">
+            {filtered.length} Kunden
+          </span>
+          <Link
+            href="/admin/kunden/neu"
+            className="flex items-center gap-1.5 rounded bg-swing-gold px-4 py-2.5 text-sm font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark"
+          >
+            <Plus size={16} />
+            <span className="hidden sm:inline">Neuer Kunde</span>
+            <span className="sm:hidden">Neu</span>
+          </Link>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -129,8 +132,8 @@ export default function KundenList({ companies }: { companies: Company[] }) {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-swing-gray-dark/40">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="hidden text-xs text-swing-gray-dark/40 sm:inline">
                     seit{" "}
                     {new Date(company.created_at).toLocaleDateString("de-DE")}
                   </span>
@@ -139,7 +142,7 @@ export default function KundenList({ companies }: { companies: Company[] }) {
                       toggleApproval(company.id, company.is_approved)
                     }
                     disabled={updating === company.id}
-                    className={`flex cursor-pointer items-center gap-1 rounded px-3 py-1.5 text-xs font-bold transition-all duration-200 ${
+                    className={`flex cursor-pointer items-center gap-1 rounded px-3 py-2 text-xs font-bold transition-all duration-200 ${
                       company.is_approved
                         ? "bg-red-50 text-red-600 hover:bg-red-100"
                         : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
