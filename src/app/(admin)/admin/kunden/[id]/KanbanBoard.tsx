@@ -139,26 +139,23 @@ export default function KanbanBoard({
                 }`}
               />
 
-              <span className="min-w-0 flex-1 text-sm text-swing-navy">
+              <span className="min-w-0 shrink text-sm text-swing-navy">
                 Anfrage vom{" "}
                 {new Date(inquiry.created_at).toLocaleDateString("de-DE", {
                   day: "2-digit",
                   month: "2-digit",
                   year: "numeric",
                 })}
-                <span className="ml-2 text-swing-navy/40">
-                  ({inquiry.items.length} Positionen)
-                </span>
               </span>
 
               {inquiry.status === "completed" && inquiry.shipping_carrier && inquiry.tracking_number && (
-                <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-swing-navy/50">
-                  <Truck size={12} />
-                  <span className="font-semibold">{inquiry.shipping_carrier}</span>
-                  <span className="font-mono">{inquiry.tracking_number}</span>
+                <span className="flex min-w-0 flex-1 items-center justify-center gap-1.5 text-[11px] text-swing-navy/50">
+                  <Truck size={12} className="shrink-0" />
+                  <span className="shrink-0 font-semibold">{inquiry.shipping_carrier}</span>
+                  <span className="truncate font-mono">{inquiry.tracking_number}</span>
                   <button
                     type="button"
-                    className="rounded p-0.5 hover:bg-gray-100"
+                    className="shrink-0 rounded p-0.5 hover:bg-gray-100"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigator.clipboard.writeText(inquiry.tracking_number);
@@ -170,6 +167,14 @@ export default function KanbanBoard({
                   </button>
                 </span>
               )}
+
+              {!(inquiry.status === "completed" && inquiry.shipping_carrier && inquiry.tracking_number) && (
+                <span className="min-w-0 flex-1" />
+              )}
+
+              <span className="shrink-0 text-xs text-swing-navy/40">
+                ({inquiry.items.length} Positionen)
+              </span>
 
               <span className="w-24 shrink-0 text-right text-sm font-semibold text-swing-navy">
                 {totalValue(inquiry.items).toLocaleString("de-DE", {

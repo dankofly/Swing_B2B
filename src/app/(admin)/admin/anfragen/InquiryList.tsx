@@ -100,14 +100,6 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs font-medium text-swing-gray-dark/50">
-                  {totalItems} Artikel
-                </span>
-                {totalPrice > 0 && (
-                  <span className="text-xs font-bold text-swing-navy">
-                    {eur(totalPrice)}
-                  </span>
-                )}
                 <div className="flex items-center gap-1 text-xs text-swing-gray-dark/50">
                   <Clock size={12} />
                   {new Date(inquiry.created_at).toLocaleDateString("de-DE", {
@@ -118,6 +110,21 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
                     minute: "2-digit",
                   })}
                 </div>
+                {inquiry.status === "completed" && inquiry.tracking_number && (
+                  <span className="flex items-center gap-1.5 text-[11px] text-swing-gray-dark/50">
+                    <Truck size={12} />
+                    <span className="font-semibold">{inquiry.shipping_carrier}</span>
+                    <span className="font-mono">{inquiry.tracking_number}</span>
+                  </span>
+                )}
+                <span className="text-xs font-medium text-swing-gray-dark/50">
+                  {totalItems} Artikel
+                </span>
+                {totalPrice > 0 && (
+                  <span className="text-xs font-bold text-swing-navy">
+                    {eur(totalPrice)}
+                  </span>
+                )}
                 <span className={`inline-flex w-28 items-center justify-center rounded px-2 py-0.5 text-[10px] font-semibold ${status.color}`}>
                   {status.label}
                 </span>
