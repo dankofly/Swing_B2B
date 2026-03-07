@@ -27,7 +27,7 @@ export default async function AdminDashboard() {
     supabase
       .from("inquiries")
       .select("*", { count: "exact", head: true })
-      .in("status", ["new", "in_review"]),
+      .in("status", ["new", "in_progress"]),
     supabase
       .from("product_sizes")
       .select("*", { count: "exact", head: true })
@@ -83,10 +83,9 @@ export default async function AdminDashboard() {
 
   const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
     new: { label: "Neu", color: "text-blue-700", bg: "bg-blue-50" },
-    in_review: { label: "In Bearbeitung", color: "text-amber-700", bg: "bg-amber-50" },
-    quoted: { label: "Angebot", color: "text-purple-700", bg: "bg-purple-50" },
-    accepted: { label: "Angenommen", color: "text-emerald-700", bg: "bg-emerald-50" },
-    rejected: { label: "Abgelehnt", color: "text-red-700", bg: "bg-red-50" },
+    in_progress: { label: "In Bearbeitung", color: "text-amber-700", bg: "bg-amber-50" },
+    shipped: { label: "Versendet", color: "text-purple-700", bg: "bg-purple-50" },
+    completed: { label: "Abgeschlossen", color: "text-emerald-700", bg: "bg-emerald-50" },
   };
 
   return (
