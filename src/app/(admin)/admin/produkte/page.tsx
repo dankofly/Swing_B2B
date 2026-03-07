@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/server";
-import { Plus, Pencil, Eye, EyeOff, Package } from "lucide-react";
-import type { Product } from "@/lib/types";
-import { DeleteProductButton, ToggleActiveButton } from "./ProductActions";
+import { Plus, Package } from "lucide-react";
+import SortableProductList from "./SortableProductList";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +16,7 @@ export default async function ProduktePage() {
       sizes:product_sizes(id, size_label, sku, stock_quantity),
       colors:product_colors(id, color_name)
     `)
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   return (
@@ -64,77 +64,7 @@ export default async function ProduktePage() {
         </div>
       ) : (
         <div className="overflow-hidden card">
-          {/* Desktop table */}
-          <table className="hidden w-full text-left text-sm md:table">
-            <thead>
-              <tr className="bg-gray-50/60 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
-                <th className="px-6 py-3">Produkt</th>
-                <th className="px-6 py-3">Kategorie</th>
-                <th className="px-6 py-3">Größen</th>
-                <th className="px-6 py-3">Farben</th>
-                <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3 text-right">Aktionen</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {(products as (Product & { category: { name: string } | null })[]).map((product) => (
-                <tr key={product.id} className="hover:bg-swing-gold/4">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      {product.images?.[0] ? (
-                        <img src={product.images[0]} alt={product.name} className="h-10 w-10 rounded-lg object-cover" />
-                      ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 text-xs text-swing-navy/40">—</div>
-                      )}
-                      <span className="font-medium text-swing-navy">{product.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-swing-gray-dark/60">{product.category?.name || "—"}</td>
-                  <td className="px-6 py-4 tabular-nums">{product.sizes?.length || 0} Größen</td>
-                  <td className="px-6 py-4 tabular-nums">{product.colors?.length || 0} Farben</td>
-                  <td className="px-6 py-4"><ToggleActiveButton productId={product.id} isActive={product.is_active} /></td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-1">
-                      <Link href={`/admin/produkte/${product.id}/lager`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10 hover:text-swing-navy" title="Lagerbestand"><Package size={16} /></Link>
-                      <Link href={`/admin/produkte/${product.id}/bearbeiten`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10 hover:text-swing-navy" title="Bearbeiten"><Pencil size={16} /></Link>
-                      <DeleteProductButton productId={product.id} productName={product.name} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Mobile card layout */}
-          <div className="divide-y divide-gray-50 md:hidden">
-            {(products as (Product & { category: { name: string } | null })[]).map((product) => (
-              <div key={product.id} className="px-5 py-4">
-                <div className="flex items-center gap-3">
-                  {product.images?.[0] ? (
-                    <img src={product.images[0]} alt={product.name} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
-                  ) : (
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-xs text-swing-navy/40">—</div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <span className="block truncate font-medium text-swing-navy">{product.name}</span>
-                    <span className="text-xs text-swing-gray-dark/50">{product.category?.name || "—"}</span>
-                  </div>
-                  <ToggleActiveButton productId={product.id} isActive={product.is_active} />
-                </div>
-                <div className="mt-2.5 flex items-center justify-between">
-                  <div className="flex gap-3 text-xs text-swing-gray-dark/40 tabular-nums">
-                    <span>{product.sizes?.length || 0} Größen</span>
-                    <span>{product.colors?.length || 0} Farben</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Link href={`/admin/produkte/${product.id}/lager`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10" title="Lagerbestand"><Package size={16} /></Link>
-                    <Link href={`/admin/produkte/${product.id}/bearbeiten`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10" title="Bearbeiten"><Pencil size={16} /></Link>
-                    <DeleteProductButton productId={product.id} productName={product.name} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <SortableProductList products={products as any} />
         </div>
       )}
     </div>

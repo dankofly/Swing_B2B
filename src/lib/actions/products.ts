@@ -214,6 +214,19 @@ export async function deleteProduct(productId: string) {
   revalidatePath("/katalog");
 }
 
+export async function updateProductSortOrder(orderedIds: string[]) {
+  const supabase = createAdminClient();
+
+  const updates = orderedIds.map((id, index) =>
+    supabase.from("products").update({ sort_order: index }).eq("id", id)
+  );
+
+  await Promise.all(updates);
+
+  revalidatePath("/admin/produkte");
+  revalidatePath("/katalog");
+}
+
 export async function toggleProductActive(productId: string, isActive: boolean) {
   const supabase = createAdminClient();
 

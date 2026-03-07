@@ -70,6 +70,7 @@ export default async function KatalogPage({
       colors:product_colors(id, color_name, color_image_url, classification, is_limited)
     `)
     .eq("is_active", true)
+    .order("sort_order", { ascending: true })
     .order("name");
 
   if (q) {
