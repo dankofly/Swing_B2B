@@ -2,13 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 // Words that indicate an item should be excluded
 const EXCLUDE_PATTERNS = [
   /unverk[aä]uflich/i,
@@ -62,6 +55,12 @@ function cleanBezeichnung(raw: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 
