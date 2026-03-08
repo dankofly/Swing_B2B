@@ -42,6 +42,27 @@ export default async function DatenschutzPage() {
           <p className="text-sm leading-relaxed text-swing-navy/70">
             {t.responsibleText}
           </p>
+          <div className="mt-4 space-y-2 text-sm text-swing-navy">
+            <p className="whitespace-pre-line font-semibold">{t.responsibleName}</p>
+            <p className="whitespace-pre-line">{t.responsibleAddress}</p>
+            <p>{t.responsibleEmail}</p>
+            <p>{t.responsiblePhone}</p>
+          </div>
+        </section>
+
+        {/* Legal Basis */}
+        <section className="card p-6 sm:p-8">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-swing-navy/40">
+            {t.legalBasis}
+          </h2>
+          <p className="mb-3 text-sm leading-relaxed text-swing-navy/70">
+            {t.legalBasisText}
+          </p>
+          <ul className="list-inside list-disc space-y-1.5 text-sm text-swing-navy/70">
+            {t.legalBasisList.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
         </section>
 
         {/* Data Collection */}
@@ -49,8 +70,23 @@ export default async function DatenschutzPage() {
           <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-swing-navy/40">
             {t.dataCollection}
           </h2>
-          <p className="text-sm leading-relaxed text-swing-navy/70">
+          <p className="mb-3 text-sm leading-relaxed text-swing-navy/70">
             {t.dataCollectionText}
+          </p>
+          <ul className="list-inside list-disc space-y-1.5 text-sm text-swing-navy/70">
+            {t.dataCollectionList.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Storage Duration */}
+        <section className="card p-6 sm:p-8">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-swing-navy/40">
+            {t.storageDuration}
+          </h2>
+          <p className="text-sm leading-relaxed text-swing-navy/70">
+            {t.storageDurationText}
           </p>
         </section>
 
@@ -64,6 +100,16 @@ export default async function DatenschutzPage() {
           </p>
         </section>
 
+        {/* SSL/TLS */}
+        <section className="card p-6 sm:p-8">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-swing-navy/40">
+            {t.ssl}
+          </h2>
+          <p className="text-sm leading-relaxed text-swing-navy/70">
+            {t.sslText}
+          </p>
+        </section>
+
         {/* Hosting */}
         <section className="card p-6 sm:p-8">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-swing-navy/40">
@@ -74,6 +120,21 @@ export default async function DatenschutzPage() {
           </p>
         </section>
 
+        {/* Third Country Transfer */}
+        <section className="card p-6 sm:p-8">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-swing-navy/40">
+            {t.thirdCountry}
+          </h2>
+          <p className="mb-3 text-sm leading-relaxed text-swing-navy/70">
+            {t.thirdCountryText}
+          </p>
+          <ul className="list-inside list-disc space-y-1.5 text-sm text-swing-navy/70">
+            {t.thirdCountryList.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        </section>
+
         {/* Auth */}
         <section className="card p-6 sm:p-8">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-swing-navy/40">
@@ -81,6 +142,16 @@ export default async function DatenschutzPage() {
           </h2>
           <p className="text-sm leading-relaxed text-swing-navy/70">
             {t.authText}
+          </p>
+        </section>
+
+        {/* AI Processing */}
+        <section className="card p-6 sm:p-8">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-swing-navy/40">
+            {t.aiProcessing}
+          </h2>
+          <p className="text-sm leading-relaxed text-swing-navy/70">
+            {t.aiProcessingText}
           </p>
         </section>
 
@@ -102,11 +173,36 @@ export default async function DatenschutzPage() {
           <p className="mb-3 text-sm leading-relaxed text-swing-navy/70">
             {t.rightsText}
           </p>
-          <ul className="list-inside list-disc space-y-1 text-sm text-swing-navy/70">
+          <ul className="list-inside list-disc space-y-1.5 text-sm text-swing-navy/70">
             {t.rightsList.map((right, i) => (
               <li key={i}>{right}</li>
             ))}
           </ul>
+        </section>
+
+        {/* Supervisory Authority */}
+        <section className="card p-6 sm:p-8">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-swing-navy/40">
+            {t.supervisory}
+          </h2>
+          <p className="mb-3 text-sm leading-relaxed text-swing-navy/70">
+            {t.supervisoryText}
+          </p>
+          <div className="space-y-2 text-sm text-swing-navy">
+            <p className="font-semibold">{t.supervisoryName}</p>
+            <p className="whitespace-pre-line">{t.supervisoryAddress}</p>
+            <p>{t.supervisoryPhone}</p>
+            <p>
+              <a
+                href={t.supervisoryWeb}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-swing-navy/70 hover:text-swing-gold-dark"
+              >
+                {t.supervisoryWeb}
+              </a>
+            </p>
+          </div>
         </section>
 
         {/* Changes */}
