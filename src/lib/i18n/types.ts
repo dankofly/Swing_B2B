@@ -627,4 +627,18 @@ export interface Dictionary {
     order: string;
     errorSubmit: string;
   };
+
+  adminProfile: {
+    title: string;
+    subtitle: string;
+    personalData: string;
+    fullName: string;
+    email: string;
+    emailHint: string;
+    role: string;
+    saved: string;
+    saving: string;
+    save: string;
+    saveError: string;
+  };
 }

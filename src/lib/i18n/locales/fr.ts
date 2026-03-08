@@ -636,6 +636,20 @@ const fr: Dictionary = {
     order: "Commande",
     errorSubmit: "Erreur lors de l'envoi",
   },
+
+  adminProfile: {
+    title: "Mon profil",
+    subtitle: "Compte administrateur",
+    personalData: "Données personnelles",
+    fullName: "Nom complet",
+    email: "Adresse e-mail",
+    emailHint: "L'adresse e-mail ne peut pas être modifiée",
+    role: "Rôle",
+    saved: "Profil enregistré",
+    saving: "Enregistrement...",
+    save: "Enregistrer le profil",
+    saveError: "Erreur lors de l'enregistrement",
+  },
 };
 
 export default fr;

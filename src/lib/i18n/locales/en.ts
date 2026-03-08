@@ -636,6 +636,20 @@ const en: Dictionary = {
     order: "Order",
     errorSubmit: "Error submitting",
   },
+
+  adminProfile: {
+    title: "My Profile",
+    subtitle: "Admin Account",
+    personalData: "Personal Data",
+    fullName: "Full Name",
+    email: "Email Address",
+    emailHint: "Email address cannot be changed",
+    role: "Role",
+    saved: "Profile saved",
+    saving: "Saving...",
+    save: "Save profile",
+    saveError: "Error saving",
+  },
 };
 
 export default en;

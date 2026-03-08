@@ -636,6 +636,20 @@ const de: Dictionary = {
     order: "Bestellung",
     errorSubmit: "Fehler beim Absenden",
   },
+
+  adminProfile: {
+    title: "Mein Profil",
+    subtitle: "Admin-Konto",
+    personalData: "Persönliche Daten",
+    fullName: "Vollständiger Name",
+    email: "E-Mail-Adresse",
+    emailHint: "Die E-Mail-Adresse kann nicht geändert werden",
+    role: "Rolle",
+    saved: "Profil gespeichert",
+    saving: "Speichert...",
+    save: "Profil speichern",
+    saveError: "Fehler beim Speichern",
+  },
 };
 
 export default de;

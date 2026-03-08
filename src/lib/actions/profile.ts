@@ -58,3 +58,27 @@ export async function updateMyProfile(formData: FormData) {
   revalidatePath(`/admin/kunden/${profile.company_id}`);
   return { success: true };
 }
+
+export async function updateAdminProfile(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, error: "Nicht angemeldet" };
+
+  const admin = createAdminClient();
+
+  const fullName = formData.get("full_name") as string;
+  if (!fullName) return { success: false, error: "Name ist erforderlich" };
+
+  const { error } = await admin
+    .from("profiles")
+    .update({ full_name: fullName })
+    .eq("id", user.id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/profil");
+  return { success: true };
+}

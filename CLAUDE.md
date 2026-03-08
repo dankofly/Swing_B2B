@@ -160,6 +160,7 @@ Warenkorb → Anfrage absenden (mit Notiz) → E-Mail an Vertrieb + Bestätigung
 ## Konventionen
 - Sprache UI: **Deutsch**
 - Sprache Code: **Englisch** (Variablen, Funktionen, Kommentare)
+Sprache Code: **French** (Variablen, Funktionen, Kommentare)
 - Alle Preise in EUR, DECIMAL(10,2)
 - SKUs sind eindeutig pro Größenvariante
 - Kein Dark Mode (nur Light)

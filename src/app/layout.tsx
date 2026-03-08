@@ -3,6 +3,7 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { getLocale, getDictionary } from "@/lib/i18n";
 import { I18nProvider } from "@/lib/i18n/context";
+import LandingFooter from "@/components/ui/LandingFooter";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -28,7 +29,10 @@ export default async function RootLayout({
     <html lang={locale}>
       <body className={`${montserrat.variable} font-sans antialiased`}>
         <I18nProvider locale={locale} dict={dict}>
-          {children}
+          <div className="flex min-h-screen flex-col">
+            <div className="flex-1">{children}</div>
+            <LandingFooter />
+          </div>
         </I18nProvider>
       </body>
     </html>
