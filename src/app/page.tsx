@@ -7,9 +7,9 @@ export default async function Home() {
   const dict = await getDictionary();
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="grid min-h-screen grid-rows-[1fr_auto_auto]">
       {/* Hero */}
-      <div className="relative flex flex-1 flex-col items-center justify-center dash-hero px-5 py-12 text-center sm:px-4 sm:py-0">
+      <div className="relative flex flex-col items-center justify-center dash-hero px-5 py-12 text-center sm:px-4 sm:py-0">
         {/* Decorative rings — largest hidden on mobile to prevent overflow */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-175 w-175 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5 sm:block" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8 sm:block" />

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import KundenForm from "../../KundenForm";
+import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +14,10 @@ export default async function KundenBearbeitenPage({
 }) {
   const { id } = await params;
   const supabase = createAdminClient();
-
-  const { data: company } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [{ data: company }, dict] = await Promise.all([
+    supabase.from("companies").select("*").eq("id", id).single(),
+    getDictionary(),
+  ]);
 
   if (!company) notFound();
 
@@ -35,7 +34,7 @@ export default async function KundenBearbeitenPage({
           </Link>
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
-              Kunde bearbeiten
+              {dict.admin.customers.form.editCustomer}
             </p>
             <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
               {company.name}

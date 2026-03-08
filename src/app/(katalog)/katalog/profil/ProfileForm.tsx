@@ -64,7 +64,7 @@ export default function ProfileForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl">
+    <form onSubmit={handleSubmit}>
       <div className="rounded border border-gray-200 bg-white p-4 sm:p-6">
         {/* Company info */}
         <h3 className={sectionClass}>{tp.companyData}</h3>
@@ -219,12 +219,43 @@ export default function ProfileForm({
 
           <div className="sm:col-span-2">
             <label className={labelClass}>{tp.country}</label>
-            <input
+            <select
               name="address_country"
               defaultValue={company.address_country ?? ""}
               className={inputClass}
-              placeholder="Österreich"
-            />
+            >
+              <option value="">{tp.selectCountry}</option>
+              <option value="Österreich">Österreich</option>
+              <option value="Deutschland">Deutschland</option>
+              <option value="Schweiz">Schweiz</option>
+              <option value="Italien">Italien</option>
+              <option value="Frankreich">Frankreich</option>
+              <option value="Slowenien">Slowenien</option>
+              <option value="Tschechien">Tschechien</option>
+              <option value="Ungarn">Ungarn</option>
+              <option value="Polen">Polen</option>
+              <option value="Niederlande">Niederlande</option>
+              <option value="Belgien">Belgien</option>
+              <option value="Luxemburg">Luxemburg</option>
+              <option value="Spanien">Spanien</option>
+              <option value="Portugal">Portugal</option>
+              <option value="Großbritannien">Großbritannien</option>
+              <option value="Schweden">Schweden</option>
+              <option value="Norwegen">Norwegen</option>
+              <option value="Dänemark">Dänemark</option>
+              <option value="Finnland">Finnland</option>
+              <option value="Griechenland">Griechenland</option>
+              <option value="Türkei">Türkei</option>
+              <option value="Japan">Japan</option>
+              <option value="Südkorea">Südkorea</option>
+              <option value="USA">USA</option>
+              <option value="Kanada">Kanada</option>
+              <option value="Australien">Australien</option>
+              <option value="Neuseeland">Neuseeland</option>
+              <option value="Brasilien">Brasilien</option>
+              <option value="Chile">Chile</option>
+              <option value="Südafrika">Südafrika</option>
+            </select>
           </div>
         </div>
 

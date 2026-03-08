@@ -392,6 +392,32 @@ export interface Dictionary {
         noContent: string;
         dealerBadge: string;
       };
+      form: {
+        companyData: string;
+        companyName: string;
+        type: string;
+        dealer: string;
+        importer: string;
+        importerNetwork: string;
+        vatId: string;
+        productCategories: string;
+        paragliders: string;
+        miniwings: string;
+        parakites: string;
+        contact: string;
+        email: string;
+        phone: string;
+        address: string;
+        street: string;
+        zip: string;
+        city: string;
+        country: string;
+        selectCountry: string;
+        saveChanges: string;
+        createCustomer: string;
+        editCustomer: string;
+        saveError: string;
+      };
     };
     products: {
       title: string;
@@ -593,6 +619,7 @@ export interface Dictionary {
     zip: string;
     city: string;
     country: string;
+    selectCountry: string;
     saved: string;
     saving: string;
     save: string;
