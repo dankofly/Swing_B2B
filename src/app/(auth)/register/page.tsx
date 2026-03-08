@@ -87,6 +87,28 @@ export default function RegisterPage() {
       return;
     }
 
+    // Send email notification to SWING (fire-and-forget)
+    fetch("/api/notify-registration", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        companyName: formData.companyName,
+        companyType: formData.companyType,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        phoneWhatsapp: formData.phoneWhatsapp,
+        addressStreet: formData.addressStreet,
+        addressZip: formData.addressZip,
+        addressCity: formData.addressCity,
+        addressCountry: formData.addressCountry,
+        vatId: formData.vatId,
+        sellsParagliders: formData.sellsParagliders,
+        sellsMiniwings: formData.sellsMiniwings,
+        sellsParakites: formData.sellsParakites,
+      }),
+    }).catch(() => {}); // silent fail — registration still succeeds
+
     setSuccess(true);
     setLoading(false);
   }
