@@ -85,10 +85,20 @@ export default async function Home() {
       </div>
 
       {/* Footer */}
-      <div className="bg-[#0a1620] py-4 text-center">
-        <p className="text-[11px] text-white/15">
-          {dict.landing.footer}
-        </p>
+      <div className="bg-[#0a1620] px-5 py-4">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-2 sm:flex-row">
+          <p className="text-[11px] text-white/15">
+            {dict.landing.footer}
+          </p>
+          <div className="flex gap-4">
+            <Link href="/impressum" className="text-[11px] text-white/20 transition-colors hover:text-white/40">
+              {dict.landing.impressum}
+            </Link>
+            <Link href="/datenschutz" className="text-[11px] text-white/20 transition-colors hover:text-white/40">
+              {dict.landing.datenschutz}
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

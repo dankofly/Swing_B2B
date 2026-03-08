@@ -154,6 +154,58 @@ export interface Dictionary {
     featureInquiry: string;
     featureInquiryDesc: string;
     footer: string;
+    impressum: string;
+    datenschutz: string;
+  };
+
+  legal: {
+    backToHome: string;
+    impressum: {
+      title: string;
+      companyInfo: string;
+      companyName: string;
+      managingDirector: string;
+      address: string;
+      contact: string;
+      phone: string;
+      email: string;
+      website: string;
+      registration: string;
+      court: string;
+      registerNumber: string;
+      vatId: string;
+      responsibility: string;
+      responsibilityText: string;
+      disclaimer: string;
+      disclaimerText: string;
+      links: string;
+      linksText: string;
+      copyright: string;
+      copyrightText: string;
+    };
+    datenschutz: {
+      title: string;
+      intro: string;
+      introText: string;
+      responsible: string;
+      responsibleText: string;
+      dataCollection: string;
+      dataCollectionText: string;
+      cookies: string;
+      cookiesText: string;
+      hosting: string;
+      hostingText: string;
+      auth: string;
+      authText: string;
+      analytics: string;
+      analyticsText: string;
+      rights: string;
+      rightsText: string;
+      rightsList: string[];
+      changes: string;
+      changesText: string;
+      lastUpdated: string;
+    };
   };
 
   katalog: {

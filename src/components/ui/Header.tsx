@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ShoppingCart, LogOut, User, Settings, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useDict } from "@/lib/i18n/context";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 interface HeaderProps {
   isAdmin?: boolean;
@@ -12,21 +14,6 @@ interface HeaderProps {
   userName?: string;
   cartCount?: number;
 }
-
-const adminLinks = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/produkte", label: "Produkte" },
-  { href: "/admin/kunden", label: "Kunden" },
-  { href: "/admin/lager", label: "Lagerbestand" },
-  { href: "/admin/anfragen", label: "Anfragen" },
-];
-
-const katalogLinks = [
-  { href: "/katalog", label: "Katalog" },
-  { href: "/katalog/dashboard", label: "Dashboard" },
-  { href: "/katalog/anfragen", label: "Anfragen" },
-  { href: "/katalog/profil", label: "Profil" },
-];
 
 export default function Header({
   isAdmin = false,
@@ -37,6 +24,22 @@ export default function Header({
   const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const dict = useDict();
+
+  const adminLinks = [
+    { href: "/admin", label: dict.common.nav.dashboard },
+    { href: "/admin/produkte", label: dict.common.nav.produkte },
+    { href: "/admin/kunden", label: dict.common.nav.kunden },
+    { href: "/admin/lager", label: dict.common.nav.lager },
+    { href: "/admin/anfragen", label: dict.common.nav.anfragen },
+  ];
+
+  const katalogLinks = [
+    { href: "/katalog", label: dict.common.nav.katalog },
+    { href: "/katalog/dashboard", label: dict.common.nav.dashboard },
+    { href: "/katalog/anfragen", label: dict.common.nav.anfragen },
+    { href: "/katalog/profil", label: dict.common.nav.profil },
+  ];
 
   async function handleLogout() {
     const supabase = createClient();
@@ -81,16 +84,16 @@ export default function Header({
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           {!isAdmin && (
             <Link
               href="/katalog/warenkorb"
-              aria-label={`Warenkorb${cartCount > 0 ? `, ${cartCount} Artikel` : ""}`}
-              className="relative rounded p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label={`${dict.cart.title}${cartCount > 0 ? `, ${cartCount} ${dict.cart.items}` : ""}`}
+              className="relative flex h-11 w-11 items-center justify-center rounded text-white/70 transition-colors hover:bg-white/10 hover:text-white"
             >
               <ShoppingCart size={20} />
               {cartCount > 0 && (
-                <span className="pulse-gold absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-swing-gold text-[10px] font-bold text-swing-navy">
+                <span className="pulse-gold absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-swing-gold text-[10px] font-bold text-swing-navy">
                   {cartCount}
                 </span>
               )}
@@ -103,21 +106,23 @@ export default function Header({
             </span>
           )}
 
+          <LanguageSwitcher />
+
           {isAdmin ? (
             <Link
               href="/katalog"
-              aria-label="Zum Katalog"
-              className="rounded p-2 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-              title="Zum Katalog"
+              aria-label={dict.common.nav.zumKatalog}
+              className="flex h-11 w-11 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+              title={dict.common.nav.zumKatalog}
             >
               <User size={18} />
             </Link>
           ) : showAdminLink ? (
             <Link
               href="/admin"
-              aria-label="Admin-Bereich"
-              className="rounded p-2 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-              title="Admin"
+              aria-label={dict.common.nav.adminBereich}
+              className="flex h-11 w-11 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+              title={dict.common.nav.adminBereich}
             >
               <Settings size={18} />
             </Link>
@@ -125,9 +130,9 @@ export default function Header({
 
           <button
             onClick={handleLogout}
-            aria-label="Abmelden"
-            className="rounded p-2 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-            title="Abmelden"
+            aria-label={dict.common.nav.abmelden}
+            className="hidden h-11 w-11 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white sm:flex"
+            title={dict.common.nav.abmelden}
           >
             <LogOut size={18} />
           </button>
@@ -135,10 +140,10 @@ export default function Header({
           {/* Mobile menu toggle */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label={mobileOpen ? "Menü schließen" : "Menü öffnen"}
-            className="rounded p-2 text-white/70 hover:bg-white/10 md:hidden"
+            aria-label={mobileOpen ? dict.common.nav.menuClose : dict.common.nav.menuOpen}
+            className="flex h-11 w-11 items-center justify-center rounded text-white/70 hover:bg-white/10 md:hidden"
           >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
@@ -151,7 +156,7 @@ export default function Header({
               key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
-              className={`block rounded px-3 py-3 text-sm font-medium transition-colors ${
+              className={`flex min-h-11 items-center rounded px-3 text-sm font-medium transition-colors ${
                 isActive(link.href)
                   ? "bg-white/10 text-swing-gold"
                   : "text-white/70 hover:bg-white/5 hover:text-white"
@@ -160,11 +165,20 @@ export default function Header({
               {link.label}
             </Link>
           ))}
-          {userName && (
-            <div className="mt-2 border-t border-white/10 px-3 pt-3 text-xs text-white/30">
-              Angemeldet als {userName}
-            </div>
-          )}
+          <div className="mt-2 border-t border-white/10 pt-2">
+            {userName && (
+              <div className="px-3 py-2 text-xs text-white/30">
+                {dict.common.nav.loggedInAs} {userName}
+              </div>
+            )}
+            <button
+              onClick={() => { setMobileOpen(false); handleLogout(); }}
+              className="flex min-h-11 w-full items-center gap-2 rounded px-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <LogOut size={16} />
+              {dict.common.nav.abmelden}
+            </button>
+          </div>
         </nav>
       )}
     </header>
