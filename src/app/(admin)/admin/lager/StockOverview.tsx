@@ -257,63 +257,105 @@ export default function StockOverview({ products }: { products: Product[] }) {
                 {/* Expanded Detail */}
                 {isExpanded && (
                   <div className="border-t border-swing-gray/10 bg-swing-gray-light/30 px-4 pb-4 pt-3 sm:px-6">
-                    {/* Size Table */}
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-[10px] uppercase tracking-wider text-swing-gray-dark/35">
-                          <th className="pb-2 pl-7 text-left font-semibold">
-                            Größe
-                          </th>
-                          <th className="pb-2 text-left font-semibold">SKU</th>
-                          <th className="pb-2 text-right font-semibold">
-                            Bestand
-                          </th>
-                          <th className="pb-2 text-right font-semibold">
-                            Status
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-swing-gray/15">
-                        {sizes.map((sz) => (
-                          <tr key={sz.id}>
-                            <td className="py-2 pl-7 font-semibold text-swing-navy">
-                              {sz.size_label}
-                            </td>
-                            <td className="py-2 font-mono text-xs text-swing-gray-dark/50">
-                              {sz.sku}
-                            </td>
-                            <td className="py-2 text-right font-bold tabular-nums text-swing-navy">
-                              {sz.stock_quantity ?? 0}
-                            </td>
-                            <td className="py-2 text-right">
-                              <StockBadge qty={sz.stock_quantity ?? 0} />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    {/* Colors */}
-                    {colors.length > 0 && (
-                      <div className="mt-3 flex items-center gap-2 border-t border-swing-gray/15 pt-3 pl-7">
-                        <Palette
-                          size={12}
-                          className="shrink-0 text-swing-gray-dark/30"
-                        />
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-swing-gray-dark/30">
-                          Designs:
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {colors.map((c) => (
-                            <span
-                              key={c.id}
-                              className="rounded bg-white px-2 py-0.5 text-xs text-swing-gray-dark/70 shadow-sm"
-                            >
-                              {c.color_name}
-                            </span>
-                          ))}
+                    {colors.length > 0 ? (
+                      <>
+                        {/* Design × Size Matrix */}
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-[10px] uppercase tracking-wider text-swing-gray-dark/35">
+                                <th className="pb-2 pl-7 text-left font-semibold">
+                                  <span className="flex items-center gap-1.5">
+                                    <Palette size={11} className="text-swing-gray-dark/30" />
+                                    Design
+                                  </span>
+                                </th>
+                                {sizes.map((sz) => (
+                                  <th key={sz.id} className="pb-2 text-center font-semibold">
+                                    {sz.size_label}
+                                  </th>
+                                ))}
+                                <th className="pb-2 text-right font-semibold pr-1">
+                                  Gesamt
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-swing-gray/15">
+                              {colors.map((color) => (
+                                <tr key={color.id}>
+                                  <td className="py-2.5 pl-7">
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-swing-navy">
+                                      <span className="h-2.5 w-2.5 rounded-sm bg-swing-navy/15 ring-1 ring-swing-navy/10" />
+                                      {color.color_name}
+                                    </span>
+                                  </td>
+                                  {sizes.map((sz) => (
+                                    <td key={sz.id} className="py-2.5 text-center">
+                                      <StockBadge qty={sz.stock_quantity ?? 0} />
+                                    </td>
+                                  ))}
+                                  <td className="py-2.5 text-right pr-1">
+                                    <span className="text-xs font-bold tabular-nums text-swing-navy/50">
+                                      {sizes.reduce((s, sz) => s + (sz.stock_quantity ?? 0), 0)}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                      </div>
+
+                        {/* SKU Reference */}
+                        <div className="mt-3 border-t border-swing-gray/15 pt-3 pl-7">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-swing-gray-dark/25">
+                            SKUs:
+                          </span>
+                          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
+                            {sizes.map((sz) => (
+                              <span key={sz.id} className="text-[11px] text-swing-gray-dark/40">
+                                {sz.size_label}:{" "}
+                                <span className="font-mono">{sz.sku}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      /* No designs — simple size table */
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-[10px] uppercase tracking-wider text-swing-gray-dark/35">
+                            <th className="pb-2 pl-7 text-left font-semibold">
+                              Größe
+                            </th>
+                            <th className="pb-2 text-left font-semibold">SKU</th>
+                            <th className="pb-2 text-right font-semibold">
+                              Bestand
+                            </th>
+                            <th className="pb-2 text-right font-semibold">
+                              Status
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-swing-gray/15">
+                          {sizes.map((sz) => (
+                            <tr key={sz.id}>
+                              <td className="py-2 pl-7 font-semibold text-swing-navy">
+                                {sz.size_label}
+                              </td>
+                              <td className="py-2 font-mono text-xs text-swing-gray-dark/50">
+                                {sz.sku}
+                              </td>
+                              <td className="py-2 text-right font-bold tabular-nums text-swing-navy">
+                                {sz.stock_quantity ?? 0}
+                              </td>
+                              <td className="py-2 text-right">
+                                <StockBadge qty={sz.stock_quantity ?? 0} />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     )}
                   </div>
                 )}
