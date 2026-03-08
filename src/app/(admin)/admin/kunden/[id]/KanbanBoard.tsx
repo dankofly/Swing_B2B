@@ -138,10 +138,12 @@ export default function KanbanBoard({
             className="rounded border border-gray-200 bg-white transition-shadow hover:shadow-sm"
           >
             {/* Row header — always visible */}
-            <button
-              type="button"
+            <div
+              role="button"
+              tabIndex={0}
               onClick={() => setExpandedId(isExpanded ? null : inquiry.id)}
-              className="flex w-full min-h-11 flex-col gap-1.5 px-4 py-3 text-left sm:flex-row sm:items-center sm:gap-4"
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedId(isExpanded ? null : inquiry.id); } }}
+              className="flex w-full min-h-11 cursor-pointer flex-col gap-1.5 px-4 py-3 text-left sm:flex-row sm:items-center sm:gap-4"
             >
               <div className="flex items-center gap-3 sm:gap-4">
                 <ChevronDown
@@ -193,7 +195,7 @@ export default function KanbanBoard({
                   {badge.label}
                 </span>
               </div>
-            </button>
+            </div>
 
             {/* Expanded content */}
             {isExpanded && (

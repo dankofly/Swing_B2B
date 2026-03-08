@@ -239,6 +239,8 @@ const en: Dictionary = {
     },
     noProductsSearch: "No products found for \"{query}\"",
     noProductsFilter: "No products found for these filters",
+    viewingAs: "Viewing catalog as",
+    viewingAsClose: "Exit view",
     detail: {
       backToCatalog: "Back to catalog",
       techSpecs: "Technical Specifications",
@@ -400,6 +402,7 @@ const en: Dictionary = {
         inquirySection: "Inquiries",
         noContent: "No content",
         dealerBadge: "Dealer",
+        viewAsCatalog: "View catalog as customer",
       },
       form: {
         companyData: "Company Data",
@@ -649,6 +652,14 @@ const en: Dictionary = {
     saving: "Saving...",
     save: "Save profile",
     saveError: "Error saving",
+    roleManagement: "Role Management",
+    roleManagementHint: "Manage roles for all users",
+    roleSuperAdmin: "Super Admin",
+    roleAdmin: "Admin",
+    roleBuyer: "Dealer",
+    roleUpdated: "Role updated",
+    roleUpdateError: "Error updating role",
+    noUsers: "No users found",
   },
 };
 

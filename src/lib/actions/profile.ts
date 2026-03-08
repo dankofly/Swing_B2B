@@ -82,3 +82,44 @@ export async function updateAdminProfile(formData: FormData) {
   revalidatePath("/admin/profil");
   return { success: true };
 }
+
+export async function updateUserRole(userId: string, newRole: string) {
+  if (!["superadmin", "admin", "buyer"].includes(newRole)) {
+    return { success: false, error: "Ungültige Rolle" };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, error: "Nicht angemeldet" };
+
+  // Only superadmins can change roles
+  const { data: callerProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (callerProfile?.role !== "superadmin") {
+    return { success: false, error: "Keine Berechtigung" };
+  }
+
+  // Prevent superadmin from demoting themselves
+  if (userId === user.id) {
+    return { success: false, error: "Eigene Rolle kann nicht geändert werden" };
+  }
+
+  const admin = createAdminClient();
+
+  const { error } = await admin
+    .from("profiles")
+    .update({ role: newRole })
+    .eq("id", userId);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/profil");
+  return { success: true };
+}

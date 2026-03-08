@@ -96,6 +96,35 @@ export async function getMyInquiries() {
   return data ?? [];
 }
 
+export async function getCompanyInquiriesForDashboard(companyId: string) {
+  const supabase = createAdminClient();
+
+  const { data } = await supabase
+    .from("inquiries")
+    .select(
+      `
+      id,
+      status,
+      status_timestamps,
+      notes,
+      shipping_carrier,
+      tracking_number,
+      created_at,
+      items:inquiry_items(
+        id,
+        quantity,
+        unit_price,
+        product_size:product_sizes(size_label, sku, product:products(name)),
+        product_color:product_colors(color_name)
+      )
+    `
+    )
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false });
+
+  return data ?? [];
+}
+
 export async function getAllInquiries() {
   const supabase = createAdminClient();
 

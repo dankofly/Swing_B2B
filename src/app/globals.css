@@ -258,6 +258,59 @@ body::before {
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
   }
+
+  /* ===== Katalog Category Tabs — editorial underline navigation ===== */
+  .katalog-tab {
+    position: relative;
+    padding: 14px 16px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    transition: color 0.2s ease, background-color 0.2s ease;
+    border-bottom: 2px solid transparent;
+  }
+  .katalog-tab::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 16px;
+    right: 16px;
+    height: 2px;
+    background: var(--swing-gold);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .katalog-tab:hover:not(.katalog-tab-disabled) {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .katalog-tab:hover:not(.katalog-tab-disabled)::after {
+    transform: scaleX(0.5);
+    opacity: 0.4;
+  }
+  .katalog-tab-active {
+    color: var(--swing-gold) !important;
+  }
+  .katalog-tab-active::after {
+    transform: scaleX(1) !important;
+    opacity: 1 !important;
+  }
+  .katalog-tab-disabled {
+    color: rgba(255, 255, 255, 0.15);
+    cursor: default;
+  }
+
+  /* Scrollbar styling for tab overflow */
+  .katalog-tabs-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .katalog-tabs-scroll::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* ===== Keyframes ===== */

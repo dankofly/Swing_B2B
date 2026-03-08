@@ -19,6 +19,8 @@ import { getCustomerVisibleNotes } from "@/lib/actions/company-notes";
 import InquiryBoard from "@/components/katalog/InquiryBoard";
 import CustomerNotes from "@/components/katalog/CustomerNotes";
 import { getDictionary, getLocale, getDateLocale } from "@/lib/i18n";
+import { createAdminClient } from "@/lib/supabase/server";
+import { getCompanyInquiriesForDashboard } from "@/lib/actions/inquiries";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +31,12 @@ const STATUS_COLORS: Record<string, { bg: string; bar: string }> = {
   completed: { bg: "bg-emerald-100", bar: "bg-emerald-500" },
 };
 
-export default async function KundenDashboardPage() {
+export default async function KundenDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ als?: string }>;
+}) {
+  const { als } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -39,26 +46,33 @@ export default async function KundenDashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("company_id, full_name")
+    .select("company_id, full_name, role")
     .eq("id", user.id)
     .single();
 
-  if (!profile?.company_id) redirect("/katalog");
+  const isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
+  const viewingAsCompanyId = als && isAdmin ? als : undefined;
+  const effectiveCompanyId = viewingAsCompanyId || profile?.company_id;
+
+  if (!profile || !effectiveCompanyId) redirect("/katalog");
 
   const [{ data: company }, inquiries, customerNotes, locale, dict] = await Promise.all([
-    supabase
+    (viewingAsCompanyId ? createAdminClient() : supabase)
       .from("companies")
       .select("*")
-      .eq("id", profile.company_id)
+      .eq("id", effectiveCompanyId)
       .single(),
-    getMyInquiries(),
-    getCustomerVisibleNotes(profile.company_id),
+    viewingAsCompanyId
+      ? getCompanyInquiriesForDashboard(viewingAsCompanyId)
+      : getMyInquiries(),
+    getCustomerVisibleNotes(effectiveCompanyId),
     getLocale(),
     getDictionary(),
   ]);
 
   if (!company) redirect("/katalog");
 
+  const alsSuffix = viewingAsCompanyId ? `?als=${viewingAsCompanyId}` : "";
   const dateLocale = getDateLocale(locale);
   const eur = (value: number) =>
     value.toLocaleString(dateLocale, { style: "currency", currency: "EUR" });
@@ -108,7 +122,7 @@ export default async function KundenDashboardPage() {
               </h1>
             </div>
             <Link
-              href="/katalog"
+              href={`/katalog${alsSuffix}`}
               className="btn-gold flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-swing-gold px-5 py-2.5 text-sm font-bold text-swing-navy shadow-lg shadow-swing-gold/20 transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-xl hover:shadow-swing-gold/25 sm:w-auto"
             >
               <Compass size={15} />
@@ -331,7 +345,7 @@ export default async function KundenDashboardPage() {
           <div className="flex items-center gap-2">
             {inquiries.length > 5 && (
               <Link
-                href="/katalog/anfragen"
+                href={`/katalog/anfragen${alsSuffix}`}
                 className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-150 px-4 py-2.5 text-xs font-semibold text-swing-navy/60 transition-all duration-150 hover:border-swing-gold hover:text-swing-navy sm:w-auto"
               >
                 {dict.common.buttons.showAll}
@@ -339,7 +353,7 @@ export default async function KundenDashboardPage() {
               </Link>
             )}
             <Link
-              href="/katalog"
+              href={`/katalog${alsSuffix}`}
               className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-swing-gold px-4 py-2.5 text-xs font-bold text-swing-navy transition-colors hover:bg-swing-gold-dark sm:w-auto"
             >
               {dict.dashboard.newInquiry}

@@ -3,13 +3,17 @@
 import Header from "@/components/ui/Header";
 import { useCart } from "@/lib/cart";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function CartHeaderWrapper() {
   const { itemCount } = useCart();
+  const searchParams = useSearchParams();
+  const isViewingAsCustomer = !!searchParams.get("als");
   const [showAdminLink, setShowAdminLink] = useState(false);
 
   useEffect(() => {
+    if (isViewingAsCustomer) return;
     async function checkRole() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -24,7 +28,7 @@ export default function CartHeaderWrapper() {
       }
     }
     checkRole();
-  }, []);
+  }, [isViewingAsCustomer]);
 
   return <Header cartCount={itemCount} showAdminLink={showAdminLink} />;
 }

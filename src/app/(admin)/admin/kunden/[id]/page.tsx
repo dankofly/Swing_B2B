@@ -12,6 +12,7 @@ import {
   FileText,
   ShoppingCart,
   BarChart3,
+  Eye,
 } from "lucide-react";
 import ApprovalToggle from "./ApprovalToggle";
 import DeleteCompanyButton from "../DeleteCompanyButton";
@@ -87,6 +88,14 @@ export default async function KundenDetailPage({
                 companyName={company.name}
                 variant="button"
               />
+              <Link
+                href={`/katalog?als=${id}`}
+                className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20 sm:px-5"
+                title={td.viewAsCatalog}
+              >
+                <Eye size={14} />
+                <span className="hidden sm:inline">{td.viewAsCatalog}</span>
+              </Link>
               <Link
                 href={`/admin/kunden/${id}/bearbeiten`}
                 className="flex items-center gap-2 rounded-lg bg-swing-gold px-4 py-2.5 text-sm font-bold text-swing-navy transition-colors hover:bg-swing-gold-dark sm:px-5"

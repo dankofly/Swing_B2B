@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Search, ChevronRight, SlidersHorizontal, PackageOpen } from "lucide-react";
+import { Search, ChevronRight, SlidersHorizontal, PackageOpen, Settings } from "lucide-react";
 import Link from "next/link";
 import type { Product, Category } from "@/lib/types";
 import { getDictionary } from "@/lib/i18n";
@@ -56,12 +56,25 @@ export default async function KatalogPage({
     sub?: string;
     en?: string;
     gewicht?: string;
+    als?: string;
   }>;
 }) {
-  const { q, kategorie, sub, en, gewicht } = await searchParams;
+  const { q, kategorie, sub, en, gewicht, als } = await searchParams;
   const supabase = await createClient();
   const dict = await getDictionary();
-  const allParams = { q, kategorie, sub, en, gewicht };
+  const allParams = { q, kategorie, sub, en, gewicht, als };
+
+  // Check if current user is admin/superadmin for edit links
+  const { data: { user } } = await supabase.auth.getUser();
+  let isAdmin = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
+  }
 
   const { data: categories } = await supabase
     .from("categories")
@@ -115,10 +128,15 @@ export default async function KatalogPage({
   const isGleitschirmeActive = kategorie === "gleitschirme";
   const activeCount = [kategorie, en, gewicht].filter(Boolean).length;
 
+  // Validate "als" param: only admins can use it
+  const viewingAsCompanyId = als && isAdmin ? als : undefined;
+  // Hide admin UI (gear icons etc.) when viewing as customer
+  const showAdminUI = isAdmin && !viewingAsCompanyId;
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="dash-hero rounded-xl px-5 py-7 sm:px-8 sm:py-9">
+      <div className="dash-hero rounded-xl px-5 pb-0 pt-7 sm:px-8 sm:pt-9">
         <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
@@ -139,6 +157,7 @@ export default async function KatalogPage({
             {sub && <input type="hidden" name="sub" value={sub} />}
             {en && <input type="hidden" name="en" value={en} />}
             {gewicht && <input type="hidden" name="gewicht" value={gewicht} />}
+            {viewingAsCompanyId && <input type="hidden" name="als" value={viewingAsCompanyId} />}
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-swing-navy/40" />
               <input
@@ -157,6 +176,47 @@ export default async function KatalogPage({
               <Search size={16} />
             </button>
           </form>
+        </div>
+
+        {/* Quick category tabs */}
+        <div className="relative z-10 -mx-5 mt-6 overflow-x-auto px-5 sm:-mx-8 sm:px-8 katalog-tabs-scroll">
+          <div className="flex items-end gap-0 border-t border-white/[0.06]">
+            {[
+              { label: "Alle", href: "/katalog", slug: undefined },
+              { label: "Paragleiter", href: "/katalog?kategorie=gleitschirme", slug: "gleitschirme" },
+              { label: "Tandem", href: "/katalog?kategorie=gleitschirme&sub=tandem", slug: "tandem" },
+              { label: "Motor", href: "/katalog?kategorie=gleitschirme&sub=motorschirme", slug: "motorschirme" },
+              { label: "Miniwings", href: "/katalog?kategorie=miniwings", slug: "miniwings" },
+              { label: "Speedflying/riding", href: "/katalog?kategorie=speedflying", slug: "speedflying" },
+              { label: "Parakites", href: "/katalog?kategorie=parakites", slug: "parakites" },
+              { label: "Gurtzeuge", href: "/katalog?kategorie=gurtzeuge", slug: "gurtzeuge" },
+              { label: "Rettungen", href: "#", slug: "_rettungen" },
+              { label: "Zubehör", href: "#", slug: "_zubehoer" },
+            ].map((tab) => {
+              const isActive =
+                tab.slug === undefined
+                  ? !kategorie && !sub
+                  : tab.slug === "tandem" || tab.slug === "motorschirme"
+                    ? sub === tab.slug
+                    : kategorie === tab.slug;
+              const isDisabled = tab.href === "#";
+              return (
+                <Link
+                  key={tab.label}
+                  href={tab.href}
+                  className={`katalog-tab shrink-0 whitespace-nowrap ${
+                    isDisabled
+                      ? "katalog-tab-disabled"
+                      : isActive
+                        ? "katalog-tab-active"
+                        : ""
+                  }`}
+                >
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -354,9 +414,12 @@ export default async function KatalogPage({
             const isFadeOut = product.is_fade_out;
 
             const Wrapper = isComingSoon ? "div" : Link;
+            const productHref = viewingAsCompanyId
+              ? `/katalog/${product.slug}?als=${viewingAsCompanyId}`
+              : `/katalog/${product.slug}`;
             const wrapperProps = isComingSoon
               ? {}
-              : { href: `/katalog/${product.slug}` };
+              : { href: productHref };
 
             return (
               <Wrapper
@@ -402,6 +465,16 @@ export default async function KatalogPage({
                   <span className="mx-3 mt-12 mb-3 w-full text-sm font-bold italic uppercase tracking-wide text-white select-none">
                     {product.name}
                   </span>
+                  {/* Admin edit gear */}
+                  {showAdminUI && (
+                    <Link
+                      href={`/admin/produkte/${product.id}/bearbeiten`}
+                      className="absolute top-2.5 right-2.5 flex h-6 w-6 items-center justify-center rounded bg-white/10 text-white/40 transition-all duration-200 hover:bg-white/25 hover:text-white z-10"
+                      title="Bearbeiten"
+                    >
+                      <Settings size={13} />
+                    </Link>
+                  )}
                   {/* Arrow */}
                   {!isComingSoon && (
                     <div className="absolute bottom-2.5 right-2.5 flex h-6 w-6 items-center justify-center rounded-lg bg-swing-gold/0 transition-all duration-200 group-hover:bg-swing-gold">

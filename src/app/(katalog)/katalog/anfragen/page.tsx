@@ -1,12 +1,36 @@
-import { getMyInquiries } from "@/lib/actions/inquiries";
+import { createClient } from "@/lib/supabase/server";
+import { getMyInquiries, getCompanyInquiriesForDashboard } from "@/lib/actions/inquiries";
 import { FileText } from "lucide-react";
 import InquiryBoard from "@/components/katalog/InquiryBoard";
 import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
-export default async function MeineAnfragenPage() {
-  const [inquiries, dict] = await Promise.all([getMyInquiries(), getDictionary()]);
+export default async function MeineAnfragenPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ als?: string }>;
+}) {
+  const { als } = await searchParams;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  let isAdmin = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
+  }
+  const viewingAsCompanyId = als && isAdmin ? als : undefined;
+
+  const [inquiries, dict] = await Promise.all([
+    viewingAsCompanyId
+      ? getCompanyInquiriesForDashboard(viewingAsCompanyId)
+      : getMyInquiries(),
+    getDictionary(),
+  ]);
 
   return (
     <div className="space-y-6">

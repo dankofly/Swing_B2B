@@ -10,10 +10,13 @@ export const dynamic = "force-dynamic";
 
 export default async function ProduktDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ als?: string }>;
 }) {
   const { slug } = await params;
+  const { als } = await searchParams;
   const supabase = await createClient();
 
   const { data: product } = await supabase
@@ -43,19 +46,25 @@ export default async function ProduktDetailPage({
   const { data: { user } } = await supabase.auth.getUser();
   let priceMap: Record<string, number> = {};
   let discountMap: Record<string, number> = {};
+  let isAdmin = false;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("company_id")
+      .select("company_id, role")
       .eq("id", user.id)
       .single();
 
-    if (profile?.company_id) {
+    isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
+
+    // Use "als" company_id if admin is viewing as customer, otherwise own company
+    const effectiveCompanyId = als && isAdmin ? als : profile?.company_id;
+
+    if (effectiveCompanyId) {
       const sizeIds = sizes.map((s) => s.id);
       const { data: prices } = await supabase
         .from("customer_prices")
         .select("product_size_id, unit_price, discount")
-        .eq("company_id", profile.company_id)
+        .eq("company_id", effectiveCompanyId)
         .in("product_size_id", sizeIds);
 
       for (const p of prices ?? []) {
@@ -64,6 +73,8 @@ export default async function ProduktDetailPage({
       }
     }
   }
+
+  const viewingAsCompanyId = als && isAdmin ? als : undefined;
 
   // Fetch per-color-size stock overrides
   const { data: stockEntries } = await supabase
@@ -92,10 +103,12 @@ export default async function ProduktDetailPage({
     : null;
   const hasSpecs = techSpecs && Object.keys(techSpecs).length > 0;
 
+  const backHref = viewingAsCompanyId ? `/katalog?als=${viewingAsCompanyId}` : "/katalog";
+
   return (
     <div className="space-y-6">
       <Link
-        href="/katalog"
+        href={backHref}
         className="inline-flex min-h-11 items-center gap-1.5 text-sm text-swing-navy/40 transition-colors duration-200 hover:text-swing-navy"
       >
         <ArrowLeft size={14} />

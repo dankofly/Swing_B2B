@@ -239,6 +239,8 @@ const de: Dictionary = {
     },
     noProductsSearch: "Keine Produkte für \"{query}\" gefunden",
     noProductsFilter: "Keine Produkte für diese Filter gefunden",
+    viewingAs: "Katalogansicht als",
+    viewingAsClose: "Ansicht beenden",
     detail: {
       backToCatalog: "Zurück zum Katalog",
       techSpecs: "Technische Daten",
@@ -400,6 +402,7 @@ const de: Dictionary = {
         inquirySection: "Anfragen",
         noContent: "Kein Inhalt",
         dealerBadge: "Händler",
+        viewAsCatalog: "Katalog als Kunde ansehen",
       },
       form: {
         companyData: "Firmendaten",
@@ -649,6 +652,14 @@ const de: Dictionary = {
     saving: "Speichert...",
     save: "Profil speichern",
     saveError: "Fehler beim Speichern",
+    roleManagement: "Rollenverwaltung",
+    roleManagementHint: "Rollen für alle Benutzer verwalten",
+    roleSuperAdmin: "Super Admin",
+    roleAdmin: "Admin",
+    roleBuyer: "Händler",
+    roleUpdated: "Rolle aktualisiert",
+    roleUpdateError: "Fehler beim Aktualisieren der Rolle",
+    noUsers: "Keine Benutzer gefunden",
   },
 };
 

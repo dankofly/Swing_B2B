@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { User } from "lucide-react";
 import ProfileForm from "./ProfileForm";
@@ -6,7 +6,12 @@ import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProfilPage() {
+export default async function ProfilPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ als?: string }>;
+}) {
+  const { als } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -16,16 +21,20 @@ export default async function ProfilPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("company_id, full_name, email")
+    .select("company_id, full_name, email, role")
     .eq("id", user.id)
     .single();
 
-  if (!profile?.company_id) redirect("/katalog");
+  const isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
+  const viewingAsCompanyId = als && isAdmin ? als : undefined;
+  const effectiveCompanyId = viewingAsCompanyId || profile?.company_id;
 
-  const { data: company } = await supabase
+  if (!profile || !effectiveCompanyId) redirect("/katalog");
+
+  const { data: company } = await (viewingAsCompanyId ? createAdminClient() : supabase)
     .from("companies")
     .select("*")
-    .eq("id", profile.company_id)
+    .eq("id", effectiveCompanyId)
     .single();
 
   if (!company) redirect("/katalog");

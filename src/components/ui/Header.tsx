@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ShoppingCart, LogOut, User, Settings, Menu, X } from "lucide-react";
+import { ShoppingCart, LogOut, User, Menu, X, ExternalLink, Settings } from "lucide-react";
 import { useState } from "react";
 import { useDict } from "@/lib/i18n/context";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -23,23 +23,32 @@ export default function Header({
 }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
   const dict = useDict();
 
-  const adminLinks = [
+  // Preserve "als" param across katalog navigation
+  const als = searchParams.get("als");
+  const alsSuffix = als ? `?als=${als}` : "";
+
+  type NavLink = { href: string; label: string; icon?: React.ComponentType<{ size?: number }> };
+
+  const adminLinks: NavLink[] = [
     { href: "/admin", label: dict.common.nav.dashboard },
     { href: "/admin/produkte", label: dict.common.nav.produkte },
     { href: "/admin/kunden", label: dict.common.nav.kunden },
     { href: "/admin/lager", label: dict.common.nav.lager },
     { href: "/admin/anfragen", label: dict.common.nav.anfragen },
-    { href: "/admin/profil", label: dict.common.nav.profil },
+    { href: "/katalog", label: dict.common.nav.katalog, icon: ExternalLink },
   ];
 
-  const katalogLinks = [
-    { href: "/katalog", label: dict.common.nav.katalog },
-    { href: "/katalog/dashboard", label: dict.common.nav.dashboard },
-    { href: "/katalog/anfragen", label: dict.common.nav.anfragen },
-    { href: "/katalog/profil", label: dict.common.nav.profil },
+  const katalogLinks: NavLink[] = [
+    { href: `/katalog${alsSuffix}`, label: dict.common.nav.katalog },
+    ...(!showAdminLink ? [
+      { href: `/katalog/dashboard${alsSuffix}`, label: dict.common.nav.dashboard },
+      { href: `/katalog/anfragen${alsSuffix}`, label: dict.common.nav.anfragen },
+    ] : []),
+    ...(showAdminLink ? [{ href: "/admin", label: dict.common.nav.adminBereich, icon: Settings }] : []),
   ];
 
   async function handleLogout() {
@@ -52,15 +61,16 @@ export default function Header({
   const links = isAdmin ? adminLinks : katalogLinks;
 
   function isActive(href: string) {
-    if (href === "/admin" || href === "/katalog") return pathname === href;
-    return pathname.startsWith(href);
+    const path = href.split("?")[0];
+    if (path === "/admin" || path === "/katalog") return pathname === path;
+    return pathname.startsWith(path);
   }
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 navy-gradient">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-8">
-          <Link href={isAdmin ? "/admin" : "/katalog"} className="flex items-center gap-2">
+          <Link href={isAdmin ? "/admin" : `/katalog${alsSuffix}`} className="flex items-center gap-2">
             <span className="text-base font-bold italic tracking-wider text-white sm:text-xl">SWING</span>
             <span className="hidden font-bold italic tracking-wider text-white sm:inline">PARAGLIDERS</span>
             <span className="rounded bg-swing-gold px-2 py-0.5 text-[10px] font-bold tracking-widest text-swing-navy">
@@ -69,26 +79,30 @@ export default function Header({
           </Link>
 
           <nav className="hidden gap-1 md:flex">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`rounded px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
-                  isActive(link.href)
-                    ? "bg-white/10 text-swing-gold"
-                    : "text-white/70 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {links.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                    isActive(link.href)
+                      ? "bg-white/10 text-swing-gold"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  {Icon && <Icon size={13} />}
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
         <div className="flex items-center gap-1 sm:gap-3">
           {!isAdmin && (
             <Link
-              href="/katalog/warenkorb"
+              href={`/katalog/warenkorb${alsSuffix}`}
               aria-label={`${dict.cart.title}${cartCount > 0 ? `, ${cartCount} ${dict.cart.items}` : ""}`}
               className="relative flex h-11 w-11 items-center justify-center rounded text-white/70 transition-colors hover:bg-white/10 hover:text-white"
             >
@@ -109,25 +123,14 @@ export default function Header({
 
           <LanguageSwitcher />
 
-          {isAdmin ? (
-            <Link
-              href="/katalog"
-              aria-label={dict.common.nav.zumKatalog}
-              className="flex h-11 w-11 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-              title={dict.common.nav.zumKatalog}
-            >
-              <User size={18} />
-            </Link>
-          ) : showAdminLink ? (
-            <Link
-              href="/admin"
-              aria-label={dict.common.nav.adminBereich}
-              className="flex h-11 w-11 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-              title={dict.common.nav.adminBereich}
-            >
-              <Settings size={18} />
-            </Link>
-          ) : null}
+          <Link
+            href={isAdmin ? "/admin/profil" : `/katalog/profil${alsSuffix}`}
+            aria-label={dict.common.nav.profil}
+            className="flex h-11 w-11 items-center justify-center rounded text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+            title={dict.common.nav.profil}
+          >
+            <User size={18} />
+          </Link>
 
           <button
             onClick={handleLogout}

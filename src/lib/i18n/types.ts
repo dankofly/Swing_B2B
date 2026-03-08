@@ -230,6 +230,8 @@ export interface Dictionary {
     };
     noProductsSearch: string;
     noProductsFilter: string;
+    viewingAs: string;
+    viewingAsClose: string;
     detail: {
       backToCatalog: string;
       techSpecs: string;
@@ -391,6 +393,7 @@ export interface Dictionary {
         inquirySection: string;
         noContent: string;
         dealerBadge: string;
+        viewAsCatalog: string;
       };
       form: {
         companyData: string;
@@ -640,5 +643,13 @@ export interface Dictionary {
     saving: string;
     save: string;
     saveError: string;
+    roleManagement: string;
+    roleManagementHint: string;
+    roleSuperAdmin: string;
+    roleAdmin: string;
+    roleBuyer: string;
+    roleUpdated: string;
+    roleUpdateError: string;
+    noUsers: string;
   };
 }

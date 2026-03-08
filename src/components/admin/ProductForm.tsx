@@ -268,7 +268,7 @@ export default function ProductForm({
             </label>
             <select
               name="en_class"
-              defaultValue={product?.en_class || product?.tech_specs?.en_class || ""}
+              defaultValue={product?.en_class || ""}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
             >
               <option value="">{tf.none}</option>

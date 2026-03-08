@@ -82,7 +82,7 @@ export default function AdminProfileForm({
             <input
               type="text"
               disabled
-              value={role}
+              value={role === "superadmin" ? "Super Admin" : "Admin"}
               className={`${inputClass} bg-gray-50 text-swing-navy/50`}
             />
           </div>
