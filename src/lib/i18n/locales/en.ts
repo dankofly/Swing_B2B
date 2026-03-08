@@ -77,7 +77,7 @@ const en: Dictionary = {
       submit: "Sign In",
       submitting: "Signing in...",
       noAccount: "No account yet?",
-      register: "Register now",
+      register: "Request access now",
       invalidCredentials: "Invalid credentials. Please try again.",
     },
     register: {

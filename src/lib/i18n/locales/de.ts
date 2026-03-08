@@ -77,7 +77,7 @@ const de: Dictionary = {
       submit: "Anmelden",
       submitting: "Wird angemeldet...",
       noAccount: "Noch kein Konto?",
-      register: "Jetzt registrieren",
+      register: "Jetzt Zugang beantragen",
       invalidCredentials: "Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.",
     },
     register: {
