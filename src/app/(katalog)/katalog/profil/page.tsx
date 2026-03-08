@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { User } from "lucide-react";
 import ProfileForm from "./ProfileForm";
+import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -29,16 +30,18 @@ export default async function ProfilPage() {
 
   if (!company) redirect("/katalog");
 
+  const dict = await getDictionary();
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="dash-hero rounded-xl px-8 py-9">
+      <div className="dash-hero rounded-xl px-5 py-7 sm:px-8 sm:py-9">
         <div className="relative z-10">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
-            Konto
+            {dict.profile.subtitle}
           </p>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white">
-            Mein Profil
+          <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+            {dict.profile.title}
           </h1>
         </div>
       </div>

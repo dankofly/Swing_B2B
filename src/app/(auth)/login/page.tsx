@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Lock } from "lucide-react";
+import { useDict } from "@/lib/i18n/context";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const dict = useDict();
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -25,7 +27,7 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setError("Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.");
+      setError(dict.auth.login.invalidCredentials);
       setLoading(false);
       return;
     }
@@ -61,10 +63,10 @@ export default function LoginPage() {
               <Lock size={18} className="text-swing-navy/60" />
             </div>
             <h1 className="text-lg font-extrabold uppercase tracking-[2px] text-swing-navy">
-              Anmelden
+              {dict.auth.login.title}
             </h1>
             <p className="mt-1 text-sm text-swing-gray-dark/40">
-              Zugang zu Ihrem B2B-Katalog
+              {dict.auth.login.subtitle}
             </p>
           </div>
 
@@ -80,7 +82,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-swing-navy/40"
               >
-                E-Mail
+                {dict.auth.login.email}
               </label>
               <input
                 id="email"
@@ -98,7 +100,7 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-swing-navy/40"
               >
-                Passwort
+                {dict.auth.login.password}
               </label>
               <input
                 id="password"
@@ -116,7 +118,7 @@ export default function LoginPage() {
                 href="/forgot-password"
                 className="text-xs font-medium text-swing-navy/40 transition-colors hover:text-swing-gold"
               >
-                Passwort vergessen?
+                {dict.auth.login.forgotPassword}
               </Link>
             </div>
 
@@ -125,19 +127,19 @@ export default function LoginPage() {
               disabled={loading}
               className="btn-gold group flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-swing-gold py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? "Anmelden..." : "Anmelden"}
+              {loading ? dict.auth.login.submitting : dict.auth.login.submit}
               {!loading && <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />}
             </button>
           </form>
 
           <div className="mt-6 border-t border-gray-100 pt-5 text-center">
             <p className="text-sm text-swing-gray-dark/40">
-              Noch kein Konto?{" "}
+              {dict.auth.login.noAccount}{" "}
               <Link
                 href="/register"
                 className="font-semibold text-swing-navy transition-colors hover:text-swing-gold"
               >
-                Jetzt registrieren
+                {dict.auth.login.register}
               </Link>
             </p>
           </div>

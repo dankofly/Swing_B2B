@@ -15,6 +15,19 @@ export async function getCompanyNotes(companyId: string) {
   return data ?? [];
 }
 
+export async function getCustomerVisibleNotes(companyId: string) {
+  const supabase = createAdminClient();
+
+  const { data } = await supabase
+    .from("company_notes")
+    .select("id, subject, content, created_at")
+    .eq("company_id", companyId)
+    .eq("visible_to_customer", true)
+    .order("created_at", { ascending: false });
+
+  return data ?? [];
+}
+
 export async function createCompanyNote(
   companyId: string,
   subject: string,

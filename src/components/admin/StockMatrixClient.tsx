@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Save } from "lucide-react";
 import { updateColorSizeStock } from "@/lib/actions/stock";
+import { useDict } from "@/lib/i18n/context";
 
 interface SizeInfo {
   size_label: string;
@@ -27,6 +28,8 @@ export default function StockMatrixClient({
   colors,
   stockMap: initialStockMap,
 }: StockMatrixClientProps) {
+  const dict = useDict();
+  const ts = dict.admin.stock;
   const [values, setValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     for (const color of colors) {
@@ -76,7 +79,7 @@ export default function StockMatrixClient({
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Fehler beim Speichern");
+      setError(e instanceof Error ? e.message : ts.saveError);
     } finally {
       setSaving(false);
     }
@@ -89,12 +92,12 @@ export default function StockMatrixClient({
           <table className="w-full text-left text-sm">
             <thead className="border-b bg-gray-50 text-[11px] uppercase tracking-widest text-swing-gray-dark/50">
               <tr>
-                <th className="px-6 py-3 font-semibold">Farbdesign</th>
+                <th className="px-6 py-3 font-semibold">{ts.colorDesign}</th>
                 {sizes.map((size) => (
                   <th key={size.size_label} className="px-4 py-3 text-center font-semibold">
                     {size.size_label}
                     <div className="mt-0.5 text-[9px] font-normal normal-case tracking-normal text-swing-gray-dark/30">
-                      Standard: {size.stock_quantity}
+                      {ts.defaultStock}: {size.stock_quantity}
                     </div>
                   </th>
                 ))}
@@ -147,24 +150,24 @@ export default function StockMatrixClient({
           </table>
         </div>
 
-        <div className="flex items-center justify-between border-t px-6 py-4">
+        <div className="flex flex-col gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p className="text-xs text-swing-gray-dark/40">
-            Leere Felder verwenden den Standard-Lagerstand der jeweiligen Größe (CSV-Import).
+            {ts.emptyFieldsHint}
           </p>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex cursor-pointer items-center gap-2 rounded bg-swing-gold px-5 py-2.5 text-sm font-bold text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded bg-swing-gold px-5 py-2.5 text-sm font-bold text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
           >
             {saved ? (
               <>
                 <Check size={16} />
-                Gespeichert
+                {ts.saved}
               </>
             ) : (
               <>
                 <Save size={16} />
-                {saving ? "Speichern..." : "Speichern"}
+                {saving ? ts.saving : dict.common.buttons.save}
               </>
             )}
           </button>

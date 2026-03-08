@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
+import { getLocale, getDictionary } from "@/lib/i18n";
+import { I18nProvider } from "@/lib/i18n/context";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -14,15 +16,20 @@ export const metadata: Metadata = {
   description: "SWING PARAGLIDERS - Händlerportal",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const dict = await getDictionary(locale);
+
   return (
-    <html lang="de">
+    <html lang={locale}>
       <body className={`${montserrat.variable} font-sans antialiased`}>
-        {children}
+        <I18nProvider locale={locale} dict={dict}>
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

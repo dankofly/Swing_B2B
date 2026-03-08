@@ -11,6 +11,8 @@ import {
   Building2,
 } from "lucide-react";
 import { confirmPrices, type ParsedPriceItem } from "@/lib/actions/prices";
+import { useDict, useLocale } from "@/lib/i18n/context";
+import { getDateLocale } from "@/lib/i18n/shared";
 
 interface Company {
   id: string;
@@ -24,10 +26,6 @@ interface ParseResult {
   summary: { total: number; matched: number; unmatched: number };
 }
 
-function eur(value: number) {
-  return value.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
-}
-
 export default function PriceUploadClient({
   companies,
   skuCount,
@@ -35,6 +33,15 @@ export default function PriceUploadClient({
   companies: Company[];
   skuCount: number;
 }) {
+  const dict = useDict();
+  const locale = useLocale();
+  const dl = getDateLocale(locale);
+  const tp = dict.admin.priceLists;
+
+  function eur(value: number) {
+    return value.toLocaleString(dl, { style: "currency", currency: "EUR" });
+  }
+
   const [selectedCompany, setSelectedCompany] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
   const [parsing, setParsing] = useState(false);
@@ -69,13 +76,13 @@ export default function PriceUploadClient({
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Fehler beim Parsen");
+        setError(data.error || tp.parseError);
         return;
       }
 
       setResult(data);
     } catch {
-      setError("Netzwerkfehler beim Upload");
+      setError(tp.networkError);
     } finally {
       setParsing(false);
     }
@@ -97,7 +104,7 @@ export default function PriceUploadClient({
       setSavedInfo(info);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Fehler beim Speichern"
+        err instanceof Error ? err.message : tp.saveError
       );
     } finally {
       setSaving(false);
@@ -118,10 +125,10 @@ export default function PriceUploadClient({
   return (
     <div className="space-y-6">
       {/* Step 1: Select company */}
-      <div className="rounded bg-white p-6 shadow-sm">
+      <div className="rounded bg-white p-4 shadow-sm sm:p-6">
         <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-swing-navy">
           <Building2 size={20} />
-          Händler auswählen
+          {tp.selectDealer}
         </h2>
         <select
           value={selectedCompany}
@@ -131,11 +138,11 @@ export default function PriceUploadClient({
           }}
           className="w-full max-w-md rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
         >
-          <option value="">Händler wählen...</option>
+          <option value="">{tp.selectDealerPlaceholder}</option>
           {companies.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
-              {!c.is_approved ? " (nicht freigeschaltet)" : ""}
+              {!c.is_approved ? ` ${tp.notApproved}` : ""}
             </option>
           ))}
         </select>
@@ -143,21 +150,21 @@ export default function PriceUploadClient({
 
       {/* Step 2: Upload PDF */}
       {selectedCompany && (
-        <div className="rounded bg-white p-6 shadow-sm">
+        <div className="rounded bg-white p-4 shadow-sm sm:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-swing-navy">
             <Upload size={20} />
-            Preisliste hochladen
+            {tp.uploadTitle}
           </h2>
           <p className="mb-4 text-sm text-swing-gray-dark/60">
-            PDF-Preisliste für <strong>{company?.name}</strong> hochladen.
-            Gemini erkennt Modellnamen, UVP und Händler-EK automatisch.
-            Im System sind <strong>{skuCount} SKUs</strong> hinterlegt.
+            {tp.uploadDescription
+              .replace("{company}", company?.name ?? "")
+              .replace("{count}", String(skuCount))}
           </p>
 
           <div className="flex flex-wrap items-end gap-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-                PDF-Datei
+                {tp.pdfFile}
               </label>
               <input
                 ref={fileRef}
@@ -181,12 +188,12 @@ export default function PriceUploadClient({
               {parsing ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  Wird analysiert...
+                  {tp.analyzing}
                 </>
               ) : (
                 <>
                   <FileText size={16} />
-                  PDF analysieren
+                  {tp.analyze}
                 </>
               )}
             </button>
@@ -194,7 +201,9 @@ export default function PriceUploadClient({
 
           {file && !parsing && !result && (
             <p className="mt-3 text-sm text-swing-gray-dark/50">
-              Bereit: {file.name} ({(file.size / 1024).toFixed(0)} KB)
+              {tp.ready
+                .replace("{fileName}", file.name)
+                .replace("{size}", (file.size / 1024).toFixed(0))}
             </p>
           )}
         </div>
@@ -205,7 +214,7 @@ export default function PriceUploadClient({
         <div className="flex items-start gap-3 rounded border border-red-200 bg-red-50 p-4">
           <AlertTriangle size={20} className="mt-0.5 shrink-0 text-red-500" />
           <div>
-            <p className="font-semibold text-red-800">Fehler</p>
+            <p className="font-semibold text-red-800">{dict.admin.stock.error}</p>
             <p className="text-sm text-red-700">{error}</p>
           </div>
         </div>
@@ -216,19 +225,19 @@ export default function PriceUploadClient({
         <div className="rounded bg-white shadow-sm">
           <div className="border-b px-6 py-4">
             <h2 className="text-lg font-semibold text-swing-navy">
-              Ergebnis der Analyse
+              {tp.result}
             </h2>
             <div className="mt-2 flex gap-4 text-sm">
               <span className="flex items-center gap-1.5 text-green-700">
                 <Check size={14} />
-                {result.summary.matched} zugeordnet
+                {result.summary.matched} {tp.matched}
               </span>
               <span className="flex items-center gap-1.5 text-red-600">
                 <X size={14} />
-                {result.summary.unmatched} nicht gefunden
+                {result.summary.unmatched} {tp.notFound}
               </span>
               <span className="text-swing-gray-dark/50">
-                {result.summary.total} gesamt
+                {result.summary.total} {tp.total}
               </span>
             </div>
           </div>
@@ -237,14 +246,14 @@ export default function PriceUploadClient({
             <table className="w-full text-left text-sm">
               <thead className="border-b bg-gray-50 text-xs uppercase tracking-wider text-swing-gray-dark/50">
                 <tr>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Modell (PDF)</th>
-                  <th className="px-4 py-3">Zugeordnet</th>
-                  <th className="px-4 py-3">Größen</th>
-                  <th className="px-4 py-3 text-right">UVP inkl. MwSt.</th>
-                  <th className="px-4 py-3 text-right">Händler EK netto</th>
-                  <th className="px-4 py-3 text-right">DISCOUNT</th>
-                  <th className="px-4 py-3 text-right">Endpreis netto</th>
+                  <th className="px-4 py-3">{tp.status}</th>
+                  <th className="px-4 py-3">{tp.modelPdf}</th>
+                  <th className="px-4 py-3">{tp.assignedTo}</th>
+                  <th className="px-4 py-3">{tp.sizes}</th>
+                  <th className="px-4 py-3 text-right">{tp.uvpGross}</th>
+                  <th className="px-4 py-3 text-right">{tp.dealerNet}</th>
+                  <th className="px-4 py-3 text-right">{tp.discount}</th>
+                  <th className="px-4 py-3 text-right">{tp.finalPrice}</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -317,27 +326,27 @@ export default function PriceUploadClient({
             </table>
           </div>
 
-          <div className="flex items-center justify-between border-t px-6 py-4">
+          <div className="flex flex-col-reverse gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <button
               onClick={handleReset}
-              className="rounded border border-gray-300 px-4 py-2 text-sm text-swing-gray-dark hover:bg-gray-50"
+              className="w-full rounded border border-gray-300 px-4 py-2 text-sm text-swing-gray-dark hover:bg-gray-50 sm:w-auto"
             >
-              Abbrechen
+              {dict.common.buttons.cancel}
             </button>
             <button
               onClick={handleConfirm}
               disabled={saving || result.summary.matched === 0}
-              className="flex items-center gap-2 rounded bg-swing-gold px-6 py-2 text-sm font-semibold text-swing-navy hover:bg-swing-gold-dark disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded bg-swing-gold px-6 py-2 text-sm font-semibold text-swing-navy hover:bg-swing-gold-dark disabled:opacity-50 sm:w-auto"
             >
               {saving ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  Wird gespeichert...
+                  {dict.common.buttons.loading}
                 </>
               ) : (
                 <>
                   <Check size={16} />
-                  {result.summary.matched} Produkt-Preise übernehmen
+                  {tp.applyPrices.replace("{count}", String(result.summary.matched))}
                 </>
               )}
             </button>
@@ -351,17 +360,19 @@ export default function PriceUploadClient({
           <Check size={24} className="mt-0.5 shrink-0 text-green-600" />
           <div>
             <p className="text-lg font-semibold text-green-800">
-              Preise gespeichert
+              {tp.pricesSaved}
             </p>
             <p className="mt-1 text-sm text-green-700">
-              {savedInfo.savedCount} Preise für {savedInfo.productCount} Produkte
-              wurden für <strong>{company?.name}</strong> übernommen.
+              {tp.pricesSavedMessage
+                .replace("{count}", String(savedInfo.savedCount))
+                .replace("{products}", String(savedInfo.productCount))
+                .replace("{company}", company?.name ?? "")}
             </p>
             <button
               onClick={handleReset}
               className="mt-3 rounded bg-swing-gold px-4 py-2 text-sm font-semibold text-swing-navy hover:bg-swing-gold-dark"
             >
-              Weitere Preisliste hochladen
+              {tp.uploadAnother}
             </button>
           </div>
         </div>

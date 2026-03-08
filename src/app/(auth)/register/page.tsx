@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { ArrowRight, CheckCircle, UserPlus } from "lucide-react";
+import { useDict } from "@/lib/i18n/context";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -27,6 +28,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const dict = useDict();
 
   function updateField(field: string, value: string | boolean) {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -38,13 +40,13 @@ export default function RegisterPage() {
     setError("");
 
     if (formData.password !== formData.passwordConfirm) {
-      setError("Passwörter stimmen nicht überein.");
+      setError(dict.auth.register.errorPasswordMismatch);
       setLoading(false);
       return;
     }
 
     if (formData.password.length < 8) {
-      setError("Passwort muss mindestens 8 Zeichen lang sein.");
+      setError(dict.auth.register.errorPasswordMin);
       setLoading(false);
       return;
     }
@@ -75,12 +77,12 @@ export default function RegisterPage() {
 
     if (signUpError) {
       const errorMap: Record<string, string> = {
-        "User already registered": "Diese E-Mail-Adresse ist bereits registriert.",
-        "Password should be at least 6 characters": "Das Passwort muss mindestens 6 Zeichen lang sein.",
-        "Unable to validate email address: invalid format": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
-        "Signup requires a valid password": "Bitte geben Sie ein gültiges Passwort ein.",
+        "User already registered": dict.auth.register.errorEmailExists,
+        "Password should be at least 6 characters": dict.auth.register.errorPasswordMin,
+        "Unable to validate email address: invalid format": dict.auth.register.errorGeneric,
+        "Signup requires a valid password": dict.auth.register.errorGeneric,
       };
-      setError(errorMap[signUpError.message] || "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.");
+      setError(errorMap[signUpError.message] || dict.auth.register.errorGeneric);
       setLoading(false);
       return;
     }
@@ -100,18 +102,16 @@ export default function RegisterPage() {
               <CheckCircle size={28} className="text-green-500" />
             </div>
             <h2 className="text-lg font-extrabold uppercase tracking-[2px] text-swing-navy">
-              Registrierung eingegangen
+              {dict.auth.register.successTitle}
             </h2>
             <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-swing-gray-dark/50">
-              Vielen Dank für Ihre Registrierung. Ihr Konto wird von unserem Team
-              geprüft und freigeschaltet. Sie erhalten eine E-Mail sobald Ihr
-              Zugang aktiv ist.
+              {dict.auth.register.successMessage}
             </p>
             <Link
               href="/login"
               className="mt-8 inline-flex items-center gap-2 rounded-lg bg-swing-gold px-8 py-3 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20"
             >
-              Zum Login
+              {dict.auth.register.toLogin}
               <ArrowRight size={16} />
             </Link>
           </div>
@@ -135,9 +135,9 @@ export default function RegisterPage() {
 
       <div className="relative z-10 w-full max-w-lg">
         {/* Branding */}
-        <div className="mb-10 text-center">
+        <div className="mb-6 text-center sm:mb-10">
           <Link href="/" className="group inline-block">
-            <span className="text-3xl font-extrabold italic tracking-[4px] text-white transition-colors group-hover:text-swing-gold">
+            <span className="text-2xl font-extrabold italic tracking-[3px] text-white transition-colors group-hover:text-swing-gold sm:text-3xl sm:tracking-[4px]">
               SWING PARAGLIDERS
             </span>
           </Link>
@@ -147,17 +147,17 @@ export default function RegisterPage() {
         </div>
 
         {/* Card */}
-        <div className="card p-8 ">
+        <div className="card p-5 sm:p-8">
           {/* Icon + heading */}
-          <div className="mb-8 text-center">
+          <div className="mb-6 text-center sm:mb-8">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-swing-navy/5">
               <UserPlus size={20} className="text-swing-navy/60" />
             </div>
             <h1 className="text-lg font-extrabold uppercase tracking-[2px] text-swing-navy">
-              Händler-Registrierung
+              {dict.auth.register.title}
             </h1>
             <p className="mt-1.5 text-sm text-swing-gray-dark/40">
-              Erstellen Sie Ihren SWING PARAGLIDERS B2B-Zugang
+              {dict.auth.register.subtitle}
             </p>
           </div>
 
@@ -171,12 +171,12 @@ export default function RegisterPage() {
             {/* Company info */}
             <div className={sectionClass}>
               <div className="h-px flex-1 bg-gray-100" />
-              <span>Firmendaten</span>
+              <span>{dict.auth.register.companyData}</span>
               <div className="h-px flex-1 bg-gray-100" />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className={labelClass}>Firmenname *</label>
+                <label className={labelClass}>{dict.auth.register.companyName} *</label>
                 <input
                   type="text"
                   value={formData.companyName}
@@ -188,20 +188,20 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className={labelClass}>Typ *</label>
+                <label className={labelClass}>{dict.auth.register.companyType} *</label>
                 <select
                   value={formData.companyType}
                   onChange={(e) => updateField("companyType", e.target.value)}
                   className={inputClass}
                 >
-                  <option value="dealer">Händler</option>
-                  <option value="importer">Importeur</option>
-                  <option value="importer_network">Importeur mit Händlernetzwerk</option>
+                  <option value="dealer">{dict.common.companyTypes.dealer}</option>
+                  <option value="importer">{dict.common.companyTypes.importer}</option>
+                  <option value="importer_network">{dict.common.companyTypes.importer_network}</option>
                 </select>
               </div>
 
               <div>
-                <label className={labelClass}>UID-Nummer</label>
+                <label className={labelClass}>{dict.auth.register.vatId}</label>
                 <input
                   type="text"
                   value={formData.vatId}
@@ -212,7 +212,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className={labelClass}>Produktkategorien</label>
+                <label className={labelClass}>{dict.auth.register.productCategories}</label>
                 <div className="mt-1 flex flex-wrap gap-x-5 gap-y-2">
                   <label className="flex cursor-pointer items-center gap-2 text-sm text-swing-gray-dark/60 transition-colors hover:text-swing-gray-dark">
                     <input
@@ -221,7 +221,7 @@ export default function RegisterPage() {
                       onChange={(e) => updateField("sellsParagliders", e.target.checked)}
                       className="accent-swing-gold"
                     />
-                    Gleitschirme
+                    {dict.common.categories.paragliders}
                   </label>
                   <label className="flex cursor-pointer items-center gap-2 text-sm text-swing-gray-dark/60 transition-colors hover:text-swing-gray-dark">
                     <input
@@ -230,7 +230,7 @@ export default function RegisterPage() {
                       onChange={(e) => updateField("sellsMiniwings", e.target.checked)}
                       className="accent-swing-gold"
                     />
-                    Miniwings
+                    {dict.common.categories.miniwings}
                   </label>
                   <label className="flex cursor-pointer items-center gap-2 text-sm text-swing-gray-dark/60 transition-colors hover:text-swing-gray-dark">
                     <input
@@ -239,7 +239,7 @@ export default function RegisterPage() {
                       onChange={(e) => updateField("sellsParakites", e.target.checked)}
                       className="accent-swing-gold"
                     />
-                    Parakites
+                    {dict.common.categories.parakites}
                   </label>
                 </div>
               </div>
@@ -248,12 +248,12 @@ export default function RegisterPage() {
             {/* Contact */}
             <div className={sectionClass}>
               <div className="h-px flex-1 bg-gray-100" />
-              <span>Kontakt</span>
+              <span>{dict.auth.register.contact}</span>
               <div className="h-px flex-1 bg-gray-100" />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className={labelClass}>Ansprechpartner *</label>
+                <label className={labelClass}>{dict.auth.register.contactPerson} *</label>
                 <input
                   type="text"
                   value={formData.fullName}
@@ -265,7 +265,7 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className={labelClass}>E-Mail *</label>
+                <label className={labelClass}>{dict.auth.register.email} *</label>
                 <input
                   type="email"
                   value={formData.email}
@@ -277,7 +277,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className={labelClass}>Telefon</label>
+                <label className={labelClass}>{dict.auth.register.phone}</label>
                 <div className="flex gap-2">
                   <input
                     type="tel"
@@ -302,12 +302,12 @@ export default function RegisterPage() {
             {/* Address */}
             <div className={sectionClass}>
               <div className="h-px flex-1 bg-gray-100" />
-              <span>Adresse</span>
+              <span>{dict.auth.register.address}</span>
               <div className="h-px flex-1 bg-gray-100" />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className={labelClass}>Straße + Nr.</label>
+                <label className={labelClass}>{dict.auth.register.street}</label>
                 <input
                   type="text"
                   value={formData.addressStreet}
@@ -318,7 +318,7 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className={labelClass}>PLZ</label>
+                <label className={labelClass}>{dict.auth.register.zip}</label>
                 <input
                   type="text"
                   value={formData.addressZip}
@@ -329,7 +329,7 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label className={labelClass}>Stadt</label>
+                <label className={labelClass}>{dict.auth.register.city}</label>
                 <input
                   type="text"
                   value={formData.addressCity}
@@ -340,7 +340,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className={labelClass}>Land</label>
+                <label className={labelClass}>{dict.auth.register.country}</label>
                 <input
                   type="text"
                   value={formData.addressCountry}
@@ -354,12 +354,12 @@ export default function RegisterPage() {
             {/* Password */}
             <div className={sectionClass}>
               <div className="h-px flex-1 bg-gray-100" />
-              <span>Passwort</span>
+              <span>{dict.auth.register.passwordSection}</span>
               <div className="h-px flex-1 bg-gray-100" />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className={labelClass}>Passwort *</label>
+                <label className={labelClass}>{dict.auth.register.password} *</label>
                 <input
                   type="password"
                   value={formData.password}
@@ -367,19 +367,19 @@ export default function RegisterPage() {
                   required
                   minLength={8}
                   className={inputClass}
-                  placeholder="Mindestens 8 Zeichen"
+                  placeholder={dict.auth.register.passwordMin}
                 />
               </div>
 
               <div>
-                <label className={labelClass}>Passwort bestätigen *</label>
+                <label className={labelClass}>{dict.auth.register.passwordConfirm} *</label>
                 <input
                   type="password"
                   value={formData.passwordConfirm}
                   onChange={(e) => updateField("passwordConfirm", e.target.value)}
                   required
                   className={inputClass}
-                  placeholder="Passwort wiederholen"
+                  placeholder={dict.auth.register.passwordRepeat}
                 />
               </div>
             </div>
@@ -389,19 +389,19 @@ export default function RegisterPage() {
               disabled={loading}
               className="group flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-swing-gold py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? "Wird registriert..." : "Registrieren"}
+              {loading ? dict.auth.register.submitting : dict.auth.register.submit}
               {!loading && <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />}
             </button>
           </form>
 
           <div className="mt-8 border-t border-gray-100 pt-6 text-center">
             <p className="text-sm text-swing-gray-dark/40">
-              Bereits registriert?{" "}
+              {dict.auth.register.alreadyRegistered}{" "}
               <Link
                 href="/login"
                 className="font-semibold text-swing-navy transition-colors hover:text-swing-gold"
               >
-                Zum Login
+                {dict.auth.register.loginLink}
               </Link>
             </p>
           </div>

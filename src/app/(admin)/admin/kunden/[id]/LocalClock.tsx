@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
+import { useDict, useLocale } from "@/lib/i18n/context";
+import { getDateLocale } from "@/lib/i18n/shared";
 
 const COUNTRY_TIMEZONES: Record<string, string> = {
   Deutschland: "Europe/Berlin",
@@ -98,6 +100,9 @@ const COUNTRY_TIMEZONES: Record<string, string> = {
 };
 
 export default function LocalClock({ country }: { country: string }) {
+  const dict = useDict();
+  const locale = useLocale();
+  const dl = getDateLocale(locale);
   const [time, setTime] = useState<string>("");
 
   const tz = COUNTRY_TIMEZONES[country];
@@ -108,7 +113,7 @@ export default function LocalClock({ country }: { country: string }) {
     function update() {
       const now = new Date();
       setTime(
-        now.toLocaleTimeString("de-DE", {
+        now.toLocaleTimeString(dl, {
           timeZone: tz,
           hour: "2-digit",
           minute: "2-digit",
@@ -119,14 +124,14 @@ export default function LocalClock({ country }: { country: string }) {
     update();
     const id = setInterval(update, 30_000);
     return () => clearInterval(id);
-  }, [tz]);
+  }, [tz, dl]);
 
   if (!tz || !time) return null;
 
   return (
     <div className="flex items-center gap-1.5 text-[10px] text-swing-navy/30">
       <Clock size={10} />
-      <span>Ortszeit {country}: <span className="font-medium text-swing-navy/50">{time}</span></span>
+      <span>{dict.admin.customers.detail.localTime} {country}: <span className="font-medium text-swing-navy/50">{time}</span></span>
     </div>
   );
 }

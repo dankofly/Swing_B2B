@@ -13,6 +13,8 @@ import {
   AlertTriangle,
   Eye,
 } from "lucide-react";
+import { useDict, useLocale } from "@/lib/i18n/context";
+import { getDateLocale } from "@/lib/i18n/shared";
 
 interface PriceUpload {
   id: string;
@@ -34,10 +36,6 @@ interface ParseResult {
   summary: { total: number; matched: number; unmatched: number };
 }
 
-function eur(value: number) {
-  return value.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
-}
-
 export default function PriceListSection({
   companyId,
   uploads: initialUploads,
@@ -47,6 +45,15 @@ export default function PriceListSection({
   uploads: PriceUpload[];
   categories: CategoryConfig[];
 }) {
+  const dict = useDict();
+  const locale = useLocale();
+  const dl = getDateLocale(locale);
+  const tp = dict.admin.priceLists;
+
+  function eur(value: number) {
+    return value.toLocaleString(dl, { style: "currency", currency: "EUR" });
+  }
+
   const [uploads, setUploads] = useState(initialUploads);
   const [uploadingCategory, setUploadingCategory] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +85,7 @@ export default function PriceListSection({
 
     const result = await uploadPriceList(companyId, formData, category);
     if (!result.success) {
-      setError(result.error || "Upload fehlgeschlagen");
+      setError(result.error || tp.uploadFailed);
       setUploadingCategory(null);
       e.target.value = "";
       return;
@@ -105,14 +112,14 @@ export default function PriceListSection({
         const data = await res.json();
 
         if (!res.ok) {
-          setError(data.error || "Fehler beim Parsen der Preisliste");
+          setError(data.error || tp.parseError);
         } else {
           setParseResult(data);
           setDiscounts({});
           didParse = true;
         }
       } catch {
-        setError("Netzwerkfehler beim Parsen");
+        setError(tp.networkError);
       } finally {
         setParsing(false);
       }
@@ -142,7 +149,7 @@ export default function PriceListSection({
       setSavedInfo(info);
       setParseResult(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Fehler beim Speichern");
+      setError(err instanceof Error ? err.message : tp.saveError);
     } finally {
       setSaving(false);
     }
@@ -167,7 +174,7 @@ export default function PriceListSection({
       <div>
         <h3 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-swing-navy/50">
           <FileText size={14} />
-          Preise-Vorschau
+          {tp.pricePreview}
           {parseCategory && (
             <span className="rounded bg-swing-navy/10 px-1.5 py-0.5 text-[10px] font-semibold text-swing-navy/60">
               {categories.find((c) => c.key === parseCategory)?.label}
@@ -185,11 +192,11 @@ export default function PriceListSection({
         <div className="mb-3 flex gap-3 text-xs">
           <span className="flex items-center gap-1 text-green-700">
             <Check size={12} />
-            {parseResult.summary.matched} zugeordnet
+            {parseResult.summary.matched} {tp.matched}
           </span>
           <span className="flex items-center gap-1 text-red-600">
             <X size={12} />
-            {parseResult.summary.unmatched} nicht gefunden
+            {parseResult.summary.unmatched} {tp.notFound}
           </span>
         </div>
 
@@ -198,11 +205,11 @@ export default function PriceListSection({
             <thead className="sticky top-0 border-b bg-gray-50 text-[10px] uppercase tracking-wider text-swing-gray-dark/50">
               <tr>
                 <th className="px-2 py-2"></th>
-                <th className="px-2 py-2">Modell</th>
-                <th className="px-2 py-2 text-right">UVP</th>
-                <th className="px-2 py-2 text-right">EK netto</th>
-                <th className="px-2 py-2 text-right">Rabatt</th>
-                <th className="px-2 py-2 text-right">Endpreis</th>
+                <th className="px-2 py-2">{tp.modelPdf}</th>
+                <th className="px-2 py-2 text-right">{tp.uvpGross}</th>
+                <th className="px-2 py-2 text-right">{tp.dealerNet}</th>
+                <th className="px-2 py-2 text-right">{tp.discount}</th>
+                <th className="px-2 py-2 text-right">{tp.finalPrice}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -266,7 +273,7 @@ export default function PriceListSection({
             onClick={handleCancelParse}
             className="cursor-pointer rounded border border-gray-300 px-3 py-1.5 text-xs text-swing-gray-dark hover:bg-gray-50"
           >
-            Abbrechen
+            {dict.common.buttons.cancel}
           </button>
           <button
             onClick={handleConfirm}
@@ -276,12 +283,12 @@ export default function PriceListSection({
             {saving ? (
               <>
                 <Loader2 size={12} className="animate-spin" />
-                Speichert...
+                {dict.common.buttons.loading}
               </>
             ) : (
               <>
                 <Check size={12} />
-                {parseResult.summary.matched} Preise übernehmen
+                {tp.applyCount.replace("{count}", String(parseResult.summary.matched))}
               </>
             )}
           </button>
@@ -302,10 +309,12 @@ export default function PriceListSection({
           <Check size={14} className="mt-0.5 shrink-0 text-green-600" />
           <div>
             <p className="text-xs font-semibold text-green-800">
-              Preise gespeichert
+              {tp.pricesSaved}
             </p>
             <p className="text-[11px] text-green-700">
-              {savedInfo.savedCount} Preise für {savedInfo.productCount} Produkte übernommen.
+              {tp.pricesSavedCount
+                .replace("{saved}", String(savedInfo.savedCount))
+                .replace("{products}", String(savedInfo.productCount))}
             </p>
           </div>
         </div>
@@ -316,7 +325,7 @@ export default function PriceListSection({
         <div className="mb-3 flex items-center gap-2 rounded border border-swing-gold/30 bg-swing-gold/10 p-3">
           <Loader2 size={14} className="animate-spin text-swing-navy" />
           <p className="text-xs font-medium text-swing-navy">
-            Gemini analysiert die Preisliste...
+            {tp.geminiAnalyzing}
           </p>
         </div>
       )}
@@ -347,7 +356,7 @@ export default function PriceListSection({
                       {latestUpload.file_name || "Preisliste.pdf"}
                     </span>
                     <span className="shrink-0 text-[10px] text-swing-navy/30">
-                      {new Date(latestUpload.created_at).toLocaleDateString("de-DE", {
+                      {new Date(latestUpload.created_at).toLocaleDateString(dl, {
                         day: "2-digit",
                         month: "2-digit",
                         year: "2-digit",
@@ -390,12 +399,12 @@ export default function PriceListSection({
                   {isUploading ? (
                     <>
                       <Loader2 size={13} className="animate-spin" />
-                      Wird hochgeladen...
+                      {tp.uploading}
                     </>
                   ) : (
                     <>
                       <Upload size={13} />
-                      PDF Preisliste hochladen
+                      {tp.uploadPdf}
                     </>
                   )}
                   <input

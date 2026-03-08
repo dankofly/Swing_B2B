@@ -11,6 +11,8 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { useDict, useLocale } from "@/lib/i18n/context";
+import { getDateLocale } from "@/lib/i18n/shared";
 
 type Status = "new" | "in_progress" | "shipped" | "completed";
 
@@ -20,31 +22,12 @@ type InquiryItem = Record<string, any>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Inquiry = Record<string, any>;
 
-const STEPS: { key: Status; label: string; icon: typeof Inbox }[] = [
-  { key: "new", label: "Eingang", icon: Inbox },
-  { key: "in_progress", label: "In Bearbeitung", icon: Settings },
-  { key: "shipped", label: "Im Versand", icon: Package },
-  { key: "completed", label: "Versendet", icon: Truck },
-];
-
-const STATUS_CONFIG: Record<Status, { label: string; color: string; bg: string }> = {
-  new: { label: "Eingang", color: "text-blue-700", bg: "bg-blue-50" },
-  in_progress: { label: "In Bearbeitung", color: "text-amber-700", bg: "bg-amber-50" },
-  shipped: { label: "Im Versand", color: "text-purple-700", bg: "bg-purple-50" },
-  completed: { label: "Versendet", color: "text-emerald-700", bg: "bg-emerald-50" },
+const STATUS_COLORS: Record<Status, { color: string; bg: string }> = {
+  new: { color: "text-blue-700", bg: "bg-blue-50" },
+  in_progress: { color: "text-amber-700", bg: "bg-amber-50" },
+  shipped: { color: "text-purple-700", bg: "bg-purple-50" },
+  completed: { color: "text-emerald-700", bg: "bg-emerald-50" },
 };
-
-function formatTimestamp(ts: string | undefined) {
-  if (!ts) return null;
-  const d = new Date(ts);
-  return d.toLocaleDateString("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export default function InquiryBoard({
   inquiries,
@@ -53,6 +36,30 @@ export default function InquiryBoard({
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const dict = useDict();
+  const locale = useLocale();
+  const dl = getDateLocale(locale);
+
+  const statusLabels: Record<string, string> = dict.common.status as Record<string, string>;
+
+  const STEPS: { key: Status; label: string; icon: typeof Inbox }[] = [
+    { key: "new", label: statusLabels.new, icon: Inbox },
+    { key: "in_progress", label: statusLabels.in_progress, icon: Settings },
+    { key: "shipped", label: statusLabels.shipped, icon: Package },
+    { key: "completed", label: statusLabels.completed, icon: Truck },
+  ];
+
+  function formatTimestamp(ts: string | undefined) {
+    if (!ts) return null;
+    const d = new Date(ts);
+    return d.toLocaleDateString(dl, {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 
   function totalValue(items: InquiryItem[]) {
     return items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
@@ -64,9 +71,9 @@ export default function InquiryBoard({
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50">
           <Package size={22} className="text-swing-navy/10" />
         </div>
-        <p className="text-sm font-medium text-swing-navy/40">Keine Anfragen vorhanden</p>
+        <p className="text-sm font-medium text-swing-navy/40">{dict.inquiries.empty}</p>
         <p className="mt-1 text-xs text-swing-gray-dark/20">
-          Stöbern Sie im Katalog um eine Anfrage zu erstellen
+          {dict.inquiries.emptyHint}
         </p>
       </div>
     );
@@ -76,7 +83,8 @@ export default function InquiryBoard({
     <div className="space-y-2">
       {inquiries.map((inquiry) => {
         const isExpanded = expandedId === inquiry.id;
-        const status = STATUS_CONFIG[inquiry.status as Status] ?? STATUS_CONFIG.new;
+        const sc = STATUS_COLORS[inquiry.status as Status] ?? STATUS_COLORS.new;
+        const status = { label: statusLabels[inquiry.status] || inquiry.status, ...sc };
         const currentStepIndex = STEPS.findIndex((s) => s.key === inquiry.status);
 
         return (
@@ -92,26 +100,27 @@ export default function InquiryBoard({
             <button
               type="button"
               onClick={() => setExpandedId(isExpanded ? null : inquiry.id)}
-              className="flex w-full cursor-pointer items-center gap-3 bg-white px-5 py-4 text-left transition-colors duration-150 hover:bg-gray-50/40 sm:gap-4"
+              className="flex w-full cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 bg-white px-4 py-3 text-left transition-colors duration-150 hover:bg-gray-50/40 sm:flex-nowrap sm:gap-4 sm:px-5 sm:py-4"
             >
               {/* Gold accent line when expanded */}
               {isExpanded && (
                 <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-swing-gold" />
               )}
 
-              {/* Date + count */}
-              <div className="min-w-0 flex-1">
-                <span className="text-sm font-bold text-swing-navy">
-                  {new Date(inquiry.created_at).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </span>
-                <span className="ml-2 text-xs text-swing-navy/40">
-                  {inquiry.items.length} {inquiry.items.length === 1 ? "Pos." : "Pos."}
-                </span>
-              </div>
+              {/* Date */}
+              <span className="shrink-0 text-sm font-bold text-swing-navy sm:w-44">
+                {new Date(inquiry.created_at).toLocaleDateString(dl, {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+              {/* Count */}
+              <span className="shrink-0 text-xs tabular-nums text-swing-navy/40 sm:w-28">
+                {inquiry.items.length} {inquiry.items.length === 1 ? dict.inquiries.position : dict.inquiries.positions}
+              </span>
+              {/* Spacer — push right items on desktop */}
+              <span className="hidden flex-1 sm:block" />
 
               {/* Tracking pill — only show when completed */}
               {inquiry.status === "completed" && inquiry.shipping_carrier && inquiry.tracking_number && (
@@ -121,7 +130,7 @@ export default function InquiryBoard({
                   <span
                     role="button"
                     tabIndex={0}
-                    className="cursor-pointer rounded p-0.5 transition-colors hover:bg-purple-100"
+                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded transition-colors hover:bg-purple-100"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigator.clipboard.writeText(inquiry.tracking_number);
@@ -146,16 +155,19 @@ export default function InquiryBoard({
                 </span>
               )}
 
+              {/* Mobile spacer — push badge + value to right on second line */}
+              <span className="flex-1 sm:hidden" />
+
               {/* Status badge */}
               <span
-                className={`shrink-0 rounded px-2 py-0.5 text-[10px] font-bold ${status.bg} ${status.color}`}
+                className={`shrink-0 rounded py-0.5 text-[10px] font-bold text-center w-24 ${status.bg} ${status.color}`}
               >
                 {status.label}
               </span>
 
               {/* Value */}
-              <span className="w-24 shrink-0 text-right text-sm font-extrabold tabular-nums text-swing-navy sm:w-28">
-                {totalValue(inquiry.items).toLocaleString("de-DE", {
+              <span className="shrink-0 text-right text-sm font-extrabold tabular-nums text-swing-navy sm:w-28">
+                {totalValue(inquiry.items).toLocaleString(dl, {
                   style: "currency",
                   currency: "EUR",
                 })}
@@ -174,8 +186,8 @@ export default function InquiryBoard({
             {isExpanded && (
               <div className="border-t border-gray-100 bg-gray-50/40">
                 {/* Flight-path stepper */}
-                <div className="px-6 pt-6 pb-2">
-                  <div className="flex items-center">
+                <div className="px-3 pt-4 pb-2 sm:px-6 sm:pt-6">
+                  <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] items-start gap-0">
                     {STEPS.map((step, idx) => {
                       const Icon = step.icon;
                       const isActive = inquiry.status === step.key;
@@ -183,10 +195,10 @@ export default function InquiryBoard({
                       const isDone = isPast || isActive;
 
                       return (
-                        <div key={step.key} className="flex flex-1 items-center">
+                        <div key={step.key} className="contents">
                           <div className="flex flex-col items-center">
                             <div
-                              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
+                              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all sm:h-12 sm:w-12 ${
                                 isActive && step.key === "completed"
                                   ? "border-emerald-500 bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
                                   : isActive
@@ -196,10 +208,10 @@ export default function InquiryBoard({
                                       : "border-gray-200 bg-white text-swing-navy/15"
                               }`}
                             >
-                              <Icon size={16} />
+                              <Icon size={16} className="sm:h-5 sm:w-5" />
                             </div>
                             <span
-                              className={`mt-2 text-[10px] font-bold uppercase tracking-wider ${
+                              className={`mt-1.5 text-[9px] font-bold uppercase tracking-wider sm:mt-2 sm:text-[10px] ${
                                 isActive
                                   ? "text-swing-navy"
                                   : isDone
@@ -217,9 +229,9 @@ export default function InquiryBoard({
                           </div>
                           {/* Connector — gold when past */}
                           {idx < STEPS.length - 1 && (
-                            <div className="mx-2 mb-6 h-0.5 flex-1">
+                            <div className="mt-4 flex items-center self-start px-1 sm:mt-5 sm:px-2">
                               <div
-                                className={`h-full rounded-full ${
+                                className={`h-0.5 w-full min-w-6 rounded-full sm:min-w-10 ${
                                   idx < currentStepIndex
                                     ? "bg-swing-gold/30"
                                     : "bg-gray-200"
@@ -234,18 +246,18 @@ export default function InquiryBoard({
                 </div>
 
                 {/* Items table */}
-                <div className="px-5 pb-5">
+                <div className="px-3 pb-4 sm:px-5 sm:pb-5">
                   <div className="overflow-hidden rounded-lg border border-gray-100 bg-white">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-100 bg-gray-50/60 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
-                          <th className="px-4 py-2.5 text-left">Produkt</th>
-                          <th className="px-4 py-2.5 text-left">Größe</th>
-                          <th className="px-4 py-2.5 text-right">Menge</th>
+                          <th className="px-4 py-2.5 text-left">{dict.inquiries.product}</th>
+                          <th className="px-4 py-2.5 text-left">{dict.inquiries.size}</th>
+                          <th className="px-4 py-2.5 text-right">{dict.cart.quantity}</th>
                           <th className="hidden px-4 py-2.5 text-right sm:table-cell">
-                            Stückpreis
+                            {dict.inquiries.unitPrice}
                           </th>
-                          <th className="px-4 py-2.5 text-right">Gesamt</th>
+                          <th className="px-4 py-2.5 text-right">{dict.inquiries.total}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -259,7 +271,7 @@ export default function InquiryBoard({
                             }
                           >
                             <td className="px-4 py-3 font-semibold text-swing-navy">
-                              {item.product_size?.product?.name || "Produkt"}
+                              {item.product_size?.product?.name || dict.inquiries.product}
                             </td>
                             <td className="px-4 py-3 text-swing-navy/40">
                               {item.product_size?.size_label}
@@ -268,14 +280,14 @@ export default function InquiryBoard({
                               {item.quantity}
                             </td>
                             <td className="hidden px-4 py-3 text-right tabular-nums text-swing-navy/40 sm:table-cell">
-                              {Number(item.unit_price).toLocaleString("de-DE", {
+                              {Number(item.unit_price).toLocaleString(dl, {
                                 style: "currency",
                                 currency: "EUR",
                               })}
                             </td>
                             <td className="px-4 py-3 text-right font-semibold tabular-nums text-swing-navy">
                               {(item.quantity * item.unit_price).toLocaleString(
-                                "de-DE",
+                                dl,
                                 {
                                   style: "currency",
                                   currency: "EUR",
@@ -290,10 +302,10 @@ export default function InquiryBoard({
                     <div className="relative flex items-center justify-between border-t border-gray-100 px-4 py-3">
                       <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-swing-gold/40" />
                       <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
-                        Summe
+                        {dict.inquiries.sum}
                       </span>
                       <span className="text-base font-extrabold tabular-nums text-swing-navy">
-                        {totalValue(inquiry.items).toLocaleString("de-DE", {
+                        {totalValue(inquiry.items).toLocaleString(dl, {
                           style: "currency",
                           currency: "EUR",
                         })}
@@ -309,7 +321,7 @@ export default function InquiryBoard({
                       </div>
                       <div className="flex-1">
                         <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-purple-400">
-                          Sendungsverfolgung
+                          {dict.inquiries.tracking}
                         </p>
                         <p className="mt-0.5 font-mono text-xs text-purple-700">
                           {inquiry.shipping_carrier} &middot;{" "}
@@ -340,7 +352,7 @@ export default function InquiryBoard({
                   {inquiry.notes && (
                     <div className="mt-3 rounded-lg border border-gray-100 bg-white px-4 py-3">
                       <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
-                        Anmerkung
+                        {dict.inquiries.note}
                       </p>
                       <p className="mt-1 text-xs leading-relaxed text-swing-navy/50">
                         {inquiry.notes}

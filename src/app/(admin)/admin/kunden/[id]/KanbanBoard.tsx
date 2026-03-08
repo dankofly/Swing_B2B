@@ -13,6 +13,8 @@ import {
   Check,
   Send,
 } from "lucide-react";
+import { useDict, useLocale } from "@/lib/i18n/context";
+import { getDateLocale } from "@/lib/i18n/shared";
 
 type Status = "new" | "in_progress" | "shipped" | "completed";
 
@@ -22,25 +24,34 @@ type InquiryItem = Record<string, any>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Inquiry = Record<string, any>;
 
-const STEPS: { key: Status; label: string; icon: typeof Inbox; bg: string; text: string }[] = [
-  { key: "new", label: "Eingang", icon: Inbox, bg: "bg-blue-100", text: "text-blue-700" },
-  { key: "in_progress", label: "In Bearbeitung", icon: Settings, bg: "bg-amber-100", text: "text-amber-700" },
-  { key: "shipped", label: "Im Versand", icon: Truck, bg: "bg-purple-100", text: "text-purple-700" },
-  { key: "completed", label: "Versendet", icon: CheckCircle, bg: "bg-green-100", text: "text-green-700" },
-];
-
-const STATUS_BADGE: Record<Status, { bg: string; text: string; label: string }> = {
-  new: { bg: "bg-blue-100", text: "text-blue-700", label: "Eingang" },
-  in_progress: { bg: "bg-amber-100", text: "text-amber-700", label: "In Bearbeitung" },
-  shipped: { bg: "bg-purple-100", text: "text-purple-700", label: "Im Versand" },
-  completed: { bg: "bg-green-100", text: "text-green-700", label: "Versendet" },
-};
-
 export default function KanbanBoard({
   inquiries: initialInquiries,
 }: {
   inquiries: Inquiry[];
 }) {
+  const dict = useDict();
+  const locale = useLocale();
+  const dl = getDateLocale(locale);
+  const tk = dict.admin.kanban;
+
+  const STEPS: { key: Status; label: string; icon: typeof Inbox; bg: string; text: string }[] = [
+    { key: "new", label: tk.statusNew, icon: Inbox, bg: "bg-blue-100", text: "text-blue-700" },
+    { key: "in_progress", label: tk.statusInProgress, icon: Settings, bg: "bg-amber-100", text: "text-amber-700" },
+    { key: "shipped", label: tk.statusShipped, icon: Truck, bg: "bg-purple-100", text: "text-purple-700" },
+    { key: "completed", label: tk.statusCompleted, icon: CheckCircle, bg: "bg-green-100", text: "text-green-700" },
+  ];
+
+  const STATUS_BADGE: Record<Status, { bg: string; text: string; label: string }> = {
+    new: { bg: "bg-blue-100", text: "text-blue-700", label: tk.statusNew },
+    in_progress: { bg: "bg-amber-100", text: "text-amber-700", label: tk.statusInProgress },
+    shipped: { bg: "bg-purple-100", text: "text-purple-700", label: tk.statusShipped },
+    completed: { bg: "bg-green-100", text: "text-green-700", label: tk.statusCompleted },
+  };
+
+  function eur(value: number) {
+    return value.toLocaleString(dl, { style: "currency", currency: "EUR" });
+  }
+
   const [inquiries, setInquiries] = useState(initialInquiries);
   const [expandedId, setExpandedId] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
@@ -107,7 +118,7 @@ export default function KanbanBoard({
       <div className="flex items-center justify-center rounded border border-dashed border-gray-200 bg-white p-12">
         <div className="text-center">
           <Package size={32} className="mx-auto mb-2 text-swing-navy/20" />
-          <p className="text-sm font-medium text-swing-navy/40">Keine Anfragen vorhanden</p>
+          <p className="text-sm font-medium text-swing-navy/40">{tk.noInquiries}</p>
         </div>
       </div>
     );
@@ -130,69 +141,65 @@ export default function KanbanBoard({
             <button
               type="button"
               onClick={() => setExpandedId(isExpanded ? null : inquiry.id)}
-              className="flex w-full items-center gap-4 px-4 py-3 text-left"
+              className="flex w-full min-h-11 flex-col gap-1.5 px-4 py-3 text-left sm:flex-row sm:items-center sm:gap-4"
             >
-              <ChevronDown
-                size={16}
-                className={`shrink-0 text-swing-navy/30 transition-transform ${
-                  isExpanded ? "rotate-180" : ""
-                }`}
-              />
-
-              <span className="min-w-0 shrink text-sm text-swing-navy">
-                Anfrage vom{" "}
-                {new Date(inquiry.created_at).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
-              </span>
-
-              {inquiry.status === "completed" && inquiry.shipping_carrier && inquiry.tracking_number && (
-                <span className="flex min-w-0 flex-1 items-center justify-center gap-1.5 text-[11px] text-swing-navy/50">
-                  <Truck size={12} className="shrink-0" />
-                  <span className="shrink-0 font-semibold">{inquiry.shipping_carrier}</span>
-                  <span className="truncate font-mono">{inquiry.tracking_number}</span>
-                  <button
-                    type="button"
-                    className="shrink-0 rounded p-0.5 hover:bg-gray-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigator.clipboard.writeText(inquiry.tracking_number);
-                      setCopiedId(inquiry.id);
-                      setTimeout(() => setCopiedId(null), 2000);
-                    }}
-                  >
-                    {copiedId === inquiry.id ? <Check size={11} className="text-green-500" /> : <Copy size={11} />}
-                  </button>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <ChevronDown
+                  size={16}
+                  className={`shrink-0 text-swing-navy/30 transition-transform ${
+                    isExpanded ? "rotate-180" : ""
+                  }`}
+                />
+                <span className="min-w-0 shrink text-sm text-swing-navy">
+                  {tk.inquiryFrom}{" "}
+                  {new Date(inquiry.created_at).toLocaleDateString(dl, {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })}
                 </span>
-              )}
+              </div>
 
-              {!(inquiry.status === "completed" && inquiry.shipping_carrier && inquiry.tracking_number) && (
-                <span className="min-w-0 flex-1" />
-              )}
+              <div className="flex flex-wrap items-center gap-2 pl-7 sm:flex-1 sm:justify-end sm:gap-3 sm:pl-0">
+                {inquiry.status === "completed" && inquiry.shipping_carrier && inquiry.tracking_number && (
+                  <span className="hidden items-center gap-1.5 text-[11px] text-swing-navy/50 sm:flex">
+                    <Truck size={12} className="shrink-0" />
+                    <span className="shrink-0 font-semibold">{inquiry.shipping_carrier}</span>
+                    <span className="truncate font-mono">{inquiry.tracking_number}</span>
+                    <button
+                      type="button"
+                      className="shrink-0 rounded p-0.5 hover:bg-gray-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(inquiry.tracking_number);
+                        setCopiedId(inquiry.id);
+                        setTimeout(() => setCopiedId(null), 2000);
+                      }}
+                    >
+                      {copiedId === inquiry.id ? <Check size={11} className="text-green-500" /> : <Copy size={11} />}
+                    </button>
+                  </span>
+                )}
 
-              <span className="shrink-0 text-xs text-swing-navy/40">
-                ({inquiry.items.length} Positionen)
-              </span>
+                <span className="text-xs text-swing-navy/40">
+                  {inquiry.items.length} {tk.pos}
+                </span>
 
-              <span className="w-24 shrink-0 text-right text-sm font-semibold text-swing-navy">
-                {totalValue(inquiry.items).toLocaleString("de-DE", {
-                  style: "currency",
-                  currency: "EUR",
-                })}
-              </span>
+                <span className="text-sm font-semibold text-swing-navy">
+                  {eur(totalValue(inquiry.items))}
+                </span>
 
-              <span className={`inline-flex w-28 shrink-0 items-center justify-center rounded px-2 py-0.5 text-[11px] font-semibold ${badge.bg} ${badge.text}`}>
-                {badge.label}
-              </span>
+                <span className={`inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-semibold ${badge.bg} ${badge.text}`}>
+                  {badge.label}
+                </span>
+              </div>
             </button>
 
             {/* Expanded content */}
             {isExpanded && (
               <div className="border-t border-gray-100 px-4 pb-4 pt-3">
                 {/* Status Kanban track */}
-                <div className="mb-4 grid grid-cols-4 gap-1 rounded bg-gray-50 p-1">
+                <div className="mb-4 grid grid-cols-2 gap-1 rounded bg-gray-50 p-1 sm:grid-cols-4">
                   {STEPS.map((step, idx) => {
                     const Icon = step.icon;
                     const isActive = inquiry.status === step.key;
@@ -207,7 +214,7 @@ export default function KanbanBoard({
                         type="button"
                         disabled={isUpdating}
                         onClick={() => handleStatusChange(inquiry.id, step.key)}
-                        className={`flex flex-col items-center justify-center gap-0.5 rounded px-3 py-2 transition-all ${
+                        className={`flex min-h-11 flex-col items-center justify-center gap-0.5 rounded px-2 py-2 transition-all sm:px-3 ${
                           isActive
                             ? `${step.bg} ${step.text} shadow-sm`
                             : isPast
@@ -215,13 +222,13 @@ export default function KanbanBoard({
                               : "text-swing-navy/30 hover:bg-white hover:text-swing-navy/50"
                         } ${isUpdating ? "opacity-50" : "cursor-pointer"}`}
                       >
-                        <span className="flex items-center gap-1.5 text-xs font-semibold">
+                        <span className="flex items-center gap-1 text-[11px] font-semibold sm:gap-1.5 sm:text-xs">
                           <Icon size={14} />
                           {step.label}
                         </span>
                         {timestamp && (
-                          <span className="text-[10px] font-normal opacity-60">
-                            {new Date(timestamp).toLocaleDateString("de-DE", {
+                          <span className="text-[9px] font-normal opacity-60 sm:text-[10px]">
+                            {new Date(timestamp).toLocaleDateString(dl, {
                               day: "2-digit",
                               month: "2-digit",
                               year: "2-digit",
@@ -236,21 +243,22 @@ export default function KanbanBoard({
                 </div>
 
                 {/* Items table */}
+                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 text-[10px] font-bold uppercase tracking-widest text-swing-navy/40">
-                      <th className="pb-2 text-left">Produkt</th>
-                      <th className="pb-2 text-left">Größe</th>
-                      <th className="pb-2 text-right">Menge</th>
-                      <th className="pb-2 text-right">Stückpreis</th>
-                      <th className="pb-2 text-right">Gesamt</th>
+                      <th className="pb-2 text-left">{tk.product}</th>
+                      <th className="pb-2 text-left">{tk.size}</th>
+                      <th className="pb-2 text-right">{tk.quantity}</th>
+                      <th className="pb-2 text-right">{tk.unitPrice}</th>
+                      <th className="pb-2 text-right">{tk.total}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {inquiry.items.map((item: InquiryItem) => (
                       <tr key={item.id} className="border-b border-gray-50">
                         <td className="py-1.5 text-swing-navy">
-                          {item.product_size?.product?.name || "Produkt"}
+                          {item.product_size?.product?.name || tk.product}
                         </td>
                         <td className="py-1.5 text-swing-navy/60">
                           {item.product_size?.size_label}
@@ -259,16 +267,10 @@ export default function KanbanBoard({
                           {item.quantity}
                         </td>
                         <td className="py-1.5 text-right text-swing-navy/60">
-                          {Number(item.unit_price).toLocaleString("de-DE", {
-                            style: "currency",
-                            currency: "EUR",
-                          })}
+                          {eur(Number(item.unit_price))}
                         </td>
                         <td className="py-1.5 text-right font-medium text-swing-navy">
-                          {(item.quantity * item.unit_price).toLocaleString("de-DE", {
-                            style: "currency",
-                            currency: "EUR",
-                          })}
+                          {eur(item.quantity * item.unit_price)}
                         </td>
                       </tr>
                     ))}
@@ -276,29 +278,27 @@ export default function KanbanBoard({
                   <tfoot>
                     <tr className="border-t border-gray-200">
                       <td colSpan={4} className="pt-2 text-right text-xs font-bold uppercase tracking-widest text-swing-navy/40">
-                        Summe
+                        {tk.sum}
                       </td>
                       <td className="pt-2 text-right font-bold text-swing-navy">
-                        {totalValue(inquiry.items).toLocaleString("de-DE", {
-                          style: "currency",
-                          currency: "EUR",
-                        })}
+                        {eur(totalValue(inquiry.items))}
                       </td>
                     </tr>
                   </tfoot>
                 </table>
+                </div>
 
                 {/* Notes & Tracking */}
-                <div className="mt-3 flex gap-4">
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:gap-4">
                   {/* Notiz */}
                   <div className="flex-1">
                     <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-swing-navy/40">
-                      Notiz
+                      {tk.note}
                     </label>
                     <input
                       type="text"
                       defaultValue={inquiry.notes ?? ""}
-                      placeholder="Interne Notiz..."
+                      placeholder={tk.internalNotePlaceholder}
                       className="w-full rounded border border-gray-200 px-2.5 py-1.5 text-xs text-swing-navy placeholder:text-swing-navy/30 focus:border-swing-navy/30 focus:outline-none"
                       onChange={(e) => {
                         const val = e.target.value;
@@ -316,7 +316,7 @@ export default function KanbanBoard({
                       }}
                     />
                     {savingField === `notes-${inquiry.id}` && (
-                      <span className="text-[10px] text-swing-navy/30">Speichert...</span>
+                      <span className="text-[10px] text-swing-navy/30">{tk.saving}</span>
                     )}
                   </div>
 
@@ -324,28 +324,28 @@ export default function KanbanBoard({
                   {inquiry.status === "shipped" && (
                     <div className="shrink-0">
                       <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-swing-navy/40">
-                        Sendungsverfolgung
+                        {tk.trackingSection}
                       </label>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <select
                           defaultValue={inquiry.shipping_carrier ?? ""}
-                          className="rounded border border-gray-200 px-2 py-1.5 text-xs text-swing-navy focus:border-swing-navy/30 focus:outline-none"
+                          className="rounded border border-gray-200 px-2 py-2 text-xs text-swing-navy focus:border-swing-navy/30 focus:outline-none sm:py-1.5"
                           onChange={(e) => { carrierInputs.current[inquiry.id] = e.target.value; }}
                         >
-                          <option value="" disabled>Dienst</option>
+                          <option value="" disabled>{tk.service}</option>
                           <option value="DPD">DPD</option>
                           <option value="DHL">DHL</option>
                           <option value="UPS">UPS</option>
                           <option value="GLS">GLS</option>
                           <option value="FedEx">FedEx</option>
                           <option value="Post AT">Post AT</option>
-                          <option value="Andere">Andere</option>
+                          <option value="Andere">{tk.other}</option>
                         </select>
                         <input
                           type="text"
                           defaultValue={inquiry.tracking_number ?? ""}
-                          placeholder="Sendungsnummer..."
-                          className="w-48 rounded border border-gray-200 px-2.5 py-1.5 text-xs text-swing-navy placeholder:text-swing-navy/30 focus:border-swing-navy/30 focus:outline-none"
+                          placeholder={tk.trackingPlaceholder}
+                          className="min-w-0 flex-1 rounded border border-gray-200 px-2.5 py-2 text-xs text-swing-navy placeholder:text-swing-navy/30 focus:border-swing-navy/30 focus:outline-none sm:w-48 sm:flex-none sm:py-1.5"
                           onChange={(e) => { trackingInputs.current[inquiry.id] = e.target.value; }}
                         />
                         <button
@@ -380,7 +380,7 @@ export default function KanbanBoard({
                           }}
                         >
                           <Send size={12} />
-                          {savingField === `tracking-${inquiry.id}` ? "..." : "Versenden"}
+                          {savingField === `tracking-${inquiry.id}` ? "..." : tk.ship}
                         </button>
                       </div>
                     </div>
@@ -388,7 +388,7 @@ export default function KanbanBoard({
                   {inquiry.status === "completed" && inquiry.tracking_number && (
                     <div className="shrink-0">
                       <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-swing-navy/40">
-                        Sendungsverfolgung
+                        {tk.trackingSection}
                       </label>
                       <div className="flex items-center gap-2">
                         <span className="rounded bg-green-50 px-2 py-1.5 text-xs font-semibold text-green-700">

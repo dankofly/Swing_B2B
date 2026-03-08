@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, Trash2, Upload, X } from "lucide-react";
 import type { Product, ProductSize, ProductColor, Category } from "@/lib/types";
+import { useDict } from "@/lib/i18n/context";
 
 interface SizeInput {
   size_label: string;
@@ -33,6 +34,8 @@ export default function ProductForm({
   sizes: initialSizes,
   colors: initialColors,
 }: ProductFormProps) {
+  const dict = useDict();
+  const tf = dict.admin.products.form;
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [sizes, setSizes] = useState<SizeInput[]>(
@@ -64,7 +67,7 @@ export default function ProductForm({
         canvas.width = targetSize;
         canvas.height = targetSize;
         const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("Canvas nicht verfügbar"));
+        if (!ctx) return reject(new Error("Canvas not available"));
 
         // Transparent background (default for canvas)
         ctx.clearRect(0, 0, targetSize, targetSize);
@@ -79,11 +82,11 @@ export default function ProductForm({
 
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         canvas.toBlob(
-          (blob) => (blob ? resolve(blob) : reject(new Error("PNG-Konvertierung fehlgeschlagen"))),
+          (blob) => (blob ? resolve(blob) : reject(new Error("PNG conversion failed"))),
           "image/png"
         );
       };
-      img.onerror = () => reject(new Error("Bild konnte nicht geladen werden"));
+      img.onerror = () => reject(new Error("Image load failed"));
       img.src = URL.createObjectURL(file);
     });
   }
@@ -151,12 +154,12 @@ export default function ProductForm({
       const data = await res.json();
 
       if (!res.ok) {
-        setColorUploadError(`Upload fehlgeschlagen: ${data.error}`);
+        setColorUploadError(`Upload failed: ${data.error}`);
       } else {
         updateColor(colorIndex, "color_image_url", data.url);
       }
     } catch (err) {
-      setColorUploadError(err instanceof Error ? err.message : "Upload fehlgeschlagen");
+      setColorUploadError(err instanceof Error ? err.message : "Upload failed");
     }
 
     setUploadingColorIndex(null);
@@ -171,7 +174,7 @@ export default function ProductForm({
         try {
           await action(formData);
         } catch (err) {
-          setFormError(err instanceof Error ? err.message : "Fehler beim Speichern");
+          setFormError(err instanceof Error ? err.message : tf.saveError);
         } finally {
           setSubmitting(false);
         }
@@ -183,14 +186,14 @@ export default function ProductForm({
       <input type="hidden" name="colors" value={JSON.stringify(colors)} />
 
       {/* Basic info */}
-      <div className="rounded bg-white p-6 shadow-sm">
+      <div className="rounded bg-white p-4 shadow-sm sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-swing-navy">
-          Grunddaten
+          {tf.basicData}
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              Produktname *
+              {tf.productName} *
             </label>
             <input
               name="name"
@@ -204,14 +207,14 @@ export default function ProductForm({
 
           <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              Kategorie
+              {tf.category}
             </label>
             <select
               name="category_id"
               defaultValue={product?.category_id || ""}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
             >
-              <option value="">Keine Kategorie</option>
+              <option value="">{tf.noCategory}</option>
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
@@ -228,7 +231,7 @@ export default function ProductForm({
                 defaultChecked={product?.is_active ?? true}
                 className="rounded border-gray-300 accent-swing-gold"
               />
-              Aktiv (im Katalog sichtbar)
+              {tf.isActive}
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -237,7 +240,7 @@ export default function ProductForm({
                 defaultChecked={product?.is_coming_soon ?? false}
                 className="rounded border-gray-300 accent-swing-navy"
               />
-              Coming Soon
+              {tf.isComingSoon}
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -246,7 +249,7 @@ export default function ProductForm({
                 defaultChecked={product?.is_preorder ?? false}
                 className="rounded border-gray-300 accent-swing-gold"
               />
-              Vorbestellung offen
+              {tf.isPreorder}
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -255,20 +258,20 @@ export default function ProductForm({
                 defaultChecked={product?.is_fade_out ?? false}
                 className="rounded border-gray-300 accent-red-500"
               />
-              Fade Out
+              {tf.isFadeOut}
             </label>
           </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              EN-Klasse
+              {tf.enClass}
             </label>
             <select
               name="en_class"
               defaultValue={product?.en_class || product?.tech_specs?.en_class || ""}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
             >
-              <option value="">Keine</option>
+              <option value="">{tf.none}</option>
               <option value="EN-A">EN-A</option>
               <option value="EN-A/B">EN-A/B</option>
               <option value="LOW EN-B">LOW EN-B</option>
@@ -282,14 +285,14 @@ export default function ProductForm({
 
           <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              Gewichtsklasse
+              {tf.weightClass}
             </label>
             <select
               name="classification"
               defaultValue={product?.classification || ""}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
             >
-              <option value="">Keine</option>
+              <option value="">{tf.none}</option>
               <option value="D-LITE">D-LITE</option>
               <option value="U-LITE">U-LITE</option>
               <option value="N-LITE">N-LITE</option>
@@ -298,50 +301,50 @@ export default function ProductForm({
 
           <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              Einsatzbereich
+              {tf.useCase}
             </label>
             <input
               name="use_case"
               type="text"
               defaultValue={product?.use_case || ""}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder="z.B. Schulung & Thermik"
+              placeholder={tf.useCasePlaceholder}
             />
           </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              Website-Link
+              {tf.websiteLink}
             </label>
             <input
               name="website_url"
               type="url"
               defaultValue={product?.website_url || ""}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder="https://www.swing.de/..."
+              placeholder={tf.websitePlaceholder}
             />
           </div>
 
           <div className="sm:col-span-2">
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              Beschreibung
+              {tf.description}
             </label>
             <textarea
               name="description"
               rows={4}
               defaultValue={product?.description || ""}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder="Produktbeschreibung..."
+              placeholder={tf.descriptionPlaceholder}
             />
           </div>
         </div>
       </div>
 
       {/* Sizes */}
-      <div className="rounded bg-white p-6 shadow-sm">
+      <div className="rounded bg-white p-4 shadow-sm sm:p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-swing-navy">
-            Größenvarianten
+            {tf.sizes}
           </h2>
           <button
             type="button"
@@ -349,54 +352,56 @@ export default function ProductForm({
             className="flex items-center gap-1 rounded bg-swing-navy px-3 py-1.5 text-xs font-medium text-white hover:bg-swing-navy/80"
           >
             <Plus size={14} />
-            Größe hinzufügen
+            {tf.addSize}
           </button>
         </div>
         {sizes.length === 0 ? (
           <p className="text-sm text-swing-gray-dark/60">
-            Noch keine Größen. Klicke &quot;Größe hinzufügen&quot;, um eine Variante anzulegen.
+            {tf.noSizes}
           </p>
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-swing-gray-dark/40">
-              <span className="w-32">Größe</span>
-              <span className="flex-1">SKU</span>
-              <span className="w-36">Lieferzeit</span>
+            <div className="hidden items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-swing-gray-dark/40 sm:flex">
+              <span className="w-32">{tf.sizeName}</span>
+              <span className="flex-1">{tf.sku}</span>
+              <span className="w-36">{tf.deliveryTime}</span>
               <span className="w-8" />
             </div>
             {sizes.map((size, i) => (
-              <div key={i} className="flex items-center gap-3">
+              <div key={i} className="flex flex-col gap-2 rounded border border-gray-100 p-3 sm:flex-row sm:items-center sm:gap-3 sm:border-0 sm:p-0">
                 <input
                   value={size.size_label}
                   onChange={(e) => updateSize(i, "size_label", e.target.value)}
-                  placeholder="Größe (z.B. S, M, L)"
-                  className="w-32 rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+                  placeholder={tf.sizeNamePlaceholder}
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold sm:w-32"
                 />
                 <input
                   value={size.sku}
                   onChange={(e) => updateSize(i, "sku", e.target.value)}
-                  placeholder="SKU (z.B. ALPHA7-S)"
-                  className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+                  placeholder={tf.skuPlaceholder}
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold sm:flex-1"
                 />
-                <select
-                  value={size.delivery_weeks}
-                  onChange={(e) => updateSize(i, "delivery_weeks", e.target.value)}
-                  className="w-36 rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-                  title="Lieferzeit wenn nicht auf Lager"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((w) => (
-                    <option key={w} value={w}>
-                      {w} {w === 1 ? "Woche" : "Wochen"}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => removeSize(i)}
-                  className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                >
-                  <Trash2 size={16} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={size.delivery_weeks}
+                    onChange={(e) => updateSize(i, "delivery_weeks", e.target.value)}
+                    className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold sm:w-36 sm:flex-initial"
+                    title="Lieferzeit wenn nicht auf Lager"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((w) => (
+                      <option key={w} value={w}>
+                        {w} {tf.weeks}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => removeSize(i)}
+                    className="rounded p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -404,10 +409,10 @@ export default function ProductForm({
       </div>
 
       {/* Colors */}
-      <div className="rounded bg-white p-6 shadow-sm">
+      <div className="rounded bg-white p-4 shadow-sm sm:p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-swing-navy">
-            Farbdesigns
+            {tf.colors}
           </h2>
           <button
             type="button"
@@ -415,7 +420,7 @@ export default function ProductForm({
             className="flex items-center gap-1 rounded bg-swing-navy px-3 py-1.5 text-xs font-medium text-white hover:bg-swing-navy/80"
           >
             <Plus size={14} />
-            Farbe hinzufügen
+            {tf.addColor}
           </button>
         </div>
         {colorUploadError && (
@@ -425,15 +430,15 @@ export default function ProductForm({
         )}
         {colors.length === 0 ? (
           <p className="text-sm text-swing-gray-dark/60">
-            Noch keine Farben. Klicke &quot;Farbe hinzufügen&quot;, um ein Design anzulegen.
+            {tf.noColors}
           </p>
         ) : (
           <div className="space-y-4">
             {colors.map((color, i) => (
-              <div key={i} className="flex items-start gap-4 rounded border border-gray-200 bg-swing-gray-light p-4">
+              <div key={i} className="flex flex-col items-center gap-3 rounded border border-gray-200 bg-swing-gray-light p-4 sm:flex-row sm:items-start sm:gap-4">
                 {/* Piktogramm Upload */}
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-xs font-medium text-swing-gray-dark">Piktogramm</span>
+                  <span className="text-xs font-medium text-swing-gray-dark">{tf.pictogram}</span>
                   {color.color_image_url ? (
                     <div className="group relative h-30 w-30" style={{ backgroundImage: "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><rect width=\"8\" height=\"8\" fill=\"%23eee\"/><rect x=\"8\" y=\"8\" width=\"8\" height=\"8\" fill=\"%23eee\"/></svg>')", backgroundSize: "16px 16px" }}>
                       <img
@@ -452,11 +457,11 @@ export default function ProductForm({
                   ) : (
                     <label className={`flex h-30 w-30 cursor-pointer flex-col items-center justify-center rounded border-2 border-dashed ${uploadingColorIndex === i ? "border-swing-gold bg-swing-gold/5" : "border-gray-300 hover:border-swing-gold hover:bg-swing-gold/5"} text-gray-400 transition-colors`}>
                       {uploadingColorIndex === i ? (
-                        <span className="text-xs text-swing-gold">Lädt...</span>
+                        <span className="text-xs text-swing-gold">{tf.uploading}</span>
                       ) : (
                         <>
                           <Upload size={18} className="text-gray-400" />
-                          <span className="mt-1 text-[10px] leading-tight text-center">Bild{"\n"}hochladen</span>
+                          <span className="mt-1 text-[10px] leading-tight text-center">{tf.uploadImage}</span>
                         </>
                       )}
                       <input
@@ -476,7 +481,7 @@ export default function ProductForm({
                     <input
                       value={color.color_name}
                       onChange={(e) => updateColor(i, "color_name", e.target.value)}
-                      placeholder="Farbname (z.B. Design A)"
+                      placeholder={tf.colorNamePlaceholder}
                       className="flex-1 rounded border border-gray-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
                     />
                     <button
@@ -499,7 +504,7 @@ export default function ProductForm({
                       }}
                       className="accent-swing-gold"
                     />
-                    Limited Edition
+                    {tf.limitedEdition}
                   </label>
                 </div>
               </div>
@@ -516,19 +521,19 @@ export default function ProductForm({
       )}
 
       {/* Submit */}
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <button
           type="submit"
           disabled={submitting}
-          className="rounded bg-swing-gold px-6 py-2.5 text-sm font-semibold text-swing-navy hover:bg-swing-gold-dark disabled:opacity-50"
+          className="w-full rounded bg-swing-gold px-6 py-2.5 text-sm font-semibold text-swing-navy hover:bg-swing-gold-dark disabled:opacity-50 sm:w-auto"
         >
-          {submitting ? "Speichert..." : product ? "Speichern" : "Produkt anlegen"}
+          {submitting ? tf.saving : product ? tf.save : tf.createProduct}
         </button>
         <a
           href="/admin/produkte"
-          className="rounded border border-gray-300 px-6 py-2.5 text-sm text-swing-gray-dark hover:bg-gray-50"
+          className="block rounded border border-gray-300 px-6 py-2.5 text-center text-sm text-swing-gray-dark hover:bg-gray-50 sm:inline-block"
         >
-          Abbrechen
+          {tf.cancel}
         </a>
       </div>
     </form>

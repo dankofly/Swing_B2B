@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ShoppingCart, ChevronDown, Check, Palette, Layers } from "lucide-react";
 import type { ProductSize, ProductColor } from "@/lib/types";
 import { useCart } from "@/lib/cart";
+import { useDict, useLocale } from "@/lib/i18n/context";
+import { getDateLocale } from "@/lib/i18n/shared";
 
 interface ProductDetailClientProps {
   productId: string;
@@ -22,10 +24,6 @@ function stockDot(quantity: number) {
   return "bg-red-500";
 }
 
-function eur(value: number) {
-  return value.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
-}
-
 export default function ProductDetailClient({
   productId,
   productName,
@@ -37,6 +35,16 @@ export default function ProductDetailClient({
   stockMap,
 }: ProductDetailClientProps) {
   const { addItem } = useCart();
+  const dict = useDict();
+  const locale = useLocale();
+  const dl = getDateLocale(locale);
+  const t = dict.katalog.detail;
+  const ts = dict.common.stock;
+
+  function eur(value: number) {
+    return value.toLocaleString(dl, { style: "currency", currency: "EUR" });
+  }
+
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [added, setAdded] = useState(false);
@@ -83,26 +91,26 @@ export default function ProductDetailClient({
       {/* Color selector */}
       {colors.length > 0 && (
         <div className="overflow-hidden card ">
-          <div className="flex items-center gap-3 px-6 py-5">
+          <div className="flex items-center gap-3 px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-swing-navy text-white">
               <Palette size={18} strokeWidth={1.75} />
             </div>
             <div>
-              <h3 className="text-[15px] font-bold text-swing-navy">Farbdesigns</h3>
+              <h3 className="text-[15px] font-bold text-swing-navy">{t.colorDesigns}</h3>
               <p className="text-[11px] text-swing-gray-dark/35">
-                {selectedColor ? `${selectedColorName} ausgewählt` : "Wählen Sie ein Design"}
+                {selectedColor ? t.designSelected.replace("{name}", selectedColorName) : t.chooseDesign}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 border-t border-gray-100 px-6 py-5">
+          <div className="grid grid-cols-3 gap-2 border-t border-gray-100 px-4 py-4 sm:flex sm:flex-wrap sm:gap-3 sm:px-6 sm:py-5">
             {colors.map((color) => {
               const isActive = selectedColor === color.id;
               return (
                 <button
                   key={color.id}
                   onClick={() => toggleColor(color.id)}
-                  className={`group relative flex w-28 cursor-pointer flex-col items-center overflow-hidden rounded-xl p-3 transition-all duration-200 ${
+                  className={`group relative flex w-full cursor-pointer flex-col items-center overflow-hidden rounded-xl p-2 transition-all duration-200 sm:w-auto sm:max-w-32 sm:p-3 ${
                     isActive
                       ? "bg-swing-navy/4 ring-2 ring-swing-navy/20 shadow-md shadow-black/5"
                       : "bg-gray-50/60 hover:bg-gray-50 hover:shadow-sm"
@@ -156,25 +164,23 @@ export default function ProductDetailClient({
       {selectedColor && sizes.length > 0 && (
         <div key={selectedColor} className="overflow-hidden card fade-in-up">
           {/* Section header */}
-          <div className="flex items-center justify-between px-6 py-5">
+          <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-swing-gold/10">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-swing-gold/10">
                 <Layers size={18} className="text-swing-gold-dark" />
               </div>
               <div>
                 <h3 className="text-[15px] font-bold text-swing-navy">
-                  Größen & Verfügbarkeit
+                  {t.sizesAvailability}
                 </h3>
                 <p className="text-[11px] text-swing-gray-dark/35">
-                  Design{" "}
-                  <span className="font-semibold text-swing-gold-dark">{selectedColorName}</span>
-                  {" · "}{sizes.length} {sizes.length === 1 ? "Größe" : "Größen"}
+                  {t.designSizes.replace("{name}", selectedColorName).replace("{count}", String(sizes.length))}
                 </p>
               </div>
             </div>
             {totalQty > 0 && (
               <span className="rounded-lg bg-swing-gold/10 px-3 py-1.5 text-[11px] font-bold tabular-nums text-swing-gold-dark">
-                {totalQty} {totalQty === 1 ? "Stück" : "Stück"} gewählt
+                {t.piecesChosen.replace("{count}", String(totalQty))}
               </span>
             )}
           </div>
@@ -186,17 +192,17 @@ export default function ProductDetailClient({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50/60 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
-                    <th className="px-5 py-2.5 text-left">Größe</th>
+                    <th className="px-5 py-2.5 text-left">{t.size}</th>
                     {hasPrices && (
                       <>
-                        {uvpBrutto != null && <th className="px-5 py-2.5 text-right">UVP brutto</th>}
-                        <th className="px-5 py-2.5 text-right">Ihr EK netto</th>
-                        <th className="px-5 py-2.5 text-right">Rabatt</th>
+                        {uvpBrutto != null && <th className="px-5 py-2.5 text-right">{t.listPrice}</th>}
+                        <th className="px-5 py-2.5 text-right">{t.yourPrice}</th>
+                        <th className="px-5 py-2.5 text-right">{t.discount}</th>
                       </>
                     )}
-                    <th className="px-5 py-2.5 text-left">Lagerstand</th>
-                    <th className="px-5 py-2.5 text-left">Lieferzeit</th>
-                    <th className="px-5 py-2.5 text-right">Menge</th>
+                    <th className="px-5 py-2.5 text-left">{t.stock}</th>
+                    <th className="px-5 py-2.5 text-left">{t.deliveryTime}</th>
+                    <th className="px-5 py-2.5 text-right">{t.quantity}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -211,9 +217,9 @@ export default function ProductDetailClient({
                         <td className="px-5 py-3.5"><span className="font-bold text-swing-navy">{size.size_label}</span></td>
                         {hasPrices && (
                           <>
-                            {uvpBrutto != null && <td className="px-5 py-3.5 text-right tabular-nums text-swing-navy/50 line-through">{eur(uvpBrutto)}</td>}
+                            {uvpBrutto != null && <td className="px-5 py-3.5 text-right tabular-nums text-swing-navy/40">{eur(uvpBrutto)}</td>}
                             <td className="px-5 py-3.5 text-right text-lg font-extrabold tabular-nums text-swing-navy">
-                              {ekNetto != null ? eur(ekNetto) : <span className="text-sm text-swing-navy/30">Auf Anfrage</span>}
+                              {ekNetto != null ? eur(ekNetto) : <span className="text-sm text-swing-navy/30">{ts.onRequest}</span>}
                             </td>
                             <td className="px-5 py-3.5 text-right">
                               {rabatt > 0 ? <span className="rounded-lg bg-swing-gold/15 px-2.5 py-1 text-[11px] font-bold tabular-nums text-swing-gold-dark">-{rabatt}%</span> : <span className="text-[11px] text-swing-navy/15">—</span>}
@@ -224,12 +230,12 @@ export default function ProductDetailClient({
                           <div className="flex items-center gap-2">
                             <span className={`inline-block h-2 w-2 rounded-full ${stockDot(stock)}`} />
                             <span className={stock > 0 && stock <= 10 ? "font-semibold text-amber-700" : "text-swing-navy/50"}>
-                              {stock > 10 ? "Verfügbar" : stock > 0 ? `Nur noch ${stock} Stk.` : "Nicht auf Lager"}
+                              {stock > 10 ? ts.available : stock > 0 ? ts.onlyXLeft.replace("{count}", String(stock)) : ts.outOfStock}
                             </span>
                           </div>
                         </td>
                         <td className="px-5 py-3.5 text-swing-navy/35">
-                          {stock > 0 ? "Sofort" : size.delivery_days > 0 ? `ca. ${Math.round(size.delivery_days / 7)} ${Math.round(size.delivery_days / 7) === 1 ? "Woche" : "Wochen"}` : "Auf Anfrage"}
+                          {stock > 0 ? ts.immediate : size.delivery_days > 0 ? ts.weeksDelivery.replace("{weeks}", String(Math.round(size.delivery_days / 7))) : ts.onRequest}
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <input type="number" min={0} value={qty} onChange={(e) => setQuantities((prev) => ({ ...prev, [size.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
@@ -257,7 +263,7 @@ export default function ProductDetailClient({
                       <div className="flex items-center gap-2">
                         <span className={`inline-block h-2 w-2 rounded-full ${stockDot(stock)}`} />
                         <span className={`text-xs ${stock > 0 && stock <= 10 ? "font-semibold text-amber-700" : "text-swing-navy/50"}`}>
-                          {stock > 10 ? "Verfügbar" : stock > 0 ? `${stock} Stk.` : "Nicht auf Lager"}
+                          {stock > 10 ? ts.available : stock > 0 ? ts.onlyXLeft.replace("{count}", String(stock)) : ts.outOfStock}
                         </span>
                       </div>
                     </div>
@@ -266,18 +272,18 @@ export default function ProductDetailClient({
                         {ekNetto != null ? (
                           <span className="text-lg font-extrabold tabular-nums text-swing-navy">{eur(ekNetto)}</span>
                         ) : (
-                          <span className="text-sm text-swing-navy/30">Auf Anfrage</span>
+                          <span className="text-sm text-swing-navy/30">{ts.onRequest}</span>
                         )}
-                        {uvpBrutto != null && <span className="text-xs tabular-nums text-swing-navy/35 line-through">{eur(uvpBrutto)}</span>}
+                        {uvpBrutto != null && <span className="text-xs tabular-nums text-swing-navy/35">{t.listPrice} {eur(uvpBrutto)}</span>}
                         {rabatt > 0 && <span className="rounded bg-swing-gold/15 px-2 py-0.5 text-[10px] font-bold tabular-nums text-swing-gold-dark">-{rabatt}%</span>}
                       </div>
                     )}
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-xs text-swing-navy/35">
-                        {stock > 0 ? "Sofort lieferbar" : size.delivery_days > 0 ? `ca. ${Math.round(size.delivery_days / 7)} Wo.` : "Auf Anfrage"}
+                        {stock > 0 ? ts.immediate : size.delivery_days > 0 ? ts.weeksDelivery.replace("{weeks}", String(Math.round(size.delivery_days / 7))) : ts.onRequest}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-swing-navy/30">Menge</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-swing-navy/30">{t.quantity}</span>
                         <input type="number" min={0} value={qty} onChange={(e) => setQuantities((prev) => ({ ...prev, [size.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
                           className={`w-16 rounded-lg border bg-white px-2 py-2 text-center text-sm tabular-nums transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20 ${qty > 0 ? "border-swing-gold/40 font-bold text-swing-navy" : "border-gray-200 text-swing-navy/40"}`} />
                       </div>
@@ -295,7 +301,7 @@ export default function ProductDetailClient({
               {hasPrices && totalQty > 0 && (
                 <div className="flex items-baseline gap-3">
                   <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
-                    Zwischensumme
+                    {t.subtotal}
                   </span>
                   <span className="text-base font-extrabold tabular-nums text-swing-navy">
                     {eur(
@@ -319,12 +325,12 @@ export default function ProductDetailClient({
               {added ? (
                 <>
                   <Check size={16} className="animate-[bounceIn_0.3s_ease]" />
-                  Hinzugefügt!
+                  {t.added}
                 </>
               ) : (
                 <>
                   <ShoppingCart size={16} className="transition-transform duration-200 group-hover:scale-110" />
-                  In den Warenkorb
+                  {t.addToCart}
                 </>
               )}
             </button>

@@ -1,29 +1,31 @@
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Truck, FileText } from "lucide-react";
+import { getDictionary } from "@/lib/i18n";
 
-export default function Home() {
+export default async function Home() {
+  const dict = await getDictionary();
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Hero */}
-      <div className="relative flex flex-1 flex-col items-center justify-center dash-hero px-4 text-center">
+      <div className="relative flex flex-1 flex-col items-center justify-center dash-hero px-5 py-12 text-center sm:px-4 sm:py-0">
         {/* Decorative rings — largest hidden on mobile to prevent overflow */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-175 w-175 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5 sm:block" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8 sm:block" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 h-75 w-75 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/4" />
 
         <div className="relative z-10 flex flex-col items-center">
-          <h1 className="swing-h1 mb-2">SWING PARAGLIDERS</h1>
+          <h1 className="swing-h1 mb-2">{dict.landing.brand}</h1>
           <div className="flex items-center justify-center gap-3">
             <div className="hidden h-px w-12 bg-swing-gold/20 sm:block" />
             <p className="text-xs font-extrabold uppercase tracking-[2px] text-white/35 sm:text-sm sm:tracking-[4px]">
-              B2B Händlerportal
+              {dict.landing.title}
             </p>
             <div className="hidden h-px w-12 bg-swing-gold/20 sm:block" />
           </div>
 
           <p className="mt-5 max-w-sm text-center text-sm leading-relaxed text-white/25 sm:max-w-md">
-            Exklusiver Zugang zu individuellen Preisen, Live-Lagerbeständen
-            und direkter Bestellanfrage für autorisierte Händler.
+            {dict.landing.subtitle}
           </p>
 
           <div className="mt-8 flex w-full max-w-xs flex-col items-center gap-3 sm:w-auto sm:max-w-none sm:flex-row">
@@ -31,14 +33,14 @@ export default function Home() {
               href="/login"
               className="group flex w-full items-center justify-center gap-2 rounded-lg bg-swing-gold px-10 py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 sm:w-auto"
             >
-              Anmelden
+              {dict.landing.login}
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               href="/register"
               className="w-full rounded-lg border border-white/10 px-10 py-3.5 text-center text-sm font-semibold tracking-wide text-white/60 transition-all duration-200 hover:border-white/25 hover:text-white/90 sm:w-auto"
             >
-              Registrieren
+              {dict.landing.register}
             </Link>
           </div>
         </div>
@@ -50,22 +52,22 @@ export default function Home() {
           {[
             {
               icon: ShieldCheck,
-              title: "Individuelle Preise",
-              desc: "Ihre verhandelten EK-Konditionen",
+              title: dict.landing.featurePrice,
+              desc: dict.landing.featurePriceDesc,
             },
             {
               icon: Truck,
-              title: "Live Lagerbestand",
-              desc: "Echtzeit-Verfügbarkeit aller Größen",
+              title: dict.landing.featureStock,
+              desc: dict.landing.featureStockDesc,
             },
             {
               icon: FileText,
-              title: "Schnelle Anfragen",
-              desc: "Bestellanfrage in wenigen Klicks",
+              title: dict.landing.featureInquiry,
+              desc: dict.landing.featureInquiryDesc,
             },
           ].map((feat, i) => (
             <div
-              key={feat.title}
+              key={i}
               className={`flex items-center gap-4 px-6 py-5 sm:px-8 sm:py-7 ${
                 i < 2 ? "border-b border-white/6 sm:border-b-0 sm:border-r" : ""
               }`}
@@ -85,7 +87,7 @@ export default function Home() {
       {/* Footer */}
       <div className="bg-[#0a1620] py-4 text-center">
         <p className="text-[11px] text-white/15">
-          SWING Flugsportgeräte GmbH &middot; swing.de
+          {dict.landing.footer}
         </p>
       </div>
     </div>

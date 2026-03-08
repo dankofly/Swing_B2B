@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Users, CheckCircle, XCircle, Search, Plus } from "lucide-react";
 import DeleteCompanyButton from "./DeleteCompanyButton";
+import { useDict, useLocale } from "@/lib/i18n/context";
+import { getDateLocale } from "@/lib/i18n/shared";
 
 interface Company {
   id: string;
@@ -24,6 +26,10 @@ interface Company {
 }
 
 export default function KundenList({ companies }: { companies: Company[] }) {
+  const dict = useDict();
+  const locale = useLocale();
+  const dl = getDateLocale(locale);
+  const tc = dict.admin.customers;
   const [search, setSearch] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
   const router = useRouter();
@@ -55,7 +61,7 @@ export default function KundenList({ companies }: { companies: Company[] }) {
           />
           <input
             type="text"
-            placeholder="Kunde suchen..."
+            placeholder={tc.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded border border-swing-gray bg-white/80 py-2.5 pl-9 pr-3 text-sm backdrop-blur-sm transition-all duration-200 focus:border-swing-gold focus:bg-white focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
@@ -63,15 +69,15 @@ export default function KundenList({ companies }: { companies: Company[] }) {
         </div>
         <div className="flex items-center justify-between gap-3 sm:justify-start">
           <span className="text-sm text-swing-gray-dark/50">
-            {filtered.length} Kunden
+            {filtered.length} {tc.count}
           </span>
           <Link
             href="/admin/kunden/neu"
             className="flex items-center gap-1.5 rounded bg-swing-gold px-4 py-2.5 text-sm font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark"
           >
             <Plus size={16} />
-            <span className="hidden sm:inline">Neuer Kunde</span>
-            <span className="sm:hidden">Neu</span>
+            <span className="hidden sm:inline">{tc.newCustomer}</span>
+            <span className="sm:hidden">{dict.common.buttons.new}</span>
           </Link>
         </div>
       </div>
@@ -80,14 +86,14 @@ export default function KundenList({ companies }: { companies: Company[] }) {
         <div className="flex flex-col items-center justify-center py-20">
           <Users size={48} className="mb-4 text-swing-gray-dark/20" />
           <p className="text-lg font-semibold text-swing-navy">
-            Keine Kunden gefunden
+            {tc.noCustomers}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((company) => (
             <div key={company.id} className="glass-card rounded transition-all duration-200">
-              <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
                 <div>
                   <div className="flex items-center gap-2">
                     <Link
@@ -98,11 +104,11 @@ export default function KundenList({ companies }: { companies: Company[] }) {
                     </Link>
                     {company.is_approved ? (
                       <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
-                        Freigeschaltet
+                        {dict.common.approved}
                       </span>
                     ) : (
                       <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
-                        Nicht freigeschaltet
+                        {dict.common.notApproved}
                       </span>
                     )}
                   </div>
@@ -134,15 +140,15 @@ export default function KundenList({ companies }: { companies: Company[] }) {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="hidden text-xs text-swing-gray-dark/40 sm:inline">
-                    seit{" "}
-                    {new Date(company.created_at).toLocaleDateString("de-DE")}
+                    {tc.since}{" "}
+                    {new Date(company.created_at).toLocaleDateString(dl)}
                   </span>
                   <button
                     onClick={() =>
                       toggleApproval(company.id, company.is_approved)
                     }
                     disabled={updating === company.id}
-                    className={`flex cursor-pointer items-center gap-1 rounded px-3 py-2 text-xs font-bold transition-all duration-200 ${
+                    className={`flex min-h-11 cursor-pointer items-center gap-1 rounded px-3 py-2 text-xs font-bold transition-all duration-200 sm:min-h-0 ${
                       company.is_approved
                         ? "bg-red-50 text-red-600 hover:bg-red-100"
                         : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
@@ -151,12 +157,12 @@ export default function KundenList({ companies }: { companies: Company[] }) {
                     {company.is_approved ? (
                       <>
                         <XCircle size={14} />
-                        Sperren
+                        {tc.lock}
                       </>
                     ) : (
                       <>
                         <CheckCircle size={14} />
-                        Freischalten
+                        {tc.unlock}
                       </>
                     )}
                   </button>

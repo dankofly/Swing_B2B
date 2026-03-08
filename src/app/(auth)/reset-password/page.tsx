@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, KeyRound, CheckCircle } from "lucide-react";
+import { useDict } from "@/lib/i18n/context";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -13,6 +14,7 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const dict = useDict();
 
   async function handleReset(e: React.FormEvent) {
     e.preventDefault();
@@ -20,13 +22,13 @@ export default function ResetPasswordPage() {
     setError("");
 
     if (password !== passwordConfirm) {
-      setError("Passwörter stimmen nicht überein.");
+      setError(dict.auth.resetPassword.errorMismatch);
       setLoading(false);
       return;
     }
 
     if (password.length < 8) {
-      setError("Passwort muss mindestens 8 Zeichen lang sein.");
+      setError(dict.auth.resetPassword.errorMin);
       setLoading(false);
       return;
     }
@@ -35,7 +37,7 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      setError("Fehler beim Zurücksetzen. Bitte fordern Sie einen neuen Link an.");
+      setError(dict.auth.resetPassword.errorGeneric);
       setLoading(false);
       return;
     }
@@ -73,10 +75,10 @@ export default function ResetPasswordPage() {
                 <CheckCircle size={28} className="text-emerald-500" />
               </div>
               <h1 className="text-lg font-extrabold uppercase tracking-[2px] text-swing-navy">
-                Passwort geändert
+                {dict.auth.resetPassword.successTitle}
               </h1>
               <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-swing-gray-dark/50">
-                Ihr Passwort wurde erfolgreich zurückgesetzt. Sie werden zum Katalog weitergeleitet...
+                {dict.auth.resetPassword.successMessage}
               </p>
             </div>
           ) : (
@@ -86,10 +88,10 @@ export default function ResetPasswordPage() {
                   <KeyRound size={20} className="text-swing-navy/60" />
                 </div>
                 <h1 className="text-lg font-extrabold uppercase tracking-[2px] text-swing-navy">
-                  Neues Passwort
+                  {dict.auth.resetPassword.title}
                 </h1>
                 <p className="mt-1.5 text-sm text-swing-gray-dark/40">
-                  Vergeben Sie ein neues Passwort
+                  {dict.auth.resetPassword.subtitle}
                 </p>
               </div>
 
@@ -105,7 +107,7 @@ export default function ResetPasswordPage() {
                     htmlFor="password"
                     className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-swing-navy/40"
                   >
-                    Neues Passwort
+                    {dict.auth.resetPassword.newPassword}
                   </label>
                   <input
                     id="password"
@@ -115,7 +117,7 @@ export default function ResetPasswordPage() {
                     required
                     minLength={8}
                     className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm transition-all duration-150 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
-                    placeholder="Mindestens 8 Zeichen"
+                    placeholder={dict.auth.resetPassword.passwordMin}
                   />
                 </div>
 
@@ -124,7 +126,7 @@ export default function ResetPasswordPage() {
                     htmlFor="passwordConfirm"
                     className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-swing-navy/40"
                   >
-                    Passwort bestätigen
+                    {dict.auth.resetPassword.confirmPassword}
                   </label>
                   <input
                     id="passwordConfirm"
@@ -133,7 +135,7 @@ export default function ResetPasswordPage() {
                     onChange={(e) => setPasswordConfirm(e.target.value)}
                     required
                     className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm transition-all duration-150 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
-                    placeholder="Passwort wiederholen"
+                    placeholder={dict.auth.resetPassword.passwordRepeat}
                   />
                 </div>
 
@@ -142,7 +144,7 @@ export default function ResetPasswordPage() {
                   disabled={loading}
                   className="btn-gold group flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-swing-gold py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {loading ? "Wird gespeichert..." : "Passwort speichern"}
+                  {loading ? dict.auth.resetPassword.submitting : dict.auth.resetPassword.submit}
                   {!loading && <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />}
                 </button>
               </form>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { updateMyProfile } from "@/lib/actions/profile";
 import { Save, Loader2, CheckCircle } from "lucide-react";
+import { useDict } from "@/lib/i18n/context";
 
 interface Company {
   id: string;
@@ -28,12 +29,6 @@ const labelClass =
 const sectionClass =
   "text-xs font-bold uppercase tracking-widest text-swing-navy/70 mb-4";
 
-const COMPANY_TYPE_LABELS: Record<string, string> = {
-  dealer: "Händler",
-  importer: "Importeur",
-  importer_network: "Importeur mit Händlernetzwerk",
-};
-
 export default function ProfileForm({
   company,
   fullName,
@@ -43,6 +38,9 @@ export default function ProfileForm({
   fullName: string;
   email: string;
 }) {
+  const dict = useDict();
+  const tp = dict.profile;
+  const companyTypeLabels = dict.common.companyTypes as Record<string, string>;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -61,18 +59,18 @@ export default function ProfileForm({
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } else {
-      setError(result.error || "Fehler beim Speichern");
+      setError(result.error || tp.saveError);
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl">
-      <div className="rounded border border-gray-200 bg-white p-6">
+      <div className="rounded border border-gray-200 bg-white p-4 sm:p-6">
         {/* Company info */}
-        <h3 className={sectionClass}>Firmendaten</h3>
+        <h3 className={sectionClass}>{tp.companyData}</h3>
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className={labelClass}>Firmenname *</label>
+            <label className={labelClass}>{tp.companyName} *</label>
             <input
               name="name"
               required
@@ -82,12 +80,12 @@ export default function ProfileForm({
           </div>
 
           <div>
-            <label className={labelClass}>Typ</label>
+            <label className={labelClass}>{tp.type}</label>
             <input
               type="text"
               disabled
               value={
-                COMPANY_TYPE_LABELS[company.company_type] ||
+                companyTypeLabels[company.company_type] ||
                 company.company_type
               }
               className={`${inputClass} bg-gray-50 text-swing-navy/50`}
@@ -95,7 +93,7 @@ export default function ProfileForm({
           </div>
 
           <div>
-            <label className={labelClass}>UID-Nummer</label>
+            <label className={labelClass}>{tp.vatId}</label>
             <input
               name="vat_id"
               defaultValue={company.vat_id ?? ""}
@@ -105,42 +103,42 @@ export default function ProfileForm({
           </div>
 
           <div className="sm:col-span-2">
-            <label className={labelClass}>Produktkategorien</label>
+            <label className={labelClass}>{tp.productCategories}</label>
             <div className="mt-1 flex flex-wrap gap-3">
               {company.sells_paragliders && (
                 <span className="rounded bg-swing-navy/10 px-2 py-1 text-xs font-semibold text-swing-navy/70">
-                  Gleitschirme
+                  {dict.common.categories.paragliders}
                 </span>
               )}
               {company.sells_miniwings && (
                 <span className="rounded bg-swing-navy/10 px-2 py-1 text-xs font-semibold text-swing-navy/70">
-                  Miniwings
+                  {dict.common.categories.miniwings}
                 </span>
               )}
               {company.sells_parakites && (
                 <span className="rounded bg-swing-navy/10 px-2 py-1 text-xs font-semibold text-swing-navy/70">
-                  Parakites
+                  {dict.common.categories.parakites}
                 </span>
               )}
               {!company.sells_paragliders &&
                 !company.sells_miniwings &&
                 !company.sells_parakites && (
                   <span className="text-xs text-swing-navy/30">
-                    Keine Kategorien zugewiesen
+                    {tp.noCategoriesAssigned}
                   </span>
                 )}
             </div>
             <p className="mt-1 text-[10px] text-swing-navy/30">
-              Kategorien können nur vom Admin geändert werden
+              {tp.categoriesAdminOnly}
             </p>
           </div>
         </div>
 
         {/* Contact */}
-        <h3 className={`${sectionClass} mt-8`}>Kontakt</h3>
+        <h3 className={`${sectionClass} mt-8`}>{tp.contact}</h3>
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label className={labelClass}>Ansprechpartner *</label>
+            <label className={labelClass}>{tp.contactPerson} *</label>
             <input
               name="full_name"
               required
@@ -150,7 +148,7 @@ export default function ProfileForm({
           </div>
 
           <div>
-            <label className={labelClass}>E-Mail *</label>
+            <label className={labelClass}>{tp.email} *</label>
             <input
               name="contact_email"
               type="email"
@@ -159,12 +157,12 @@ export default function ProfileForm({
               className={inputClass}
             />
             <p className="mt-1 text-[10px] text-swing-navy/30">
-              Login-E-Mail: {email}
+              {tp.loginEmail}: {email}
             </p>
           </div>
 
           <div className="sm:col-span-2">
-            <label className={labelClass}>Telefon</label>
+            <label className={labelClass}>{tp.phone}</label>
             <div className="flex gap-2">
               <input
                 name="phone"
@@ -187,10 +185,10 @@ export default function ProfileForm({
         </div>
 
         {/* Address */}
-        <h3 className={`${sectionClass} mt-8`}>Adresse</h3>
+        <h3 className={`${sectionClass} mt-8`}>{tp.address}</h3>
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className={labelClass}>Straße + Nr.</label>
+            <label className={labelClass}>{tp.street}</label>
             <input
               name="address_street"
               defaultValue={company.address_street ?? ""}
@@ -200,7 +198,7 @@ export default function ProfileForm({
           </div>
 
           <div>
-            <label className={labelClass}>PLZ</label>
+            <label className={labelClass}>{tp.zip}</label>
             <input
               name="address_zip"
               defaultValue={company.address_zip ?? ""}
@@ -210,7 +208,7 @@ export default function ProfileForm({
           </div>
 
           <div>
-            <label className={labelClass}>Stadt</label>
+            <label className={labelClass}>{tp.city}</label>
             <input
               name="address_city"
               defaultValue={company.address_city ?? ""}
@@ -220,7 +218,7 @@ export default function ProfileForm({
           </div>
 
           <div className="sm:col-span-2">
-            <label className={labelClass}>Land</label>
+            <label className={labelClass}>{tp.country}</label>
             <input
               name="address_country"
               defaultValue={company.address_country ?? ""}
@@ -237,7 +235,7 @@ export default function ProfileForm({
         {success && (
           <div className="mt-4 flex items-center gap-2 text-sm font-medium text-green-700">
             <CheckCircle size={16} />
-            Änderungen gespeichert
+            {tp.saved}
           </div>
         )}
 
@@ -245,14 +243,14 @@ export default function ProfileForm({
           <button
             type="submit"
             disabled={saving}
-            className="flex cursor-pointer items-center gap-2 rounded bg-swing-gold px-5 py-2.5 text-sm font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark disabled:opacity-50"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded bg-swing-gold px-5 py-2.5 text-sm font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark disabled:opacity-50 sm:w-auto"
           >
             {saving ? (
               <Loader2 size={16} className="animate-spin" />
             ) : (
               <Save size={16} />
             )}
-            {saving ? "Speichert..." : "Änderungen speichern"}
+            {saving ? tp.saving : tp.save}
           </button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import type { ProductSize, ProductColor } from "@/lib/types";
 import ProductDetailClient from "@/components/katalog/ProductDetailClient";
+import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,8 @@ export default async function ProduktDetailPage({
     .single();
 
   if (!product) notFound();
+
+  const dict = await getDictionary();
 
   const sizes = ((product.sizes || []) as ProductSize[]).sort(
     (a, b) => a.sort_order - b.sort_order
@@ -93,16 +96,16 @@ export default async function ProduktDetailPage({
     <div className="space-y-6">
       <Link
         href="/katalog"
-        className="inline-flex items-center gap-1.5 text-sm text-swing-navy/40 transition-colors duration-200 hover:text-swing-navy"
+        className="inline-flex min-h-11 items-center gap-1.5 text-sm text-swing-navy/40 transition-colors duration-200 hover:text-swing-navy"
       >
         <ArrowLeft size={14} />
-        Zurück zum Katalog
+        {dict.katalog.detail.backToCatalog}
       </Link>
 
       {/* Product Hero */}
       <div className="dash-hero overflow-hidden rounded-xl">
         {/* Top bar with category + badges */}
-        <div className="relative z-10 flex flex-wrap items-center gap-3 border-b border-white/8 px-6 py-3.5 sm:px-8">
+        <div className="relative z-10 flex flex-wrap items-center gap-2 border-b border-white/8 px-4 py-3 sm:gap-3 sm:px-6 sm:py-3.5 md:px-8">
           {categoryName && (
             <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
               {categoryName}
@@ -112,7 +115,7 @@ export default async function ProduktDetailPage({
             <div className="flex flex-wrap items-center gap-2">
               {product.is_preorder && (
                 <span className="rounded bg-swing-gold px-3 py-1 text-xs font-bold uppercase tracking-wide text-swing-navy">
-                  Jetzt vorbestellen
+                  {dict.katalog.badges.preorder}
                 </span>
               )}
               {product.is_fade_out && (
@@ -161,16 +164,16 @@ export default async function ProduktDetailPage({
                 className="btn-gold group mt-5 inline-flex w-fit items-center gap-2 rounded-lg bg-swing-gold px-5 py-2.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20"
               >
                 <ExternalLink size={14} className="transition-transform group-hover:translate-x-0.5" />
-                Produkt auf swing.de ansehen
+                {dict.katalog.detail.viewOnWebsite}
               </a>
             )}
           </div>
 
           {/* Right: Tech Specs card */}
           {hasSpecs && (
-            <div className="glass-dark min-w-65 rounded-lg p-6">
+            <div className="glass-dark w-full rounded-lg p-5 sm:p-6 lg:min-w-65">
               <h3 className="mb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-gold/80">
-                Technische Daten
+                {dict.katalog.detail.techSpecs}
               </h3>
               <dl className="space-y-2.5 text-sm">
                 {Object.entries(techSpecs).map(([key, value]) => (

@@ -2,14 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { LogIn, ShoppingCart, Euro, TrendingUp, TrendingDown, Minus } from "lucide-react";
-
-const PERIODS = [
-  { key: "7d", label: "7T" },
-  { key: "30d", label: "30T" },
-  { key: "90d", label: "90T" },
-  { key: "1y", label: "1J" },
-  { key: "all", label: "Alle" },
-];
+import { useDict, useLocale } from "@/lib/i18n/context";
+import { getDateLocale } from "@/lib/i18n/shared";
 
 // Dummy data per period — will be replaced with real Supabase queries
 const DUMMY: Record<string, { logins: number; loginsTrend: number; inquiries: number; inquiriesTrend: number; revenue: number; revenueTrend: number; sparkline: number[] }> = {
@@ -19,13 +13,6 @@ const DUMMY: Record<string, { logins: number; loginsTrend: number; inquiries: nu
   "1y": { logins: 156, loginsTrend: 3, inquiries: 42, inquiriesTrend: 18, revenue: 145200, revenueTrend: 12, sparkline: [10, 12, 9, 14, 16, 13, 18, 15, 20, 22, 18, 25] },
   all: { logins: 312, loginsTrend: 0, inquiries: 87, inquiriesTrend: 0, revenue: 298400, revenueTrend: 0, sparkline: [5, 8, 12, 15, 18, 22, 20, 25, 28, 30, 32, 35] },
 };
-
-function formatCurrency(value: number) {
-  if (value >= 1000) {
-    return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
-  }
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(value);
-}
 
 function MiniSparkline({ data, color, height = 28 }: { data: number[]; color: string; height?: number }) {
   if (data.length < 2) return null;
@@ -76,7 +63,7 @@ function MiniSparkline({ data, color, height = 28 }: { data: number[]; color: st
   );
 }
 
-function AnimatedNumber({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) {
+function AnimatedNumber({ value, locale, prefix = "", suffix = "" }: { value: number; locale: string; prefix?: string; suffix?: string }) {
   const [display, setDisplay] = useState(0);
   const ref = useRef<number>(0);
   const frameRef = useRef<number>(0);
@@ -108,12 +95,12 @@ function AnimatedNumber({ value, prefix = "", suffix = "" }: { value: number; pr
 
   if (prefix || suffix) {
     const formatted = display >= 1000
-      ? new Intl.NumberFormat("de-DE").format(display)
+      ? new Intl.NumberFormat(locale).format(display)
       : String(display);
     return <>{prefix}{formatted}{suffix}</>;
   }
 
-  return <>{display >= 1000 ? new Intl.NumberFormat("de-DE").format(display) : display}</>;
+  return <>{display >= 1000 ? new Intl.NumberFormat(locale).format(display) : display}</>;
 }
 
 function TrendBadge({ value }: { value: number }) {
@@ -142,9 +129,29 @@ function TrendBadge({ value }: { value: number }) {
 }
 
 export default function CompanyStats() {
+  const dict = useDict();
+  const locale = useLocale();
+  const dl = getDateLocale(locale);
+  const ts = dict.admin.stats;
+
+  const PERIODS = [
+    { key: "7d", label: ts.period7d },
+    { key: "30d", label: ts.period30d },
+    { key: "90d", label: ts.period90d },
+    { key: "1y", label: ts.period1y },
+    { key: "all", label: ts.periodAll },
+  ];
+
   const [period, setPeriod] = useState("30d");
   const [transitioning, setTransitioning] = useState(false);
   const data = DUMMY[period];
+
+  function formatCurrency(value: number) {
+    if (value >= 1000) {
+      return new Intl.NumberFormat(dl, { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+    }
+    return new Intl.NumberFormat(dl, { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(value);
+  }
 
   function switchPeriod(key: string) {
     if (key === period) return;
@@ -157,7 +164,7 @@ export default function CompanyStats() {
 
   const stats = [
     {
-      label: "Logins",
+      label: ts.logins,
       value: data.logins,
       formatted: null as string | null,
       trend: data.loginsTrend,
@@ -167,7 +174,7 @@ export default function CompanyStats() {
       iconColor: "text-blue-500",
     },
     {
-      label: "Anfragen",
+      label: ts.inquiries,
       value: data.inquiries,
       formatted: null as string | null,
       trend: data.inquiriesTrend,
@@ -177,7 +184,7 @@ export default function CompanyStats() {
       iconColor: "text-amber-500",
     },
     {
-      label: "Umsatz",
+      label: ts.revenue,
       value: data.revenue,
       formatted: formatCurrency(data.revenue),
       trend: data.revenueTrend,
@@ -234,9 +241,9 @@ export default function CompanyStats() {
             <div className="flex items-end justify-between pl-8">
               <span className="kpi-value text-xl font-extrabold leading-none text-swing-navy">
                 {s.formatted ? (
-                  <AnimatedNumber value={s.value} suffix=" EUR" />
+                  <AnimatedNumber value={s.value} locale={dl} suffix=" EUR" />
                 ) : (
-                  <AnimatedNumber value={s.value} />
+                  <AnimatedNumber value={s.value} locale={dl} />
                 )}
               </span>
               <div className="opacity-60 transition-opacity duration-200 group-hover:opacity-100">

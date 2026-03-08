@@ -128,7 +128,7 @@ export default function LagerImportClient() {
   return (
     <div>
       {/* Upload Card */}
-      <div className="glass-card mb-6 rounded p-6">
+      <div className="glass-card mb-6 rounded p-4 sm:p-6">
         <h2 className="mb-2 text-base font-bold text-swing-navy">
           WinLine Bestandsliste importieren
         </h2>
@@ -206,7 +206,7 @@ export default function LagerImportClient() {
       {/* Matched Items */}
       {matchedItems.length > 0 && (
         <div className="glass-card mb-6 overflow-hidden rounded">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-swing-gray/30 px-6 py-4">
+          <div className="flex flex-col gap-3 border-b border-swing-gray/30 px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6">
             <div className="flex items-center gap-3">
               <h2 className="text-base font-bold text-swing-navy">
                 Zugeordnete Artikel
@@ -225,7 +225,7 @@ export default function LagerImportClient() {
               <button
                 onClick={handleConfirm}
                 disabled={saving || !!result}
-                className="flex cursor-pointer items-center gap-2 rounded bg-swing-gold px-6 py-2 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none"
+                className="flex cursor-pointer items-center gap-2 rounded bg-swing-gold px-4 py-2 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none sm:px-6"
               >
                 {saving ? (
                   <>

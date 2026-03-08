@@ -12,6 +12,8 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
+import { useDict, useLocale } from "@/lib/i18n/context";
+import { getDateLocale } from "@/lib/i18n/shared";
 
 interface Note {
   id: string;
@@ -28,6 +30,11 @@ export default function NotesSection({
   companyId: string;
   notes: Note[];
 }) {
+  const dict = useDict();
+  const locale = useLocale();
+  const dl = getDateLocale(locale);
+  const td = dict.admin.customers.detail;
+
   const [notes, setNotes] = useState(initialNotes);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -73,7 +80,7 @@ export default function NotesSection({
       <div className="mb-3 flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-swing-navy/50">
           <StickyNote size={14} />
-          Notizen
+          {td.notes}
           {notes.length > 0 && (
             <span className="rounded bg-swing-navy/10 px-1.5 py-0.5 text-[10px] font-semibold text-swing-navy/60">
               {notes.length}
@@ -86,7 +93,7 @@ export default function NotesSection({
           className="flex cursor-pointer items-center gap-1.5 rounded bg-swing-gold px-3 py-1.5 text-xs font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark"
         >
           {showForm ? <X size={12} /> : <Plus size={12} />}
-          {showForm ? "Abbrechen" : "Neue Notiz"}
+          {showForm ? td.cancelNote : td.newNote}
         </button>
       </div>
 
@@ -96,25 +103,23 @@ export default function NotesSection({
           <div className="space-y-3">
             <div>
               <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-swing-navy/40">
-                Betreff *
+                {td.subject} *
               </label>
               <input
                 type="text"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="z.B. Erstgespräch geführt"
                 className="w-full rounded border border-gray-200 px-3 py-2 text-sm text-swing-navy placeholder:text-swing-navy/30 focus:border-swing-navy/30 focus:outline-none"
               />
             </div>
             <div>
               <label className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-swing-navy/40">
-                Inhalt
+                {td.content}
               </label>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 rows={3}
-                placeholder="Details zur Notiz..."
                 className="w-full rounded border border-gray-200 px-3 py-2 text-sm text-swing-navy placeholder:text-swing-navy/30 focus:border-swing-navy/30 focus:outline-none"
               />
             </div>
@@ -127,7 +132,7 @@ export default function NotesSection({
                   className="h-3.5 w-3.5 rounded border-gray-300 accent-swing-gold"
                 />
                 <Eye size={12} />
-                Für Händler sichtbar
+                {td.visibleToCustomer}
               </label>
               <button
                 type="button"
@@ -136,7 +141,7 @@ export default function NotesSection({
                 className="flex cursor-pointer items-center gap-1.5 rounded bg-swing-gold px-4 py-2 text-xs font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark disabled:opacity-50"
               >
                 {saving ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-                {saving ? "Speichert..." : "Notiz speichern"}
+                {saving ? td.saving : td.saveNote}
               </button>
             </div>
           </div>
@@ -146,7 +151,7 @@ export default function NotesSection({
       {/* Notes list */}
       {notes.length === 0 ? (
         <div className="flex items-center justify-center rounded border border-dashed border-gray-200 bg-white p-8">
-          <p className="text-sm text-swing-navy/30">Keine Notizen vorhanden</p>
+          <p className="text-sm text-swing-navy/30">{td.noNotes}</p>
         </div>
       ) : (
         <div className="space-y-1.5">
@@ -174,11 +179,11 @@ export default function NotesSection({
                   </span>
                   {note.visible_to_customer && (
                     <span className="shrink-0 rounded bg-swing-gold/15 px-1.5 py-0.5 text-[9px] font-bold text-swing-gold-dark">
-                      Händler
+                      {td.dealerBadge}
                     </span>
                   )}
                   <span className="shrink-0 text-[11px] text-swing-navy/40">
-                    {new Date(note.created_at).toLocaleDateString("de-DE", {
+                    {new Date(note.created_at).toLocaleDateString(dl, {
                       day: "2-digit",
                       month: "2-digit",
                       year: "numeric",
@@ -193,7 +198,7 @@ export default function NotesSection({
                         {note.content}
                       </p>
                     ) : (
-                      <p className="text-sm italic text-swing-navy/30">Kein Inhalt</p>
+                      <p className="text-sm italic text-swing-navy/30">{td.noContent}</p>
                     )}
                     <div className="mt-2 flex justify-end gap-1">
                       <button
@@ -214,7 +219,7 @@ export default function NotesSection({
                         }`}
                       >
                         {note.visible_to_customer ? <Eye size={11} /> : <EyeOff size={11} />}
-                        {note.visible_to_customer ? "Sichtbar" : "Verborgen"}
+                        {note.visible_to_customer ? td.visible : td.hidden}
                       </button>
                       <button
                         type="button"
@@ -222,7 +227,7 @@ export default function NotesSection({
                         className="flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-[11px] text-swing-navy/40 transition-colors hover:bg-red-50 hover:text-red-600"
                       >
                         <Trash2 size={11} />
-                        Löschen
+                        {td.deleteNote}
                       </button>
                     </div>
                   </div>

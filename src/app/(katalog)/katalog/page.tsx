@@ -2,11 +2,21 @@ import { createClient } from "@/lib/supabase/server";
 import { Search, ChevronRight, SlidersHorizontal, PackageOpen } from "lucide-react";
 import Link from "next/link";
 import type { Product, Category } from "@/lib/types";
+import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
 const CLASSIFICATIONS = ["N-LITE", "D-LITE", "U-LITE"];
-const EN_CLASSES = ["EN-A", "EN-B", "EN-C", "EN-D"];
+const EN_CLASSES = [
+  "EN-A",
+  "EN-A/B",
+  "LOW EN-B",
+  "MID EN-B",
+  "HIGH EN-B",
+  "EN-C 2-Liner",
+  "EN-D 2-Liner",
+  "EN-926-1",
+];
 
 const MAIN_CATEGORIES = [
   "gleitschirme",
@@ -50,6 +60,7 @@ export default async function KatalogPage({
 }) {
   const { q, kategorie, sub, en, gewicht } = await searchParams;
   const supabase = await createClient();
+  const dict = await getDictionary();
   const allParams = { q, kategorie, sub, en, gewicht };
 
   const { data: categories } = await supabase
@@ -91,7 +102,7 @@ export default async function KatalogPage({
   }
 
   if (en) {
-    query = query.ilike("en_class", `%${en}%`);
+    query = query.eq("en_class", en);
   }
 
   if (gewicht) {
@@ -111,15 +122,15 @@ export default async function KatalogPage({
         <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
-              Katalog
+              {dict.common.nav.katalog}
             </p>
             <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-              Produktkatalog
+              {dict.katalog.title}
             </h1>
             <p className="mt-1.5 text-sm text-white/40 tabular-nums">
-              {products?.length ?? 0} Produkt{(products?.length ?? 0) !== 1 ? "e" : ""}
+              {products?.length ?? 0} {(products?.length ?? 0) !== 1 ? dict.katalog.productsCount : dict.katalog.productCount}
               {hasActiveFilters && (
-                <> &middot; <Link href="/katalog" className="text-swing-gold hover:text-white transition-colors duration-200">Filter zurücksetzen</Link></>
+                <> &middot; <Link href="/katalog" className="text-swing-gold hover:text-white transition-colors duration-200">{dict.common.buttons.resetFilters}</Link></>
               )}
             </p>
           </div>
@@ -134,13 +145,13 @@ export default async function KatalogPage({
                 type="search"
                 name="q"
                 defaultValue={q}
-                placeholder="Produkt suchen..."
+                placeholder={dict.katalog.searchPlaceholder}
                 className="w-full rounded-lg border border-white/10 bg-white py-2.5 pl-9 pr-4 text-sm text-swing-navy transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20 sm:w-64"
               />
             </div>
             <button
               type="submit"
-              aria-label="Suchen"
+              aria-label={dict.common.buttons.search}
               className="rounded-lg bg-swing-gold px-4 py-2.5 text-sm font-bold text-swing-navy transition-colors duration-200 hover:bg-swing-gold-dark active:scale-[0.97]"
             >
               <Search size={16} />
@@ -155,19 +166,19 @@ export default async function KatalogPage({
         <div className="space-y-1 px-4 pt-4 sm:grid sm:grid-cols-[7rem_1fr] sm:items-center sm:gap-x-4 sm:space-y-0 sm:px-6 sm:pt-5">
           <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
             <SlidersHorizontal size={13} />
-            Kategorie
+            {dict.katalog.filters.category}
           </span>
           <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
             <div className="flex gap-1.5 pb-1 sm:flex-wrap sm:pb-0">
               <Link
                 href={filterUrl(allParams, "kategorie", undefined)}
-                className={`shrink-0 cursor-pointer rounded-lg px-3.5 py-2.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] sm:text-sm sm:py-2 ${
+                className={`shrink-0 cursor-pointer rounded-lg px-3.5 py-2.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] min-h-11 flex items-center sm:min-h-0 sm:text-sm sm:py-2 ${
                   !kategorie
                     ? "bg-swing-navy text-white shadow-sm"
                     : "text-swing-navy/60 hover:bg-gray-50 hover:text-swing-navy"
                 }`}
               >
-                Alle
+                {dict.katalog.filters.all}
               </Link>
               {MAIN_CATEGORIES.map((slug) => {
                 const cat = catMap[slug];
@@ -176,7 +187,7 @@ export default async function KatalogPage({
                   <Link
                     key={cat.id}
                     href={filterUrl(allParams, "kategorie", slug)}
-                    className={`shrink-0 cursor-pointer whitespace-nowrap rounded-lg px-3.5 py-2.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] sm:text-sm sm:py-2 ${
+                    className={`shrink-0 cursor-pointer whitespace-nowrap rounded-lg px-3.5 py-2.5 text-xs font-medium transition-all duration-150 active:scale-[0.96] min-h-11 flex items-center sm:min-h-0 sm:text-sm sm:py-2 ${
                       kategorie === slug
                         ? "bg-swing-navy text-white shadow-sm"
                         : "text-swing-navy/60 hover:bg-gray-50 hover:text-swing-navy"
@@ -204,7 +215,7 @@ export default async function KatalogPage({
                       : "text-swing-navy/60 hover:bg-gray-50"
                   }`}
                 >
-                  Alle
+                  {dict.katalog.filters.all}
                 </Link>
                 {GLEITSCHIRM_SUBS.map((slug) => {
                   const cat = catMap[slug];
@@ -234,7 +245,7 @@ export default async function KatalogPage({
         {/* Row 2: EN-Klasse */}
         <div className="space-y-1 px-4 pt-3 sm:grid sm:grid-cols-[7rem_1fr] sm:items-center sm:gap-x-4 sm:space-y-0 sm:px-6 sm:pt-3">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
-            EN-Klasse
+            {dict.katalog.filters.enClass}
           </span>
           <div className="flex flex-wrap gap-1.5">
             <Link
@@ -245,7 +256,7 @@ export default async function KatalogPage({
                   : "text-swing-navy/60 hover:bg-gray-50"
               }`}
             >
-              Alle
+              {dict.katalog.filters.all}
             </Link>
             {EN_CLASSES.map((cls) => (
               <Link
@@ -266,7 +277,7 @@ export default async function KatalogPage({
         {/* Row 3: Gewicht */}
         <div className="space-y-1 px-4 pb-4 pt-2 sm:grid sm:grid-cols-[7rem_1fr] sm:items-center sm:gap-x-4 sm:space-y-0 sm:px-6 sm:pb-5 sm:pt-2">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
-            Gewicht
+            {dict.katalog.filters.weight}
           </span>
           <div className="flex flex-wrap gap-1.5">
             <Link
@@ -277,7 +288,7 @@ export default async function KatalogPage({
                   : "text-swing-navy/60 hover:bg-gray-50"
               }`}
             >
-              Alle
+              {dict.katalog.filters.all}
             </Link>
             {CLASSIFICATIONS.map((cls) => (
               <Link
@@ -301,13 +312,13 @@ export default async function KatalogPage({
             <div className="hidden sm:block" />
             <div className="flex items-center gap-3">
               <span className="rounded bg-swing-navy/5 px-2.5 py-1 text-[10px] font-bold text-swing-navy/50 tabular-nums">
-                {activeCount} Filter aktiv
+                {activeCount} {dict.katalog.filters.activeFilters}
               </span>
               <Link
                 href="/katalog"
                 className="cursor-pointer text-[10px] font-bold text-swing-gold-dark hover:text-swing-navy transition-colors duration-200"
               >
-                Alle zurücksetzen
+                {dict.common.buttons.resetAll}
               </Link>
             </div>
           </div>
@@ -322,12 +333,12 @@ export default async function KatalogPage({
           </div>
           <p className="text-[15px] font-bold text-swing-navy/25">
             {q
-              ? `Keine Produkte für "${q}" gefunden`
-              : "Keine Produkte für diese Filter gefunden"}
+              ? dict.katalog.noProductsSearch.replace("{query}", q)
+              : dict.katalog.noProductsFilter}
           </p>
           {hasActiveFilters && (
             <Link href="/katalog" className="mt-3 inline-block text-sm font-medium text-swing-gold-dark hover:text-swing-navy transition-colors duration-200">
-              Filter zurücksetzen
+              {dict.common.buttons.resetFilters}
             </Link>
           )}
         </div>
@@ -363,17 +374,17 @@ export default async function KatalogPage({
                   <div className="absolute left-3 top-2.5 flex flex-wrap gap-1">
                     {isComingSoon && (
                       <span className="rounded bg-white/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-swing-navy">
-                        Coming Soon
+                        {dict.katalog.badges.comingSoon}
                       </span>
                     )}
                     {isPreorder && !isComingSoon && (
                       <span className="rounded bg-swing-gold px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-swing-navy">
-                        Jetzt vorbestellen
+                        {dict.katalog.badges.preorder}
                       </span>
                     )}
                     {isFadeOut && (
                       <span className="rounded bg-red-500/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                        Fade Out
+                        {dict.katalog.badges.fadeOut}
                       </span>
                     )}
                     {product.classification && (
@@ -450,11 +461,11 @@ export default async function KatalogPage({
                         <div className="ml-auto flex items-center gap-1.5">
                           {(product.colors as unknown as { is_limited: boolean }[]).some((c) => c.is_limited) && (
                             <span className="rounded bg-swing-gold/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-swing-gold-dark">
-                              Limited
+                              {dict.katalog.badges.limited}
                             </span>
                           )}
                           <span className="text-[10px] font-medium text-swing-navy/25 tabular-nums">
-                            {product.colors.length} Design{product.colors.length > 1 ? "s" : ""}
+                            {product.colors.length} {product.colors.length > 1 ? dict.katalog.badges.designs : dict.katalog.badges.design}
                           </span>
                         </div>
                       )}

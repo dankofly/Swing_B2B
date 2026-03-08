@@ -4,12 +4,14 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { ArrowLeft, Mail } from "lucide-react";
+import { useDict } from "@/lib/i18n/context";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const dict = useDict();
 
   async function handleReset(e: React.FormEvent) {
     e.preventDefault();
@@ -22,7 +24,7 @@ export default function ForgotPasswordPage() {
     });
 
     if (error) {
-      setError("Fehler beim Senden der E-Mail. Bitte versuchen Sie es erneut.");
+      setError(dict.auth.forgotPassword.errorGeneric);
       setLoading(false);
       return;
     }
@@ -59,18 +61,17 @@ export default function ForgotPasswordPage() {
                 <Mail size={20} className="text-emerald-600" />
               </div>
               <h1 className="text-lg font-extrabold uppercase tracking-[2px] text-swing-navy">
-                E-Mail gesendet
+                {dict.auth.forgotPassword.successTitle}
               </h1>
               <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-swing-gray-dark/50">
-                Wenn ein Konto mit dieser E-Mail-Adresse existiert, erhalten Sie
-                einen Link zum Zurücksetzen Ihres Passworts.
+                {dict.auth.forgotPassword.successMessage}
               </p>
               <Link
                 href="/login"
                 className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-swing-navy transition-colors hover:text-swing-gold"
               >
                 <ArrowLeft size={14} />
-                Zurück zum Login
+                {dict.auth.forgotPassword.backToLogin}
               </Link>
             </div>
           ) : (
@@ -80,10 +81,10 @@ export default function ForgotPasswordPage() {
                   <Mail size={20} className="text-swing-navy/60" />
                 </div>
                 <h1 className="text-lg font-extrabold uppercase tracking-[2px] text-swing-navy">
-                  Passwort vergessen
+                  {dict.auth.forgotPassword.title}
                 </h1>
                 <p className="mt-1.5 text-sm text-swing-gray-dark/40">
-                  Geben Sie Ihre E-Mail-Adresse ein
+                  {dict.auth.forgotPassword.subtitle}
                 </p>
               </div>
 
@@ -99,7 +100,7 @@ export default function ForgotPasswordPage() {
                     htmlFor="email"
                     className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-swing-navy/40"
                   >
-                    E-Mail
+                    {dict.auth.forgotPassword.email}
                   </label>
                   <input
                     id="email"
@@ -117,7 +118,7 @@ export default function ForgotPasswordPage() {
                   disabled={loading}
                   className="btn-gold group flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-swing-gold py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {loading ? "Wird gesendet..." : "Link senden"}
+                  {loading ? dict.auth.forgotPassword.submitting : dict.auth.forgotPassword.submit}
                 </button>
               </form>
 
@@ -127,7 +128,7 @@ export default function ForgotPasswordPage() {
                   className="inline-flex items-center gap-1.5 text-sm font-semibold text-swing-navy transition-colors hover:text-swing-gold"
                 >
                   <ArrowLeft size={14} />
-                  Zurück zum Login
+                  {dict.auth.forgotPassword.backToLogin}
                 </Link>
               </div>
             </>

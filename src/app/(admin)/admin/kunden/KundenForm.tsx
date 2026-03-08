@@ -71,13 +71,13 @@ export default function KundenForm({ company }: { company?: Company }) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Firmendaten */}
       <div className="card overflow-hidden">
-        <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/60 px-6 py-4">
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/60 px-4 py-3.5 sm:px-6 sm:py-4">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-swing-navy text-white">
             <Building2 size={16} strokeWidth={1.75} />
           </div>
           <h3 className="text-sm font-bold text-swing-navy">Firmendaten</h3>
         </div>
-        <div className="grid gap-5 p-6 sm:grid-cols-2">
+        <div className="grid gap-5 p-4 sm:p-6 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className={labelClass}>Firmenname *</label>
             <input
@@ -149,13 +149,13 @@ export default function KundenForm({ company }: { company?: Company }) {
 
       {/* Kontakt */}
       <div className="card overflow-hidden">
-        <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/60 px-6 py-4">
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/60 px-4 py-3.5 sm:px-6 sm:py-4">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-swing-navy text-white">
             <Mail size={16} strokeWidth={1.75} />
           </div>
           <h3 className="text-sm font-bold text-swing-navy">Kontakt</h3>
         </div>
-        <div className="grid gap-5 p-6 sm:grid-cols-2">
+        <div className="grid gap-5 p-4 sm:p-6 sm:grid-cols-2">
           <div>
             <label className={labelClass}>E-Mail *</label>
             <input
@@ -194,13 +194,13 @@ export default function KundenForm({ company }: { company?: Company }) {
 
       {/* Adresse */}
       <div className="card overflow-hidden">
-        <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/60 px-6 py-4">
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/60 px-4 py-3.5 sm:px-6 sm:py-4">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-swing-navy text-white">
             <MapPin size={16} strokeWidth={1.75} />
           </div>
           <h3 className="text-sm font-bold text-swing-navy">Adresse</h3>
         </div>
-        <div className="grid gap-5 p-6 sm:grid-cols-2">
+        <div className="grid gap-5 p-4 sm:p-6 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className={labelClass}>Straße + Nr.</label>
             <input
@@ -254,7 +254,7 @@ export default function KundenForm({ company }: { company?: Company }) {
         <button
           type="submit"
           disabled={saving}
-          className="btn-gold flex cursor-pointer items-center gap-2 rounded-lg bg-swing-gold px-6 py-3 text-sm font-bold text-swing-navy shadow-lg shadow-swing-gold/20 transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-xl hover:shadow-swing-gold/25 disabled:opacity-50"
+          className="btn-gold flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-swing-gold px-6 py-3 text-sm font-bold text-swing-navy shadow-lg shadow-swing-gold/20 transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-xl hover:shadow-swing-gold/25 disabled:opacity-50 sm:w-auto sm:justify-start"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {isEdit ? "Änderungen speichern" : "Kunden anlegen"}

@@ -2,7 +2,7 @@ export default function KatalogLoading() {
   return (
     <div className="space-y-6">
       {/* Hero skeleton */}
-      <div className="dash-hero rounded-xl px-8 py-9">
+      <div className="dash-hero rounded-xl px-5 py-7 sm:px-8 sm:py-9">
         <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
             <div className="h-3 w-24 animate-pulse rounded bg-white/10" />

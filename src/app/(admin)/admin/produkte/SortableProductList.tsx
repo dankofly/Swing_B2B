@@ -6,6 +6,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -18,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Package } from "lucide-react";
+import { GripVertical, Pencil, Package, ChevronUp, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { updateProductSortOrder } from "@/lib/actions/products";
 import { DeleteProductButton, ToggleActiveButton } from "./ProductActions";
@@ -93,38 +94,40 @@ function SortableRow({ product }: { product: ProductRow }) {
   );
 }
 
-function SortableMobileCard({ product }: { product: ProductRow }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: product.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 50 : undefined,
-    position: isDragging ? "relative" as const : undefined,
-  };
-
+function MobileCard({
+  product,
+  isFirst,
+  isLast,
+  onMoveUp,
+  onMoveDown,
+}: {
+  product: ProductRow;
+  isFirst: boolean;
+  isLast: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}) {
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`px-5 py-4 ${isDragging ? "bg-swing-gold/10 shadow-lg" : ""}`}
-    >
+    <div className="px-5 py-4">
       <div className="flex items-center gap-3">
-        <button
-          {...attributes}
-          {...listeners}
-          className="cursor-grab touch-none rounded p-1 text-swing-navy/25 transition-colors hover:text-swing-navy/50 active:cursor-grabbing"
-          title="Ziehen zum Sortieren"
-        >
-          <GripVertical size={16} />
-        </button>
+        <div className="flex flex-col">
+          <button
+            onClick={onMoveUp}
+            disabled={isFirst}
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded text-swing-navy/30 transition-colors hover:bg-swing-navy/5 hover:text-swing-navy/60 disabled:cursor-default disabled:text-swing-navy/10"
+            title="Nach oben"
+          >
+            <ChevronUp size={18} />
+          </button>
+          <button
+            onClick={onMoveDown}
+            disabled={isLast}
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded text-swing-navy/30 transition-colors hover:bg-swing-navy/5 hover:text-swing-navy/60 disabled:cursor-default disabled:text-swing-navy/10"
+            title="Nach unten"
+          >
+            <ChevronDown size={18} />
+          </button>
+        </div>
         {product.images?.[0] ? (
           <img src={product.images[0]} alt={product.name} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
         ) : (
@@ -136,14 +139,14 @@ function SortableMobileCard({ product }: { product: ProductRow }) {
         </div>
         <ToggleActiveButton productId={product.id} isActive={product.is_active} />
       </div>
-      <div className="mt-2.5 flex items-center justify-between pl-8">
+      <div className="mt-2.5 flex items-center justify-between pl-12">
         <div className="flex gap-3 text-xs text-swing-gray-dark/40 tabular-nums">
           <span>{product.sizes?.length || 0} Größen</span>
           <span>{product.colors?.length || 0} Farben</span>
         </div>
         <div className="flex items-center gap-1">
-          <Link href={`/admin/produkte/${product.id}/lager`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10" title="Lagerbestand"><Package size={16} /></Link>
-          <Link href={`/admin/produkte/${product.id}/bearbeiten`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10" title="Bearbeiten"><Pencil size={16} /></Link>
+          <Link href={`/admin/produkte/${product.id}/lager`} className="flex h-11 w-11 items-center justify-center rounded-lg text-swing-navy/40 transition-colors hover:bg-swing-gold/10" title="Lagerbestand"><Package size={18} /></Link>
+          <Link href={`/admin/produkte/${product.id}/bearbeiten`} className="flex h-11 w-11 items-center justify-center rounded-lg text-swing-navy/40 transition-colors hover:bg-swing-gold/10" title="Bearbeiten"><Pencil size={18} /></Link>
           <DeleteProductButton productId={product.id} productName={product.name} />
         </div>
       </div>
@@ -157,8 +160,25 @@ export default function SortableProductList({ products: initialProducts }: { pro
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  async function handleMove(oldIndex: number, newIndex: number) {
+    if (newIndex < 0 || newIndex >= products.length) return;
+    const newOrder = arrayMove(products, oldIndex, newIndex);
+    setProducts(newOrder);
+
+    setSaving(true);
+    try {
+      await updateProductSortOrder(newOrder.map((p) => p.id));
+    } catch {
+      setProducts(initialProducts);
+      alert("Fehler beim Speichern der Reihenfolge");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -209,10 +229,17 @@ export default function SortableProductList({ products: initialProducts }: { pro
           </tbody>
         </table>
 
-        {/* Mobile card layout */}
+        {/* Mobile card layout with arrow buttons */}
         <div className="divide-y divide-gray-50 md:hidden">
-          {products.map((product) => (
-            <SortableMobileCard key={product.id} product={product} />
+          {products.map((product, index) => (
+            <MobileCard
+              key={product.id}
+              product={product}
+              isFirst={index === 0}
+              isLast={index === products.length - 1}
+              onMoveUp={() => handleMove(index, index - 1)}
+              onMoveDown={() => handleMove(index, index + 1)}
+            />
           ))}
         </div>
       </SortableContext>
