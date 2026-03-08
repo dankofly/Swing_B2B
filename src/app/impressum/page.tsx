@@ -35,18 +35,18 @@ export default async function ImpressumPage() {
               <p className="text-[10px] font-bold uppercase tracking-widest text-swing-navy/30">
                 {t.managingDirector}
               </p>
-              <p className="mt-1 text-sm text-swing-navy">Michael Nesler</p>
+              <p className="mt-1 text-sm text-swing-navy">Günther Wörl</p>
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-swing-navy/30">
                 {t.address}
               </p>
               <p className="mt-1 text-sm leading-relaxed text-swing-navy">
-                Galtürer Straße 10
+                An der Leiten 4
                 <br />
-                6542 Pfunds
+                82290 Landsberied
                 <br />
-                Österreich
+                Deutschland
               </p>
             </div>
           </div>
@@ -60,9 +60,13 @@ export default async function ImpressumPage() {
           <div className="space-y-2 text-sm text-swing-navy">
             <p>
               <span className="text-swing-navy/40">{t.phone}:</span>{" "}
-              <a href="tel:+435474200400" className="hover:text-swing-gold-dark">
-                +43 5474 200 400
+              <a href="tel:+498141327788" className="hover:text-swing-gold-dark">
+                +49 (0) 81 41 / 32 77 888
               </a>
+            </p>
+            <p>
+              <span className="text-swing-navy/40">{t.fax}:</span>{" "}
+              +49 (0) 81 41 / 32 77 870
             </p>
             <p>
               <span className="text-swing-navy/40">{t.email}:</span>{" "}
@@ -92,18 +96,18 @@ export default async function ImpressumPage() {
           <div className="space-y-2 text-sm text-swing-navy">
             <p>
               <span className="text-swing-navy/40">{t.court}:</span>{" "}
-              Landesgericht Innsbruck
+              Amtsgericht München
             </p>
             <p>
               <span className="text-swing-navy/40">{t.registerNumber}:</span>{" "}
-              FN 58821f
+              HRB Nr.: 111 242
             </p>
           </div>
           <div className="mt-4">
             <p className="text-[10px] font-bold uppercase tracking-widest text-swing-navy/30">
               {t.vatId}
             </p>
-            <p className="mt-1 text-sm text-swing-navy">ATU37191305</p>
+            <p className="mt-1 text-sm text-swing-navy">DE 165 22 5951</p>
           </div>
         </section>
 
@@ -114,6 +118,13 @@ export default async function ImpressumPage() {
           </h2>
           <p className="text-sm leading-relaxed text-swing-navy/70">
             {t.responsibilityText}
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-swing-navy">
+            Günther Wörl
+            <br />
+            An der Leiten 4
+            <br />
+            82290 Landsberied
           </p>
         </section>
 
@@ -146,6 +157,19 @@ export default async function ImpressumPage() {
             {t.copyrightText}
           </p>
         </section>
+
+        {/* Hypeakz Credit */}
+        <div className="pb-4 pt-2 text-center text-xs text-swing-gray-dark/30">
+          {t.madeWith}{" "}
+          <a
+            href="https://hypeakz.io"
+            target="_blank"
+            rel="noopener"
+            className="font-semibold text-swing-navy/40 transition-colors hover:text-swing-gold"
+          >
+            Hypeakz.io
+          </a>
+        </div>
       </div>
     </div>
   );
