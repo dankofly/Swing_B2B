@@ -160,7 +160,7 @@ const de: Dictionary = {
   },
 
   legal: {
-    backToHome: "Zurück zur Startseite",
+    backToHome: "Zum Katalog",
     impressum: {
       title: "Impressum",
       companyInfo: "Angaben gemäß § 5 TMG",

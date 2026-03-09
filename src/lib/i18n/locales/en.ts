@@ -160,7 +160,7 @@ const en: Dictionary = {
   },
 
   legal: {
-    backToHome: "Back to Home",
+    backToHome: "To Catalog",
     impressum: {
       title: "Legal Notice",
       companyInfo: "Information pursuant to § 5 TMG (German Telemedia Act)",

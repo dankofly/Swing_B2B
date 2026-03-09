@@ -160,7 +160,7 @@ const fr: Dictionary = {
   },
 
   legal: {
-    backToHome: "Retour à l'accueil",
+    backToHome: "Vers le catalogue",
     impressum: {
       title: "Mentions légales",
       companyInfo: "Informations conformément au § 5 TMG (loi allemande sur les télémédias)",

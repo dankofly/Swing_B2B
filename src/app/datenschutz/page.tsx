@@ -11,7 +11,7 @@ export default async function DatenschutzPage() {
       <div className="dash-hero px-5 py-10 sm:px-8 sm:py-14">
         <div className="relative z-10 mx-auto max-w-3xl">
           <Link
-            href="/"
+            href="/katalog"
             className="mb-4 inline-flex items-center gap-1.5 text-sm text-white/40 transition-colors hover:text-white"
           >
             <ArrowLeft size={14} />
