@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "mobile-design": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "computedHash": "2cd07193e7c49d7450bb68364ce3d2b0155a7ea645164b671dfa4d32b7afb77f"
+    }
+  }
+}

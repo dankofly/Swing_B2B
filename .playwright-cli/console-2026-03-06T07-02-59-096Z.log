@@ -1,0 +1,8 @@
+[34396018ms] [WARNING] [HMR] Invalid message: {"isTrusted":true}
+TypeError: Cannot convert undefined or null to object
+    at Object.keys (<anonymous>)
+    at extractModulesFromTurbopackMessage (http://localhost:3001/_next/static/chunks/46267_next_dist_client_8c6efdd5._.js:11210:39)
+    at TurbopackHmr.onTurbopackMessage (http://localhost:3001/_next/static/chunks/46267_next_dist_client_8c6efdd5._.js:11157:32)
+    at processMessage (http://localhost:3001/_next/static/chunks/46267_next_dist_client_8c6efdd5._.js:11589:30)
+    at WebSocket.handleMessage (http://localhost:3001/_next/static/chunks/46267_next_dist_client_8c6efdd5._.js:10914:52) @ http://localhost:3001/_next/static/chunks/46267_next_dist_51a89c50._.js:2297
+[53406785ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/login?_rsc=1foqh:0

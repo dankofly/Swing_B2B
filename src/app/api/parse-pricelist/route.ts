@@ -58,17 +58,24 @@ Antworte NUR mit einem JSON-Array. Kein Markdown, kein Codeblock, nur das Array:
 
 Wenn keine Preisdaten gefunden werden, antworte mit: []`;
 
-    const result = await model.generateContent([
-      { text: prompt },
-      {
-        inlineData: {
-          mimeType: file.type || "application/pdf",
-          data: base64,
+    // Parallelize Gemini call with sizes fetch (sizes not needed for prompt)
+    const [geminiResult, { data: allSizes }] = await Promise.all([
+      model.generateContent([
+        { text: prompt },
+        {
+          inlineData: {
+            mimeType: file.type || "application/pdf",
+            data: base64,
+          },
         },
-      },
+      ]),
+      supabase
+        .from("product_sizes")
+        .select("id, sku, size_label, product_id")
+        .order("sort_order"),
     ]);
 
-    const responseText = result.response.text().trim();
+    const responseText = geminiResult.response.text().trim();
 
     let parsed: Array<{
       modell: string;
@@ -93,12 +100,6 @@ Wenn keine Preisdaten gefunden werden, antworte mit: []`;
     const productMap = new Map(
       (allProducts ?? []).map((p) => [p.name.toLowerCase(), p])
     );
-
-    // Also fetch all sizes grouped by product
-    const { data: allSizes } = await supabase
-      .from("product_sizes")
-      .select("id, sku, size_label, product_id")
-      .order("sort_order");
 
     const sizesByProduct = new Map<
       string,

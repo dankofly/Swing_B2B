@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { sendEmail } from "@/lib/email";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "info@swing.de";
 
@@ -203,30 +203,13 @@ export async function POST(request: NextRequest) {
   try {
     const data: RegistrationData = await request.json();
 
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.log("[notify-registration] SMTP credentials not set, skipping email");
-      console.log("[notify-registration] Registration data:", JSON.stringify(data, null, 2));
-      return NextResponse.json({ success: true, skipped: true });
-    }
+    const sent = await sendEmail(
+      ADMIN_EMAIL,
+      `Anfrage für den Zugang zu dem SWING B2B Portal — ${data.companyName}`,
+      buildHtml(data),
+    );
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
-      port: Number(process.env.SMTP_PORT || "587"),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: `"SWING B2B Portal" <${process.env.SMTP_USER}>`,
-      to: ADMIN_EMAIL,
-      subject: `Anfrage für den Zugang zu dem SWING B2B Portal — ${data.companyName}`,
-      html: buildHtml(data),
-    });
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, skipped: !sent });
   } catch (err) {
     console.error("[notify-registration] Error:", err);
     return NextResponse.json({ success: false }, { status: 500 });

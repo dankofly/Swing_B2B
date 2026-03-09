@@ -1,0 +1,391 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "SWING B2B" [ref=e6] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e7]: SWING
+            - generic [ref=e8]: B2B
+          - navigation [ref=e9]:
+            - link "Dashboard" [ref=e10] [cursor=pointer]:
+              - /url: /admin
+            - link "Produkte" [ref=e11] [cursor=pointer]:
+              - /url: /admin/produkte
+            - link "Kunden" [ref=e12] [cursor=pointer]:
+              - /url: /admin/kunden
+            - link "Preislisten" [ref=e13] [cursor=pointer]:
+              - /url: /admin/preislisten
+            - link "Lagerbestand" [ref=e14] [cursor=pointer]:
+              - /url: /admin/lager
+            - link "Anfragen" [ref=e15] [cursor=pointer]:
+              - /url: /admin/anfragen
+        - generic [ref=e16]:
+          - link "Zum Katalog" [ref=e17] [cursor=pointer]:
+            - /url: /katalog
+            - img [ref=e18]
+          - button "Abmelden" [ref=e21]:
+            - img [ref=e22]
+    - main [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - heading "Produkte" [level=1] [ref=e28]
+          - link "Neues Produkt" [ref=e29] [cursor=pointer]:
+            - /url: /admin/produkte/neu
+            - img [ref=e30]
+            - text: Neues Produkt
+        - table [ref=e32]:
+          - rowgroup [ref=e33]:
+            - row "Produkt Kategorie Größen Farben Status Aktionen" [ref=e34]:
+              - columnheader "Produkt" [ref=e35]
+              - columnheader "Kategorie" [ref=e36]
+              - columnheader "Größen" [ref=e37]
+              - columnheader "Farben" [ref=e38]
+              - columnheader "Status" [ref=e39]
+              - columnheader "Aktionen" [ref=e40]
+          - rowgroup [ref=e41]:
+            - row "Connect Race Lite Connect Race Lite Gurtzeuge 4 Größen 1 Farben Aktiv" [ref=e42]:
+              - cell "Connect Race Lite Connect Race Lite" [ref=e43]:
+                - generic [ref=e44]:
+                  - img "Connect Race Lite" [ref=e45]
+                  - generic [ref=e46]: Connect Race Lite
+              - cell "Gurtzeuge" [ref=e47]
+              - cell "4 Größen" [ref=e48]
+              - cell "1 Farben" [ref=e49]
+              - cell "Aktiv" [ref=e50]:
+                - button "Aktiv" [ref=e51]:
+                  - img [ref=e52]
+                  - generic [ref=e55]: Aktiv
+              - cell [ref=e56]:
+                - generic [ref=e57]:
+                  - link "Bearbeiten" [ref=e58] [cursor=pointer]:
+                    - /url: /admin/produkte/1ce89f7a-34f9-498f-bc02-d9e6b33d086e/bearbeiten
+                    - img [ref=e59]
+                  - button "Löschen" [ref=e62]:
+                    - img [ref=e63]
+            - row "Connect Reverse 3 Connect Reverse 3 Gurtzeuge 4 Größen 2 Farben Aktiv" [ref=e66]:
+              - cell "Connect Reverse 3 Connect Reverse 3" [ref=e67]:
+                - generic [ref=e68]:
+                  - img "Connect Reverse 3" [ref=e69]
+                  - generic [ref=e70]: Connect Reverse 3
+              - cell "Gurtzeuge" [ref=e71]
+              - cell "4 Größen" [ref=e72]
+              - cell "2 Farben" [ref=e73]
+              - cell "Aktiv" [ref=e74]:
+                - button "Aktiv" [ref=e75]:
+                  - img [ref=e76]
+                  - generic [ref=e79]: Aktiv
+              - cell [ref=e80]:
+                - generic [ref=e81]:
+                  - link "Bearbeiten" [ref=e82] [cursor=pointer]:
+                    - /url: /admin/produkte/15fcc71e-ce95-467c-8d87-bff526a42da0/bearbeiten
+                    - img [ref=e83]
+                  - button "Löschen" [ref=e86]:
+                    - img [ref=e87]
+            - row "Brave 5 Brave 5 Gurtzeuge 1 Größen 1 Farben Aktiv" [ref=e90]:
+              - cell "Brave 5 Brave 5" [ref=e91]:
+                - generic [ref=e92]:
+                  - img "Brave 5" [ref=e93]
+                  - generic [ref=e94]: Brave 5
+              - cell "Gurtzeuge" [ref=e95]
+              - cell "1 Größen" [ref=e96]
+              - cell "1 Farben" [ref=e97]
+              - cell "Aktiv" [ref=e98]:
+                - button "Aktiv" [ref=e99]:
+                  - img [ref=e100]
+                  - generic [ref=e103]: Aktiv
+              - cell [ref=e104]:
+                - generic [ref=e105]:
+                  - link "Bearbeiten" [ref=e106] [cursor=pointer]:
+                    - /url: /admin/produkte/5e943ad7-ee79-48eb-932a-30822e8e04ef/bearbeiten
+                    - img [ref=e107]
+                  - button "Löschen" [ref=e110]:
+                    - img [ref=e111]
+            - row "Wave RS D-Lite Wave RS D-Lite Parakites 5 Größen 2 Farben Aktiv" [ref=e114]:
+              - cell "Wave RS D-Lite Wave RS D-Lite" [ref=e115]:
+                - generic [ref=e116]:
+                  - img "Wave RS D-Lite" [ref=e117]
+                  - generic [ref=e118]: Wave RS D-Lite
+              - cell "Parakites" [ref=e119]
+              - cell "5 Größen" [ref=e120]
+              - cell "2 Farben" [ref=e121]
+              - cell "Aktiv" [ref=e122]:
+                - button "Aktiv" [ref=e123]:
+                  - img [ref=e124]
+                  - generic [ref=e127]: Aktiv
+              - cell [ref=e128]:
+                - generic [ref=e129]:
+                  - link "Bearbeiten" [ref=e130] [cursor=pointer]:
+                    - /url: /admin/produkte/5d500c9d-9b71-4eef-ab67-ed303267b3b4/bearbeiten
+                    - img [ref=e131]
+                  - button "Löschen" [ref=e134]:
+                    - img [ref=e135]
+            - row "Spitfire Classic Spitfire Classic Speedflying / Speedriding 3 Größen 1 Farben Aktiv" [ref=e138]:
+              - cell "Spitfire Classic Spitfire Classic" [ref=e139]:
+                - generic [ref=e140]:
+                  - img "Spitfire Classic" [ref=e141]
+                  - generic [ref=e142]: Spitfire Classic
+              - cell "Speedflying / Speedriding" [ref=e143]
+              - cell "3 Größen" [ref=e144]
+              - cell "1 Farben" [ref=e145]
+              - cell "Aktiv" [ref=e146]:
+                - button "Aktiv" [ref=e147]:
+                  - img [ref=e148]
+                  - generic [ref=e151]: Aktiv
+              - cell [ref=e152]:
+                - generic [ref=e153]:
+                  - link "Bearbeiten" [ref=e154] [cursor=pointer]:
+                    - /url: /admin/produkte/bb652b65-6eec-4a3d-8177-b99dc34e03e0/bearbeiten
+                    - img [ref=e155]
+                  - button "Löschen" [ref=e158]:
+                    - img [ref=e159]
+            - row "Spitfire 3 Spitfire 3 Speedflying / Speedriding 4 Größen 2 Farben Aktiv" [ref=e162]:
+              - cell "Spitfire 3 Spitfire 3" [ref=e163]:
+                - generic [ref=e164]:
+                  - img "Spitfire 3" [ref=e165]
+                  - generic [ref=e166]: Spitfire 3
+              - cell "Speedflying / Speedriding" [ref=e167]
+              - cell "4 Größen" [ref=e168]
+              - cell "2 Farben" [ref=e169]
+              - cell "Aktiv" [ref=e170]:
+                - button "Aktiv" [ref=e171]:
+                  - img [ref=e172]
+                  - generic [ref=e175]: Aktiv
+              - cell [ref=e176]:
+                - generic [ref=e177]:
+                  - link "Bearbeiten" [ref=e178] [cursor=pointer]:
+                    - /url: /admin/produkte/e7a86c09-f905-48a1-a747-51c4acba445b/bearbeiten
+                    - img [ref=e179]
+                  - button "Löschen" [ref=e182]:
+                    - img [ref=e183]
+            - row "Mirage 2 RS Mirage 2 RS Miniwings / Hike & Fly 4 Größen 2 Farben Aktiv" [ref=e186]:
+              - cell "Mirage 2 RS Mirage 2 RS" [ref=e187]:
+                - generic [ref=e188]:
+                  - img "Mirage 2 RS" [ref=e189]
+                  - generic [ref=e190]: Mirage 2 RS
+              - cell "Miniwings / Hike & Fly" [ref=e191]
+              - cell "4 Größen" [ref=e192]
+              - cell "2 Farben" [ref=e193]
+              - cell "Aktiv" [ref=e194]:
+                - button "Aktiv" [ref=e195]:
+                  - img [ref=e196]
+                  - generic [ref=e199]: Aktiv
+              - cell [ref=e200]:
+                - generic [ref=e201]:
+                  - link "Bearbeiten" [ref=e202] [cursor=pointer]:
+                    - /url: /admin/produkte/12e08058-42b5-46d9-8835-d86f0cda846d/bearbeiten
+                    - img [ref=e203]
+                  - button "Löschen" [ref=e206]:
+                    - img [ref=e207]
+            - row "Sting RS Sting RS Motorschirme 6 Größen 2 Farben Aktiv" [ref=e210]:
+              - cell "Sting RS Sting RS" [ref=e211]:
+                - generic [ref=e212]:
+                  - img "Sting RS" [ref=e213]
+                  - generic [ref=e214]: Sting RS
+              - cell "Motorschirme" [ref=e215]
+              - cell "6 Größen" [ref=e216]
+              - cell "2 Farben" [ref=e217]
+              - cell "Aktiv" [ref=e218]:
+                - button "Aktiv" [ref=e219]:
+                  - img [ref=e220]
+                  - generic [ref=e223]: Aktiv
+              - cell [ref=e224]:
+                - generic [ref=e225]:
+                  - link "Bearbeiten" [ref=e226] [cursor=pointer]:
+                    - /url: /admin/produkte/ca484d9c-9a83-4370-844e-2a5fb1e3b41a/bearbeiten
+                    - img [ref=e227]
+                  - button "Löschen" [ref=e230]:
+                    - img [ref=e231]
+            - row "Twin 3 RS Twin 3 RS Tandem 2 Größen 2 Farben Aktiv" [ref=e234]:
+              - cell "Twin 3 RS Twin 3 RS" [ref=e235]:
+                - generic [ref=e236]:
+                  - img "Twin 3 RS" [ref=e237]
+                  - generic [ref=e238]: Twin 3 RS
+              - cell "Tandem" [ref=e239]
+              - cell "2 Größen" [ref=e240]
+              - cell "2 Farben" [ref=e241]
+              - cell "Aktiv" [ref=e242]:
+                - button "Aktiv" [ref=e243]:
+                  - img [ref=e244]
+                  - generic [ref=e247]: Aktiv
+              - cell [ref=e248]:
+                - generic [ref=e249]:
+                  - link "Bearbeiten" [ref=e250] [cursor=pointer]:
+                    - /url: /admin/produkte/e47604b8-ba77-41c3-964d-a1dcef411a6c/bearbeiten
+                    - img [ref=e251]
+                  - button "Löschen" [ref=e254]:
+                    - img [ref=e255]
+            - row "Sphera 2 RS Sphera 2 RS Gleitschirme 4 Größen 2 Farben Aktiv" [ref=e258]:
+              - cell "Sphera 2 RS Sphera 2 RS" [ref=e259]:
+                - generic [ref=e260]:
+                  - img "Sphera 2 RS" [ref=e261]
+                  - generic [ref=e262]: Sphera 2 RS
+              - cell "Gleitschirme" [ref=e263]
+              - cell "4 Größen" [ref=e264]
+              - cell "2 Farben" [ref=e265]
+              - cell "Aktiv" [ref=e266]:
+                - button "Aktiv" [ref=e267]:
+                  - img [ref=e268]
+                  - generic [ref=e271]: Aktiv
+              - cell [ref=e272]:
+                - generic [ref=e273]:
+                  - link "Bearbeiten" [ref=e274] [cursor=pointer]:
+                    - /url: /admin/produkte/585b436a-8cd9-48a2-8b9e-2ad38881512f/bearbeiten
+                    - img [ref=e275]
+                  - button "Löschen" [ref=e278]:
+                    - img [ref=e279]
+            - row "Libra RS Libra RS Gleitschirme 5 Größen 2 Farben Aktiv" [ref=e282]:
+              - cell "Libra RS Libra RS" [ref=e283]:
+                - generic [ref=e284]:
+                  - img "Libra RS" [ref=e285]
+                  - generic [ref=e286]: Libra RS
+              - cell "Gleitschirme" [ref=e287]
+              - cell "5 Größen" [ref=e288]
+              - cell "2 Farben" [ref=e289]
+              - cell "Aktiv" [ref=e290]:
+                - button "Aktiv" [ref=e291]:
+                  - img [ref=e292]
+                  - generic [ref=e295]: Aktiv
+              - cell [ref=e296]:
+                - generic [ref=e297]:
+                  - link "Bearbeiten" [ref=e298] [cursor=pointer]:
+                    - /url: /admin/produkte/0bc88923-ef60-4ca0-9720-3bf9d2f7bc35/bearbeiten
+                    - img [ref=e299]
+                  - button "Löschen" [ref=e302]:
+                    - img [ref=e303]
+            - row "Stellar RS Stellar RS Gleitschirme 5 Größen 1 Farben Aktiv" [ref=e306]:
+              - cell "Stellar RS Stellar RS" [ref=e307]:
+                - generic [ref=e308]:
+                  - img "Stellar RS" [ref=e309]
+                  - generic [ref=e310]: Stellar RS
+              - cell "Gleitschirme" [ref=e311]
+              - cell "5 Größen" [ref=e312]
+              - cell "1 Farben" [ref=e313]
+              - cell "Aktiv" [ref=e314]:
+                - button "Aktiv" [ref=e315]:
+                  - img [ref=e316]
+                  - generic [ref=e319]: Aktiv
+              - cell [ref=e320]:
+                - generic [ref=e321]:
+                  - link "Bearbeiten" [ref=e322] [cursor=pointer]:
+                    - /url: /admin/produkte/93a794e0-47bc-46ce-801a-4b8670314456/bearbeiten
+                    - img [ref=e323]
+                  - button "Löschen" [ref=e326]:
+                    - img [ref=e327]
+            - row "Nyos 2 RS Nyos 2 RS Gleitschirme 5 Größen 2 Farben Aktiv" [ref=e330]:
+              - cell "Nyos 2 RS Nyos 2 RS" [ref=e331]:
+                - generic [ref=e332]:
+                  - img "Nyos 2 RS" [ref=e333]
+                  - generic [ref=e334]: Nyos 2 RS
+              - cell "Gleitschirme" [ref=e335]
+              - cell "5 Größen" [ref=e336]
+              - cell "2 Farben" [ref=e337]
+              - cell "Aktiv" [ref=e338]:
+                - button "Aktiv" [ref=e339]:
+                  - img [ref=e340]
+                  - generic [ref=e343]: Aktiv
+              - cell [ref=e344]:
+                - generic [ref=e345]:
+                  - link "Bearbeiten" [ref=e346] [cursor=pointer]:
+                    - /url: /admin/produkte/341dbf33-edd7-49e3-a4fc-a84fb0af4d27/bearbeiten
+                    - img [ref=e347]
+                  - button "Löschen" [ref=e350]:
+                    - img [ref=e351]
+            - row "Nyra RS Nyra RS Gleitschirme 5 Größen 2 Farben Aktiv" [ref=e354]:
+              - cell "Nyra RS Nyra RS" [ref=e355]:
+                - generic [ref=e356]:
+                  - img "Nyra RS" [ref=e357]
+                  - generic [ref=e358]: Nyra RS
+              - cell "Gleitschirme" [ref=e359]
+              - cell "5 Größen" [ref=e360]
+              - cell "2 Farben" [ref=e361]
+              - cell "Aktiv" [ref=e362]:
+                - button "Aktiv" [ref=e363]:
+                  - img [ref=e364]
+                  - generic [ref=e367]: Aktiv
+              - cell [ref=e368]:
+                - generic [ref=e369]:
+                  - link "Bearbeiten" [ref=e370] [cursor=pointer]:
+                    - /url: /admin/produkte/1d91d054-cabf-4d1f-aea8-7f8fd566456e/bearbeiten
+                    - img [ref=e371]
+                  - button "Löschen" [ref=e374]:
+                    - img [ref=e375]
+            - row "Miura 2 RS D-Lite Miura 2 RS D-Lite Gleitschirme 5 Größen 2 Farben Aktiv" [ref=e378]:
+              - cell "Miura 2 RS D-Lite Miura 2 RS D-Lite" [ref=e379]:
+                - generic [ref=e380]:
+                  - img "Miura 2 RS D-Lite" [ref=e381]
+                  - generic [ref=e382]: Miura 2 RS D-Lite
+              - cell "Gleitschirme" [ref=e383]
+              - cell "5 Größen" [ref=e384]
+              - cell "2 Farben" [ref=e385]
+              - cell "Aktiv" [ref=e386]:
+                - button "Aktiv" [ref=e387]:
+                  - img [ref=e388]
+                  - generic [ref=e391]: Aktiv
+              - cell [ref=e392]:
+                - generic [ref=e393]:
+                  - link "Bearbeiten" [ref=e394] [cursor=pointer]:
+                    - /url: /admin/produkte/e6cc9806-6245-47be-b1fd-1ac95b126ee1/bearbeiten
+                    - img [ref=e395]
+                  - button "Löschen" [ref=e398]:
+                    - img [ref=e399]
+            - row "Miura 2 RS Miura 2 RS Gleitschirme 5 Größen 2 Farben Aktiv" [ref=e402]:
+              - cell "Miura 2 RS Miura 2 RS" [ref=e403]:
+                - generic [ref=e404]:
+                  - img "Miura 2 RS" [ref=e405]
+                  - generic [ref=e406]: Miura 2 RS
+              - cell "Gleitschirme" [ref=e407]
+              - cell "5 Größen" [ref=e408]
+              - cell "2 Farben" [ref=e409]
+              - cell "Aktiv" [ref=e410]:
+                - button "Aktiv" [ref=e411]:
+                  - img [ref=e412]
+                  - generic [ref=e415]: Aktiv
+              - cell [ref=e416]:
+                - generic [ref=e417]:
+                  - link "Bearbeiten" [ref=e418] [cursor=pointer]:
+                    - /url: /admin/produkte/eccb7386-5f2d-48ea-a138-5b2dab3b17ee/bearbeiten
+                    - img [ref=e419]
+                  - button "Löschen" [ref=e422]:
+                    - img [ref=e423]
+            - row "Verso RS Verso RS Gleitschirme 5 Größen 2 Farben Aktiv" [ref=e426]:
+              - cell "Verso RS Verso RS" [ref=e427]:
+                - generic [ref=e428]:
+                  - img "Verso RS" [ref=e429]
+                  - generic [ref=e430]: Verso RS
+              - cell "Gleitschirme" [ref=e431]
+              - cell "5 Größen" [ref=e432]
+              - cell "2 Farben" [ref=e433]
+              - cell "Aktiv" [ref=e434]:
+                - button "Aktiv" [ref=e435]:
+                  - img [ref=e436]
+                  - generic [ref=e439]: Aktiv
+              - cell [ref=e440]:
+                - generic [ref=e441]:
+                  - link "Bearbeiten" [ref=e442] [cursor=pointer]:
+                    - /url: /admin/produkte/98d96e9d-cebb-4331-b964-d0755564b43b/bearbeiten
+                    - img [ref=e443]
+                  - button "Löschen" [ref=e446]:
+                    - img [ref=e447]
+            - row "Mito 3 RS Mito 3 RS Gleitschirme 5 Größen 3 Farben Aktiv" [ref=e450]:
+              - cell "Mito 3 RS Mito 3 RS" [ref=e451]:
+                - generic [ref=e452]:
+                  - img "Mito 3 RS" [ref=e453]
+                  - generic [ref=e454]: Mito 3 RS
+              - cell "Gleitschirme" [ref=e455]
+              - cell "5 Größen" [ref=e456]
+              - cell "3 Farben" [ref=e457]
+              - cell "Aktiv" [ref=e458]:
+                - button "Aktiv" [ref=e459]:
+                  - img [ref=e460]
+                  - generic [ref=e463]: Aktiv
+              - cell [ref=e464]:
+                - generic [ref=e465]:
+                  - link "Bearbeiten" [ref=e466] [cursor=pointer]:
+                    - /url: /admin/produkte/0032d005-345d-48f5-84e6-45624ad0fa7e/bearbeiten
+                    - img [ref=e467]
+                  - button "Löschen" [ref=e470]:
+                    - img [ref=e471]
+  - button "Open Next.js Dev Tools" [ref=e479] [cursor=pointer]:
+    - img [ref=e480]
+  - alert [ref=e483]

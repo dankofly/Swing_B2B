@@ -1,0 +1,146 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "SWING B2B" [ref=e6] [cursor=pointer]:
+            - /url: /katalog
+            - generic [ref=e7]: SWING
+            - generic [ref=e8]: B2B
+          - navigation [ref=e9]:
+            - link "Katalog" [ref=e10] [cursor=pointer]:
+              - /url: /katalog
+            - link "Meine Anfragen" [ref=e11] [cursor=pointer]:
+              - /url: /katalog/anfragen
+        - generic [ref=e12]:
+          - link [ref=e13] [cursor=pointer]:
+            - /url: /katalog/warenkorb
+            - img [ref=e14]
+          - link "Admin" [ref=e18] [cursor=pointer]:
+            - /url: /admin
+            - img [ref=e19]
+          - button "Abmelden" [ref=e22]:
+            - img [ref=e23]
+    - main [ref=e26]:
+      - generic [ref=e27]:
+        - link "Zurück zum Katalog" [ref=e28] [cursor=pointer]:
+          - /url: /katalog
+          - img [ref=e29]
+          - text: Zurück zum Katalog
+        - generic [ref=e31]:
+          - generic [ref=e32]:
+            - generic [ref=e33]: Gleitschirme
+            - generic [ref=e34]:
+              - generic [ref=e35]: EN-A
+              - generic [ref=e36]: Schulung & Thermik
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - heading "Mito 2 RS" [level=1] [ref=e39]
+              - paragraph [ref=e40]: Einfachstes Aufziehverhalten ohne Überschießen. RAST für mehr Kontrolle und Komfort. Der ideale Einsteigerschirm.
+              - link "Produkt auf swing.de ansehen" [ref=e41] [cursor=pointer]:
+                - /url: https://www.swing.de/gleitschirme/mito-2-rs.html
+                - img [ref=e42]
+                - text: Produkt auf swing.de ansehen
+            - generic [ref=e46]:
+              - heading "Technische Daten" [level=3] [ref=e47]
+              - generic [ref=e48]:
+                - generic [ref=e49]:
+                  - term [ref=e50]: Zellen
+                  - definition [ref=e51]: "40"
+                - generic [ref=e52]:
+                  - term [ref=e53]: Kategorie
+                  - definition [ref=e54]: training/allround
+                - generic [ref=e55]:
+                  - term [ref=e56]: Streckung
+                  - definition [ref=e57]: "5.05"
+                - generic [ref=e58]:
+                  - term [ref=e59]: Startgewicht
+                  - definition [ref=e60]: 60 - 130 kg
+                - generic [ref=e61]:
+                  - term [ref=e62]: EN-Zertifizierung
+                  - definition [ref=e63]: EN-A
+        - generic [ref=e64]:
+          - generic [ref=e65]:
+            - heading "Farbdesigns" [level=2] [ref=e66]
+            - generic [ref=e67]:
+              - button "Cosmic Cosmic" [active] [ref=e68] [cursor=pointer]:
+                - img "Cosmic" [ref=e70]
+                - generic [ref=e71]: Cosmic
+                - img [ref=e72]
+              - button "Gold Gold" [ref=e74] [cursor=pointer]:
+                - img "Gold" [ref=e76]
+                - generic [ref=e77]: Gold
+                - img [ref=e78]
+              - button "Lime Lime" [ref=e80] [cursor=pointer]:
+                - img "Lime" [ref=e82]
+                - generic [ref=e83]: Lime
+                - img [ref=e84]
+          - generic [ref=e96]:
+            - heading "Größen & Verfügbarkeit — Cosmic" [level=3] [ref=e98]
+            - table [ref=e100]:
+              - rowgroup [ref=e101]:
+                - row "Größe UVP inkl. MwSt. Ihr EK netto Rabatt Lagerstand Lieferzeit Menge" [ref=e102]:
+                  - columnheader "Größe" [ref=e103]
+                  - columnheader "UVP inkl. MwSt." [ref=e104]
+                  - columnheader "Ihr EK netto" [ref=e105]
+                  - columnheader "Rabatt" [ref=e106]
+                  - columnheader "Lagerstand" [ref=e107]
+                  - columnheader "Lieferzeit" [ref=e108]
+                  - columnheader "Menge" [ref=e109]
+              - rowgroup [ref=e110]:
+                - row "XS 3.590,00 € 1.960,92 € 0% 3 Stk. Sofort 0" [ref=e111]:
+                  - cell "XS" [ref=e112]
+                  - cell "3.590,00 €" [ref=e113]
+                  - cell "1.960,92 €" [ref=e114]
+                  - cell "0%" [ref=e115]
+                  - cell "3 Stk." [ref=e116]:
+                    - generic [ref=e119]: 3 Stk.
+                  - cell "Sofort" [ref=e120]
+                  - cell "0" [ref=e121]:
+                    - spinbutton [ref=e122]: "0"
+                - row "S 3.590,00 € 1.960,92 € 0% Verfügbar Sofort 0" [ref=e123]:
+                  - cell "S" [ref=e124]
+                  - cell "3.590,00 €" [ref=e125]
+                  - cell "1.960,92 €" [ref=e126]
+                  - cell "0%" [ref=e127]
+                  - cell "Verfügbar" [ref=e128]:
+                    - generic [ref=e131]: Verfügbar
+                  - cell "Sofort" [ref=e132]
+                  - cell "0" [ref=e133]:
+                    - spinbutton [ref=e134]: "0"
+                - row "SM 3.590,00 € 1.960,92 € 0% 8 Stk. Sofort 0" [ref=e135]:
+                  - cell "SM" [ref=e136]
+                  - cell "3.590,00 €" [ref=e137]
+                  - cell "1.960,92 €" [ref=e138]
+                  - cell "0%" [ref=e139]
+                  - cell "8 Stk." [ref=e140]:
+                    - generic [ref=e143]: 8 Stk.
+                  - cell "Sofort" [ref=e144]
+                  - cell "0" [ref=e145]:
+                    - spinbutton [ref=e146]: "0"
+                - row "ML 3.590,00 € 1.960,92 € 0% Verfügbar Sofort 0" [ref=e147]:
+                  - cell "ML" [ref=e148]
+                  - cell "3.590,00 €" [ref=e149]
+                  - cell "1.960,92 €" [ref=e150]
+                  - cell "0%" [ref=e151]
+                  - cell "Verfügbar" [ref=e152]:
+                    - generic [ref=e155]: Verfügbar
+                  - cell "Sofort" [ref=e156]
+                  - cell "0" [ref=e157]:
+                    - spinbutton [ref=e158]: "0"
+                - row "L 3.590,00 € 1.960,92 € 0% Nicht auf Lager ca. 21 Tage 0" [ref=e159]:
+                  - cell "L" [ref=e160]
+                  - cell "3.590,00 €" [ref=e161]
+                  - cell "1.960,92 €" [ref=e162]
+                  - cell "0%" [ref=e163]
+                  - cell "Nicht auf Lager" [ref=e164]:
+                    - generic [ref=e167]: Nicht auf Lager
+                  - cell "ca. 21 Tage" [ref=e168]
+                  - cell "0" [ref=e169]:
+                    - spinbutton [ref=e170]: "0"
+            - button "In den Warenkorb" [disabled] [ref=e172]:
+              - img [ref=e173]
+              - text: In den Warenkorb
+  - button "Open Next.js Dev Tools" [ref=e91] [cursor=pointer]:
+    - img [ref=e92]
+  - alert [ref=e95]

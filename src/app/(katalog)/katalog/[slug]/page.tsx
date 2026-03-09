@@ -88,6 +88,7 @@ export default async function ProduktDetailPage({
   }
 
   const enClass = product.en_class || product.tech_specs?.["EN-Zertifizierung"];
+  const enClassCustom = product.en_class_custom;
   const categoryName = product.category
     ? (product.category as unknown as { name: string }).name
     : null;
@@ -124,7 +125,7 @@ export default async function ProduktDetailPage({
               {categoryName}
             </span>
           )}
-          {(enClass || product.classification || product.use_case || product.is_preorder || product.is_fade_out) && (
+          {(enClass || enClassCustom || product.classification || product.use_case || product.is_preorder || product.is_fade_out) && (
             <div className="flex flex-wrap items-center gap-2">
               {product.is_preorder && (
                 <span className="rounded bg-swing-gold px-3 py-1 text-xs font-bold uppercase tracking-wide text-swing-navy">
@@ -139,6 +140,11 @@ export default async function ProduktDetailPage({
               {enClass && (
                 <span className="rounded bg-swing-gold px-3 py-1 text-xs font-bold tracking-wide text-swing-navy">
                   {enClass}
+                </span>
+              )}
+              {enClassCustom && (
+                <span className="rounded border border-swing-gold/40 bg-swing-gold/15 px-3 py-1 text-xs font-bold tracking-wide text-swing-gold">
+                  {enClassCustom}
                 </span>
               )}
               {product.classification && (

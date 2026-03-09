@@ -1,0 +1,50 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "SWING B2B" [ref=e6] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e7]: SWING
+            - generic [ref=e8]: B2B
+          - navigation [ref=e9]:
+            - link "Dashboard" [ref=e10] [cursor=pointer]:
+              - /url: /admin
+            - link "Produkte" [ref=e11] [cursor=pointer]:
+              - /url: /admin/produkte
+            - link "Kunden" [ref=e12] [cursor=pointer]:
+              - /url: /admin/kunden
+            - link "Preislisten" [ref=e13] [cursor=pointer]:
+              - /url: /admin/preislisten
+            - link "Lagerbestand" [ref=e14] [cursor=pointer]:
+              - /url: /admin/lager
+            - link "Anfragen" [ref=e15] [cursor=pointer]:
+              - /url: /admin/anfragen
+        - generic [ref=e16]:
+          - link "Zum Katalog" [ref=e17] [cursor=pointer]:
+            - /url: /katalog
+            - img [ref=e18]
+          - button "Abmelden" [ref=e21]:
+            - img [ref=e22]
+    - main [ref=e25]:
+      - generic [ref=e26]:
+        - heading "Lagerbestand-Import" [level=1] [ref=e27]
+        - generic [ref=e29]:
+          - heading "CSV-Datei hochladen" [level=2] [ref=e30]
+          - paragraph [ref=e31]: "Laden Sie den CSV-Export aus Mesonic WinLine hoch. Die Datei muss mindestens die Spalten SKU und Bestand enthalten (Trennzeichen: Semikolon, Tab oder Komma)."
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - generic [ref=e34]: SKU-Spalte (0-basiert)
+              - spinbutton [ref=e35]: "0"
+            - generic [ref=e36]:
+              - generic [ref=e37]: Bestand-Spalte
+              - spinbutton [ref=e38]: "1"
+            - generic [ref=e39]:
+              - generic [ref=e40]: Liefertage-Spalte (-1 = keine)
+              - spinbutton [ref=e41]: "-1"
+          - generic [ref=e42] [cursor=pointer]:
+            - img [ref=e43]
+            - text: CSV-Datei auswählen...
+  - button "Open Next.js Dev Tools" [ref=e51] [cursor=pointer]:
+    - img [ref=e52]
+  - alert [ref=e55]

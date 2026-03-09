@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center dash-hero px-4">
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-150 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-150 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5 sm:block" />
 
       <div className="relative z-10 w-full max-w-md">
         {/* Branding */}

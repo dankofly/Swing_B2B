@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sendEmail, buildInquiryStatusEmail, buildTrackingEmail } from "@/lib/email";
 
 export interface InquiryItem {
   sizeId: string;
@@ -161,10 +162,10 @@ export async function updateInquiryStatus(
 ) {
   const supabase = createAdminClient();
 
-  // Fetch current timestamps
+  // Fetch current inquiry with company email
   const { data: current } = await supabase
     .from("inquiries")
-    .select("status_timestamps")
+    .select("status_timestamps, created_at, company:companies(name, contact_email)")
     .eq("id", inquiryId)
     .single();
 
@@ -177,6 +178,16 @@ export async function updateInquiryStatus(
     .eq("id", inquiryId);
 
   if (error) throw new Error("Status konnte nicht aktualisiert werden");
+
+  // Notify customer about status change (fire-and-forget)
+  const company = current?.company as { name: string; contact_email: string } | null;
+  if (company?.contact_email) {
+    sendEmail(
+      company.contact_email,
+      `SWING Anfrage ${inquiryId.slice(0, 8)} — Status: ${status}`,
+      buildInquiryStatusEmail(company.name, inquiryId, status, current?.created_at ?? new Date().toISOString())
+    ).catch(() => {});
+  }
 
   revalidatePath("/admin/anfragen");
   revalidatePath("/katalog/anfragen");
@@ -201,10 +212,10 @@ export async function updateInquiryTracking(
 ) {
   const supabase = createAdminClient();
 
-  // Fetch current timestamps to merge
+  // Fetch current inquiry with company email
   const { data: current } = await supabase
     .from("inquiries")
-    .select("status_timestamps")
+    .select("status_timestamps, company:companies(name, contact_email)")
     .eq("id", inquiryId)
     .single();
 
@@ -222,6 +233,17 @@ export async function updateInquiryTracking(
     .eq("id", inquiryId);
 
   if (error) throw new Error("Trackingnummer konnte nicht gespeichert werden");
+
+  // Notify customer with tracking info (fire-and-forget)
+  const company = current?.company as { name: string; contact_email: string } | null;
+  if (company?.contact_email) {
+    sendEmail(
+      company.contact_email,
+      `SWING Bestellung versendet — Tracking: ${trackingNumber}`,
+      buildTrackingEmail(company.name, inquiryId, carrier, trackingNumber)
+    ).catch(() => {});
+  }
+
   revalidatePath("/admin/kunden");
 }
 

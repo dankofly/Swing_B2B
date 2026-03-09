@@ -1,0 +1,148 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "SWING B2B" [ref=e6] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e7]: SWING
+            - generic [ref=e8]: B2B
+          - navigation [ref=e9]:
+            - link "Dashboard" [ref=e10] [cursor=pointer]:
+              - /url: /admin
+            - link "Produkte" [ref=e11] [cursor=pointer]:
+              - /url: /admin/produkte
+            - link "Kunden" [ref=e12] [cursor=pointer]:
+              - /url: /admin/kunden
+            - link "Preislisten" [ref=e13] [cursor=pointer]:
+              - /url: /admin/preislisten
+            - link "Lagerbestand" [ref=e14] [cursor=pointer]:
+              - /url: /admin/lager
+            - link "Anfragen" [ref=e15] [cursor=pointer]:
+              - /url: /admin/anfragen
+        - generic [ref=e16]:
+          - link "Zum Katalog" [ref=e17] [cursor=pointer]:
+            - /url: /katalog
+            - img [ref=e18]
+          - button "Abmelden" [ref=e21]:
+            - img [ref=e22]
+    - main [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - link "Zurück zur Übersicht" [ref=e28] [cursor=pointer]:
+            - /url: /admin/produkte
+            - img [ref=e29]
+            - text: Zurück zur Übersicht
+          - heading "Verso RS bearbeiten" [level=1] [ref=e31]
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - heading "Grunddaten" [level=2] [ref=e34]
+            - generic [ref=e35]:
+              - generic [ref=e36]:
+                - generic [ref=e37]: Produktname *
+                - textbox "z.B. Alpha 7" [ref=e38]: Verso RS
+              - generic [ref=e39]:
+                - generic [ref=e40]: Kategorie
+                - combobox [ref=e41]:
+                  - option "Keine Kategorie"
+                  - option "Gleitschirme" [selected]
+                  - option "Tandem"
+                  - option "Motorschirme"
+                  - option "Miniwings / Hike & Fly"
+                  - option "Speedflying / Speedriding"
+                  - option "Parakites"
+                  - option "Gurtzeuge"
+                  - option "Rettungsgeräte"
+                  - option "Zubehör"
+              - generic [ref=e43]:
+                - checkbox "Aktiv (im Katalog sichtbar)" [checked] [ref=e44]
+                - text: Aktiv (im Katalog sichtbar)
+              - generic [ref=e45]:
+                - generic [ref=e46]: EN-Klasse
+                - combobox [ref=e47]:
+                  - option "Keine" [selected]
+                  - option "EN-A"
+                  - option "EN-A/B"
+                  - option "LOW EN-B"
+                  - option "MID EN-B"
+                  - option "HIGH EN-B"
+                  - option "EN-C 2-Liner"
+                  - option "EN-D 2-Liner"
+              - generic [ref=e48]:
+                - generic [ref=e49]: Gewichtsklasse
+                - combobox [ref=e50]:
+                  - option "Keine"
+                  - option "D-LITE" [selected]
+                  - option "U-LITE"
+                  - option "N-LITE"
+              - generic [ref=e51]:
+                - generic [ref=e52]: Einsatzbereich
+                - textbox "z.B. Schulung & Thermik" [ref=e53]: Hike & Fly
+              - generic [ref=e54]:
+                - generic [ref=e55]: Website-Link
+                - textbox "https://www.swing.de/..." [ref=e56]: https://www.swing.de/gleitschirme/verso-rs.html
+              - generic [ref=e57]:
+                - generic [ref=e58]: Beschreibung
+                - textbox "Produktbeschreibung..." [ref=e59]: Der vielseitige Leichtschirm. Minimales Packmaß und geringes Gewicht — ideal für Hike & Fly und den Einstieg.
+          - generic [ref=e60]:
+            - heading "Produktbilder" [level=2] [ref=e61]
+            - generic [ref=e62]:
+              - img "Bild 1" [ref=e64]
+              - generic [ref=e65] [cursor=pointer]:
+                - img [ref=e66]
+                - generic [ref=e69]: Upload
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - heading "Größenvarianten" [level=2] [ref=e72]
+              - button "Größe hinzufügen" [ref=e73]:
+                - img [ref=e74]
+                - text: Größe hinzufügen
+            - generic [ref=e75]:
+              - generic [ref=e76]:
+                - textbox "Größe (z.B. S, M, L)" [ref=e77]: XXS
+                - textbox "SKU (z.B. ALPHA7-S)" [ref=e78]: VERSO-RS-XXS
+                - button [ref=e79]:
+                  - img [ref=e80]
+              - generic [ref=e83]:
+                - textbox "Größe (z.B. S, M, L)" [ref=e84]: XS
+                - textbox "SKU (z.B. ALPHA7-S)" [ref=e85]: VERSO-RS-XS
+                - button [ref=e86]:
+                  - img [ref=e87]
+              - generic [ref=e90]:
+                - textbox "Größe (z.B. S, M, L)" [ref=e91]: S
+                - textbox "SKU (z.B. ALPHA7-S)" [ref=e92]: VERSO-RS-S
+                - button [ref=e93]:
+                  - img [ref=e94]
+              - generic [ref=e97]:
+                - textbox "Größe (z.B. S, M, L)" [ref=e98]: SM
+                - textbox "SKU (z.B. ALPHA7-S)" [ref=e99]: VERSO-RS-SM
+                - button [ref=e100]:
+                  - img [ref=e101]
+              - generic [ref=e104]:
+                - textbox "Größe (z.B. S, M, L)" [ref=e105]: ML
+                - textbox "SKU (z.B. ALPHA7-S)" [ref=e106]: VERSO-RS-ML
+                - button [ref=e107]:
+                  - img [ref=e108]
+          - generic [ref=e111]:
+            - generic [ref=e112]:
+              - heading "Farbdesigns" [level=2] [ref=e113]
+              - button "Farbe hinzufügen" [ref=e114]:
+                - img [ref=e115]
+                - text: Farbe hinzufügen
+            - generic [ref=e116]:
+              - generic [ref=e117]:
+                - textbox "Farbname (z.B. Design A)" [ref=e118]: Violet
+                - img "Violet" [ref=e120]
+                - button [ref=e121]:
+                  - img [ref=e122]
+              - generic [ref=e125]:
+                - textbox "Farbname (z.B. Design A)" [ref=e126]: Mint
+                - img "Mint" [ref=e128]
+                - button [ref=e129]:
+                  - img [ref=e130]
+          - generic [ref=e133]:
+            - button "Speichern" [ref=e134]
+            - link "Abbrechen" [ref=e135] [cursor=pointer]:
+              - /url: /admin/produkte
+  - button "Open Next.js Dev Tools" [ref=e141] [cursor=pointer]:
+    - img [ref=e142]

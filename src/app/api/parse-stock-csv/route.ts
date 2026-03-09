@@ -112,22 +112,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Fetch all products with sizes and colors from DB
-    const { data: allProducts } = await supabase
-      .from("products")
-      .select("id, name, slug")
-      .eq("is_active", true)
-      .order("name");
-
-    const { data: allSizes } = await supabase
-      .from("product_sizes")
-      .select("id, product_id, size_label, sku, stock_quantity")
-      .order("sort_order");
-
-    const { data: allColors } = await supabase
-      .from("product_colors")
-      .select("id, product_id, color_name")
-      .order("sort_order");
+    // Fetch all products, sizes, and colors in parallel
+    const [{ data: allProducts }, { data: allSizes }, { data: allColors }] =
+      await Promise.all([
+        supabase.from("products").select("id, name, slug").eq("is_active", true).order("name"),
+        supabase.from("product_sizes").select("id, product_id, size_label, sku, stock_quantity").order("sort_order"),
+        supabase.from("product_colors").select("id, product_id, color_name").order("sort_order"),
+      ]);
 
     // Build context for Gemini
     const productContext = (allProducts ?? []).map((p) => {

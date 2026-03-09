@@ -1,0 +1,111 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "SWING B2B" [ref=e6] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e7]: SWING
+            - generic [ref=e8]: B2B
+          - navigation [ref=e9]:
+            - link "Dashboard" [ref=e10] [cursor=pointer]:
+              - /url: /admin
+            - link "Produkte" [ref=e11] [cursor=pointer]:
+              - /url: /admin/produkte
+            - link "Kunden" [ref=e12] [cursor=pointer]:
+              - /url: /admin/kunden
+            - link "Preislisten" [ref=e13] [cursor=pointer]:
+              - /url: /admin/preislisten
+            - link "Lagerbestand" [ref=e14] [cursor=pointer]:
+              - /url: /admin/lager
+            - link "Anfragen" [ref=e15] [cursor=pointer]:
+              - /url: /admin/anfragen
+        - generic [ref=e16]:
+          - link "Zum Katalog" [ref=e17] [cursor=pointer]:
+            - /url: /katalog
+            - img [ref=e18]
+          - button "Abmelden" [ref=e21]:
+            - img [ref=e22]
+    - main [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - link "Zurück zur Übersicht" [ref=e28] [cursor=pointer]:
+            - /url: /admin/produkte
+            - img [ref=e29]
+            - text: Zurück zur Übersicht
+          - heading "Neues Produkt" [level=1] [ref=e31]
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - heading "Grunddaten" [level=2] [ref=e34]
+            - generic [ref=e35]:
+              - generic [ref=e36]:
+                - generic [ref=e37]: Produktname *
+                - textbox "z.B. Alpha 7" [ref=e38]
+              - generic [ref=e39]:
+                - generic [ref=e40]: Kategorie
+                - combobox [ref=e41]:
+                  - option "Keine Kategorie" [selected]
+                  - option "Gleitschirme"
+                  - option "Tandem"
+                  - option "Motorschirme"
+                  - option "Miniwings / Hike & Fly"
+                  - option "Speedflying / Speedriding"
+                  - option "Parakites"
+                  - option "Gurtzeuge"
+                  - option "Rettungsgeräte"
+                  - option "Zubehör"
+              - generic [ref=e43]:
+                - checkbox "Aktiv (im Katalog sichtbar)" [checked] [ref=e44]
+                - text: Aktiv (im Katalog sichtbar)
+              - generic [ref=e45]:
+                - generic [ref=e46]: EN-Klasse
+                - combobox [ref=e47]:
+                  - option "Keine" [selected]
+                  - option "EN-A"
+                  - option "EN-A/B"
+                  - option "LOW EN-B"
+                  - option "MID EN-B"
+                  - option "HIGH EN-B"
+                  - option "EN-C 2-Liner"
+                  - option "EN-D 2-Liner"
+              - generic [ref=e48]:
+                - generic [ref=e49]: Gewichtsklasse
+                - combobox [ref=e50]:
+                  - option "Keine" [selected]
+                  - option "D-LITE"
+                  - option "U-LITE"
+                  - option "N-LITE"
+              - generic [ref=e51]:
+                - generic [ref=e52]: Einsatzbereich
+                - textbox "z.B. Schulung & Thermik" [ref=e53]
+              - generic [ref=e54]:
+                - generic [ref=e55]: Website-Link
+                - textbox "https://www.swing.de/..." [ref=e56]
+              - generic [ref=e57]:
+                - generic [ref=e58]: Beschreibung
+                - textbox "Produktbeschreibung..." [ref=e59]
+          - generic [ref=e60]:
+            - heading "Produktbilder" [level=2] [ref=e61]
+            - generic [ref=e63] [cursor=pointer]:
+              - img [ref=e64]
+              - generic [ref=e67]: Upload
+          - generic [ref=e68]:
+            - generic [ref=e69]:
+              - heading "Größenvarianten" [level=2] [ref=e70]
+              - button "Größe hinzufügen" [ref=e71]:
+                - img [ref=e72]
+                - text: Größe hinzufügen
+            - paragraph [ref=e73]: Noch keine Größen. Klicke "Größe hinzufügen", um eine Variante anzulegen.
+          - generic [ref=e74]:
+            - generic [ref=e75]:
+              - heading "Farbdesigns" [level=2] [ref=e76]
+              - button "Farbe hinzufügen" [ref=e77]:
+                - img [ref=e78]
+                - text: Farbe hinzufügen
+            - paragraph [ref=e79]: Noch keine Farben. Klicke "Farbe hinzufügen", um ein Design anzulegen.
+          - generic [ref=e80]:
+            - button "Produkt anlegen" [ref=e81]
+            - link "Abbrechen" [ref=e82] [cursor=pointer]:
+              - /url: /admin/produkte
+  - button "Open Next.js Dev Tools" [ref=e88] [cursor=pointer]:
+    - img [ref=e89]

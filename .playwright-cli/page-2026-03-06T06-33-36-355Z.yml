@@ -1,0 +1,35 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "SWING B2B" [ref=e6] [cursor=pointer]:
+            - /url: /katalog
+            - generic [ref=e7]: SWING
+            - generic [ref=e8]: B2B
+          - navigation [ref=e9]:
+            - link "Katalog" [ref=e10] [cursor=pointer]:
+              - /url: /katalog
+            - link "Meine Anfragen" [ref=e11] [cursor=pointer]:
+              - /url: /katalog/anfragen
+        - generic [ref=e12]:
+          - link [ref=e13] [cursor=pointer]:
+            - /url: /katalog/warenkorb
+            - img [ref=e14]
+          - link "Admin" [ref=e18] [cursor=pointer]:
+            - /url: /admin
+            - img [ref=e19]
+          - button "Abmelden" [ref=e22]:
+            - img [ref=e23]
+    - main [ref=e26]:
+      - generic [ref=e27]:
+        - heading "Meine Anfragen" [level=1] [ref=e28]
+        - generic [ref=e29]:
+          - img [ref=e30]
+          - paragraph [ref=e33]: Noch keine Anfragen
+          - paragraph [ref=e34]: Sobald Sie eine Bestellanfrage senden, erscheint sie hier.
+          - link "Zum Katalog" [ref=e35] [cursor=pointer]:
+            - /url: /katalog
+  - button "Open Next.js Dev Tools" [ref=e41] [cursor=pointer]:
+    - img [ref=e42]
+  - alert [ref=e45]

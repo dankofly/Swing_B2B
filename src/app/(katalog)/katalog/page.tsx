@@ -60,12 +60,20 @@ export default async function KatalogPage({
   }>;
 }) {
   const { q, kategorie, sub, en, gewicht, als } = await searchParams;
-  const supabase = await createClient();
-  const dict = await getDictionary();
   const allParams = { q, kategorie, sub, en, gewicht, als };
 
-  // Check if current user is admin/superadmin for edit links
-  const { data: { user } } = await supabase.auth.getUser();
+  // Parallelize independent async calls
+  const [supabase, dict] = await Promise.all([
+    createClient(),
+    getDictionary(),
+  ]);
+
+  // Parallelize user auth + categories fetch (independent queries)
+  const [{ data: { user } }, { data: categories }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from("categories").select("*").order("sort_order"),
+  ]);
+
   let isAdmin = false;
   if (user) {
     const { data: profile } = await supabase
@@ -75,11 +83,6 @@ export default async function KatalogPage({
       .single();
     isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
   }
-
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("*")
-    .order("sort_order");
 
   const catMap = Object.fromEntries(
     (categories as Category[])?.map((c) => [c.slug, c]) ?? []
@@ -409,6 +412,7 @@ export default async function KatalogPage({
               ? (product.category as unknown as { name: string }).name
               : null;
             const enClass = product.en_class || product.tech_specs?.["EN-Zertifizierung"];
+            const enClassCustom = product.en_class_custom;
             const isComingSoon = product.is_coming_soon;
             const isPreorder = product.is_preorder;
             const isFadeOut = product.is_fade_out;
@@ -458,6 +462,11 @@ export default async function KatalogPage({
                     {enClass && (
                       <span className="rounded bg-white/15 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white/80">
                         {enClass}
+                      </span>
+                    )}
+                    {enClassCustom && (
+                      <span className="rounded bg-white/25 px-2 py-0.5 text-[10px] font-bold tracking-wide text-swing-gold">
+                        {enClassCustom}
                       </span>
                     )}
                   </div>

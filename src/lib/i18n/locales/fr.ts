@@ -487,6 +487,8 @@ const fr: Dictionary = {
         isPreorder: "Précommande ouverte",
         isFadeOut: "Fin de série",
         enClass: "Classe EN",
+        enClassCustom: "Classe EN (personnalisée)",
+        enClassCustomPlaceholder: "p.ex. EN-C LTF",
         none: "Aucune",
         weightClass: "Classe de poids",
         useCase: "Utilisation",

@@ -20,6 +20,7 @@ export interface Product {
   is_preorder: boolean;
   is_fade_out: boolean;
   en_class?: string | null;
+  en_class_custom?: string | null;
   classification: string | null;
   use_case: string | null;
   website_url: string | null;

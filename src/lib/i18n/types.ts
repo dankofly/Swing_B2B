@@ -463,6 +463,8 @@ export interface Dictionary {
         isPreorder: string;
         isFadeOut: string;
         enClass: string;
+        enClassCustom: string;
+        enClassCustomPlaceholder: string;
         none: string;
         weightClass: string;
         useCase: string;

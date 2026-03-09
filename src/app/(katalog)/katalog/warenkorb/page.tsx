@@ -72,7 +72,7 @@ export default function WarenkorbPage() {
           </p>
 
           <div className="mx-auto mt-6 max-w-xs rounded-lg bg-gray-50 px-5 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
               {tc.whatNext}
             </p>
             <ul className="mt-2 space-y-1.5 text-left text-xs text-swing-gray-dark/50">
@@ -225,7 +225,7 @@ export default function WarenkorbPage() {
                       </td>
                       <td className="px-6 py-3.5 text-right font-semibold text-swing-navy tabular-nums">{item.unitPrice != null ? eur(item.unitPrice * item.quantity) : "—"}</td>
                       <td className="px-6 py-3.5 text-right">
-                        <button onClick={() => removeItem(item.sizeId, item.colorId)} className="cursor-pointer p-1 text-swing-navy/15 transition-colors duration-200 hover:text-red-500"><Trash2 size={16} /></button>
+                        <button onClick={() => removeItem(item.sizeId, item.colorId)} className="cursor-pointer p-2 text-swing-navy/15 transition-colors duration-200 hover:text-red-500"><Trash2 size={16} /></button>
                       </td>
                     </tr>
                   ))}
@@ -245,7 +245,7 @@ export default function WarenkorbPage() {
                       {item.unitPrice != null && <span className="text-xs tabular-nums text-swing-gray-dark/40">({eur(item.unitPrice)} × {item.quantity})</span>}
                     </div>
                     <div className="mt-2.5 flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-swing-navy/30">{tc.quantity}</span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-swing-navy/30">{tc.quantity}</span>
                       <input type="number" min={1} value={item.quantity} onChange={(e) => updateQuantity(item.sizeId, item.colorId, parseInt(e.target.value) || 0)}
                         className="w-16 rounded-lg border border-gray-150 bg-white px-2 py-2 text-center text-sm tabular-nums transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20" />
                     </div>
@@ -291,7 +291,7 @@ export default function WarenkorbPage() {
             )}
           </div>
 
-          <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
+          <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
             {tc.notesLabel}
           </label>
           <textarea

@@ -285,6 +285,19 @@ export default function ProductForm({
 
           <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.enClassCustom}
+            </label>
+            <input
+              name="en_class_custom"
+              type="text"
+              defaultValue={product?.en_class_custom || ""}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder={tf.enClassCustomPlaceholder}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
               {tf.weightClass}
             </label>
             <select

@@ -32,13 +32,13 @@ export default async function ImpressumPage() {
           <p className="text-lg font-bold text-swing-navy">{t.companyName}</p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-swing-navy/30">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-swing-navy/30">
                 {t.managingDirector}
               </p>
               <p className="mt-1 text-sm text-swing-navy">Günther Wörl</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-swing-navy/30">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-swing-navy/30">
                 {t.address}
               </p>
               <p className="mt-1 text-sm leading-relaxed text-swing-navy">
@@ -104,7 +104,7 @@ export default async function ImpressumPage() {
             </p>
           </div>
           <div className="mt-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-swing-navy/30">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-swing-navy/30">
               {t.vatId}
             </p>
             <p className="mt-1 text-sm text-swing-navy">DE 165 22 5951</p>

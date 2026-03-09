@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sendEmail, buildApprovalEmail } from "@/lib/email";
 
 function extractCompanyFields(formData: FormData) {
   return {
@@ -76,6 +77,23 @@ export async function toggleCompanyApproval(id: string, approved: boolean) {
     .eq("id", id);
 
   if (error) return { success: false, error: error.message };
+
+  // Send approval email to company contact
+  if (approved) {
+    const { data: company } = await supabase
+      .from("companies")
+      .select("name, contact_email")
+      .eq("id", id)
+      .single();
+
+    if (company?.contact_email) {
+      sendEmail(
+        company.contact_email,
+        `Ihr SWING B2B Zugang wurde freigeschaltet`,
+        buildApprovalEmail(company.name)
+      ).catch(() => {}); // fire-and-forget
+    }
+  }
 
   revalidatePath("/admin/kunden");
   revalidatePath(`/admin/kunden/${id}`);

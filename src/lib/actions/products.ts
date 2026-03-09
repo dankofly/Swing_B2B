@@ -26,6 +26,7 @@ export async function createProduct(formData: FormData) {
   const is_preorder = formData.get("is_preorder") === "on";
   const is_fade_out = formData.get("is_fade_out") === "on";
   const en_class = formData.get("en_class") as string;
+  const en_class_custom = formData.get("en_class_custom") as string;
   const classification = formData.get("classification") as string;
   const use_case = formData.get("use_case") as string;
   const website_url = formData.get("website_url") as string;
@@ -44,6 +45,7 @@ export async function createProduct(formData: FormData) {
       is_preorder,
       is_fade_out,
       en_class: en_class || null,
+      en_class_custom: en_class_custom || null,
       tech_specs: {},
       classification: classification || null,
       use_case: use_case || null,
@@ -117,6 +119,7 @@ export async function updateProduct(productId: string, formData: FormData) {
   const is_preorder = formData.get("is_preorder") === "on";
   const is_fade_out = formData.get("is_fade_out") === "on";
   const en_class = formData.get("en_class") as string;
+  const en_class_custom = formData.get("en_class_custom") as string;
   const classification = formData.get("classification") as string;
   const use_case = formData.get("use_case") as string;
   const website_url = formData.get("website_url") as string;
@@ -135,6 +138,7 @@ export async function updateProduct(productId: string, formData: FormData) {
       is_preorder,
       is_fade_out,
       en_class: en_class || null,
+      en_class_custom: en_class_custom || null,
       tech_specs: {},
       classification: classification || null,
       use_case: use_case || null,

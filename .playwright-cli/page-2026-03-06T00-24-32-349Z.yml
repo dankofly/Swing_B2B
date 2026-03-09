@@ -1,0 +1,65 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "SWING B2B" [ref=e6] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e7]: SWING
+            - generic [ref=e8]: B2B
+          - navigation [ref=e9]:
+            - link "Dashboard" [ref=e10] [cursor=pointer]:
+              - /url: /admin
+            - link "Produkte" [ref=e11] [cursor=pointer]:
+              - /url: /admin/produkte
+            - link "Kunden" [ref=e12] [cursor=pointer]:
+              - /url: /admin/kunden
+            - link "Preislisten" [ref=e13] [cursor=pointer]:
+              - /url: /admin/preislisten
+            - link "Lagerbestand" [ref=e14] [cursor=pointer]:
+              - /url: /admin/lager
+            - link "Anfragen" [ref=e15] [cursor=pointer]:
+              - /url: /admin/anfragen
+        - generic [ref=e16]:
+          - link "Zum Katalog" [ref=e17] [cursor=pointer]:
+            - /url: /katalog
+            - img [ref=e18]
+          - button "Abmelden" [ref=e21]:
+            - img [ref=e22]
+    - main [ref=e25]:
+      - generic [ref=e26]:
+        - heading "Dashboard" [level=1] [ref=e27]
+        - generic [ref=e28]:
+          - link "20 Produkte" [ref=e29] [cursor=pointer]:
+            - /url: /admin/produkte
+            - img [ref=e31]
+            - generic [ref=e35]:
+              - paragraph [ref=e36]: "20"
+              - paragraph [ref=e37]: Produkte
+          - link "3 Händler" [ref=e38] [cursor=pointer]:
+            - /url: /admin/kunden
+            - img [ref=e40]
+            - generic [ref=e45]:
+              - paragraph [ref=e46]: "3"
+              - paragraph [ref=e47]: Händler
+          - link "0 Offene Anfragen" [ref=e48] [cursor=pointer]:
+            - /url: /admin/anfragen
+            - img [ref=e50]
+            - generic [ref=e53]:
+              - paragraph [ref=e54]: "0"
+              - paragraph [ref=e55]: Offene Anfragen
+          - link "44 Niedriger Bestand" [ref=e56] [cursor=pointer]:
+            - /url: /admin/lager
+            - img [ref=e58]
+            - generic [ref=e60]:
+              - paragraph [ref=e61]: "44"
+              - paragraph [ref=e62]: Niedriger Bestand
+        - generic [ref=e63]:
+          - generic [ref=e64]:
+            - heading "Letzte Anfragen" [level=2] [ref=e65]
+            - link "Alle anzeigen" [ref=e66] [cursor=pointer]:
+              - /url: /admin/anfragen
+          - paragraph [ref=e67]: Noch keine Anfragen vorhanden.
+  - button "Open Next.js Dev Tools" [ref=e73] [cursor=pointer]:
+    - img [ref=e74]
+  - alert [ref=e77]

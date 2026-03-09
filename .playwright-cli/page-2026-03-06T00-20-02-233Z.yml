@@ -1,0 +1,24 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - link "SWINGB2B" [ref=e5] [cursor=pointer]:
+      - /url: /
+    - generic [ref=e6]:
+      - heading "Anmelden" [level=1] [ref=e8]
+      - generic [ref=e9]:
+        - generic [ref=e10]:
+          - generic [ref=e11]: E-Mail
+          - textbox "E-Mail" [ref=e12]:
+            - /placeholder: ihre@email.de
+        - generic [ref=e13]:
+          - generic [ref=e14]: Passwort
+          - textbox "Passwort" [ref=e15]:
+            - /placeholder: ••••••••
+        - button "Anmelden" [ref=e16]:
+          - text: Anmelden
+          - img [ref=e17]
+      - paragraph [ref=e19]:
+        - text: Noch kein Konto?
+        - link "Registrieren" [ref=e20] [cursor=pointer]:
+          - /url: /register
+  - button "Open Next.js Dev Tools" [ref=e26] [cursor=pointer]:
+    - img [ref=e27]

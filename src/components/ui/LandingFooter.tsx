@@ -21,11 +21,11 @@ export default function LandingFooter() {
         </a>
 
         {/* Center: Legal links + Language switcher */}
-        <div className="flex items-center gap-4">
-          <Link href="/impressum" className="text-xs text-white/35 transition-colors hover:text-white/60">
+        <div className="flex items-center gap-2">
+          <Link href="/impressum" className="rounded px-2 py-1.5 text-xs text-white/35 transition-colors hover:text-white/60">
             {dict.landing.impressum}
           </Link>
-          <Link href="/datenschutz" className="text-xs text-white/35 transition-colors hover:text-white/60">
+          <Link href="/datenschutz" className="rounded px-2 py-1.5 text-xs text-white/35 transition-colors hover:text-white/60">
             {dict.landing.datenschutz}
           </Link>
           <div className="h-3 w-px bg-white/15" />

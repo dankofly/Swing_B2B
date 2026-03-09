@@ -160,7 +160,7 @@ export default function InquiryBoard({
 
               {/* Status badge */}
               <span
-                className={`shrink-0 rounded py-0.5 text-[10px] font-bold text-center w-24 ${status.bg} ${status.color}`}
+                className={`shrink-0 rounded py-0.5 text-[10px] font-bold text-center w-20 sm:w-24 ${status.bg} ${status.color}`}
               >
                 {status.label}
               </span>

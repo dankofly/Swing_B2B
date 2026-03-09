@@ -25,23 +25,25 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const pathname = request.nextUrl.pathname;
 
-  // Protect admin and katalog routes
+  // Classify route once to avoid repeated property access
   const isAuthRoute =
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/register") ||
-    request.nextUrl.pathname.startsWith("/forgot-password") ||
-    request.nextUrl.pathname.startsWith("/reset-password");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password");
 
   const isPublicRoute =
     isAuthRoute ||
-    request.nextUrl.pathname === "/" ||
-    request.nextUrl.pathname.startsWith("/api/") ||
-    request.nextUrl.pathname.startsWith("/impressum") ||
-    request.nextUrl.pathname.startsWith("/datenschutz");
+    pathname === "/" ||
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/impressum") ||
+    pathname.startsWith("/datenschutz");
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
@@ -49,14 +51,14 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute && !request.nextUrl.pathname.startsWith("/reset-password")) {
+  if (user && isAuthRoute && !pathname.startsWith("/reset-password")) {
     const url = request.nextUrl.clone();
     url.pathname = "/katalog";
     return NextResponse.redirect(url);
   }
 
-  // Role-based protection: only admins/superadmins can access /admin routes
-  if (user && request.nextUrl.pathname.startsWith("/admin")) {
+  // Role-based protection: only query profile DB for /admin routes
+  if (user && pathname.startsWith("/admin")) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")

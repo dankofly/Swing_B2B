@@ -487,6 +487,8 @@ const en: Dictionary = {
         isPreorder: "Pre-order open",
         isFadeOut: "Fade Out",
         enClass: "EN Class",
+        enClassCustom: "EN Class (Custom)",
+        enClassCustomPlaceholder: "e.g. EN-C LTF",
         none: "None",
         weightClass: "Weight class",
         useCase: "Use case",

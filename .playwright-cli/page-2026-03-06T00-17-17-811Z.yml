@@ -1,0 +1,32 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e6]:
+      - paragraph [ref=e7]: Flugsportgeräte GmbH
+      - heading "SWING" [level=1] [ref=e8]
+      - paragraph [ref=e9]: B2B Händlerportal
+      - generic [ref=e10]:
+        - link "Anmelden" [ref=e11] [cursor=pointer]:
+          - /url: /login
+          - text: Anmelden
+          - img [ref=e12]
+        - link "Registrieren" [ref=e14] [cursor=pointer]:
+          - /url: /register
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - img [ref=e18]
+        - generic [ref=e21]:
+          - paragraph [ref=e22]: Individuelle Preise
+          - paragraph [ref=e23]: Ihre verhandelten EK-Konditionen
+      - generic [ref=e24]:
+        - img [ref=e25]
+        - generic [ref=e30]:
+          - paragraph [ref=e31]: Live Lagerbestand
+          - paragraph [ref=e32]: Echtzeit-Verfügbarkeit aller Größen
+      - generic [ref=e33]:
+        - img [ref=e34]
+        - generic [ref=e37]:
+          - paragraph [ref=e38]: Schnelle Anfragen
+          - paragraph [ref=e39]: Bestellanfrage in wenigen Klicks
+  - button "Open Next.js Dev Tools" [ref=e45] [cursor=pointer]:
+    - img [ref=e46]
+  - alert [ref=e49]

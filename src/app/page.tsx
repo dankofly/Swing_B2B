@@ -7,11 +7,11 @@ export default async function Home() {
   return (
     <div>
       {/* Hero */}
-      <div className="relative flex min-h-[calc(100vh-160px)] flex-col items-center justify-center dash-hero px-5 py-12 text-center sm:px-4 sm:py-0">
+      <div className="relative flex min-h-[calc(100vh-160px)] flex-col items-center justify-center dash-hero px-5 py-12 text-center sm:px-8 sm:py-0">
         {/* Decorative rings — largest hidden on mobile to prevent overflow */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-175 w-175 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/5 sm:block" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/8 sm:block" />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-75 w-75 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/4" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 hidden h-75 w-75 -translate-x-1/2 -translate-y-1/2 rounded-full border border-swing-gold/4 sm:block" />
 
         <div className="relative z-10 flex flex-col items-center">
           <h1 className="swing-h1 mb-2">{dict.landing.brand}</h1>

@@ -154,7 +154,7 @@ export default function Header({
 
       {/* Mobile nav */}
       {mobileOpen && (
-        <nav className="border-t border-white/10 px-4 pb-4 pt-2 md:hidden">
+        <nav className="border-t border-white/10 px-4 pb-4 pt-3 md:hidden">
           {links.map((link) => (
             <Link
               key={link.href}

@@ -26,6 +26,7 @@ export default async function AdminDashboard() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
+  // Parallelize ALL dashboard queries in a single batch
   const [
     { count: activeProducts },
     { count: comingSoonProducts },
@@ -40,6 +41,7 @@ export default async function AdminDashboard() {
     { count: dealerCount },
     { count: importerCount },
     { count: importerNetworkCount },
+    { data: recentInquiries },
   ] = await Promise.all([
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_coming_soon", true),
@@ -54,20 +56,15 @@ export default async function AdminDashboard() {
     supabase.from("companies").select("*", { count: "exact", head: true }).eq("company_type", "dealer"),
     supabase.from("companies").select("*", { count: "exact", head: true }).eq("company_type", "importer"),
     supabase.from("companies").select("*", { count: "exact", head: true }).eq("company_type", "importer_network"),
-  ]);
-
-  const { data: recentInquiries } = await supabase
-    .from("inquiries")
-    .select(`
+    supabase.from("inquiries").select(`
       id,
       status,
       created_at,
       company_id,
       company:companies(name),
       user:profiles(full_name, email)
-    `)
-    .order("created_at", { ascending: false })
-    .limit(6);
+    `).order("created_at", { ascending: false }).limit(6),
+  ]);
 
   const companyIds = [...new Set((recentInquiries ?? []).map((i: any) => i.company_id).filter(Boolean))];
   const { data: openCounts } = companyIds.length > 0
