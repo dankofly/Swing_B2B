@@ -44,7 +44,7 @@ Typografie:
 ## Produktstruktur
 Paragleiter haben Varianten:
 ```
-Modell (z.B. "Alpha 7")
+Modell (z.B. "Mirage 2 RS")
 ├── Beschreibung, Bilder, Technische Daten
 ├── Größen: S, M, L  →  eigene SKU, eigener Preis, eigener Lagerstand
 └── Farbdesigns: A, B, C  →  nur Auswahl, kein Preisunterschied

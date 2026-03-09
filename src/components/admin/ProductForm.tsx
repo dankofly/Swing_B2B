@@ -276,7 +276,7 @@ export default function ProductForm({
               required
               defaultValue={product?.name}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder="z.B. Alpha 7"
+              placeholder="z.B. Mirage 2 RS"
             />
           </div>
 

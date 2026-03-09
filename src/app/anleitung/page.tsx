@@ -54,7 +54,7 @@ export default function AnleitungPage() {
               Schnelleinstieg &mdash; Ihre erste Bestellanfrage
             </h2>
             <p className="mt-1 text-[13px] text-swing-gray-dark/60">
-              Beispiel: Sie m&ouml;chten 2&times; Alpha 7 in Gr&ouml;&szlig;e M bestellen.
+              Beispiel: Sie m&ouml;chten 2&times; Mirage 2 RS in Gr&ouml;&szlig;e M bestellen.
             </p>
           </div>
           <div className="space-y-0 px-6 py-5 sm:px-8">
@@ -69,7 +69,7 @@ export default function AnleitungPage() {
                     <Link href="/katalog" className="font-semibold text-swing-navy underline">
                       Katalog
                     </Link>{" "}
-                    und suchen Sie nach &quot;Alpha 7&quot; oder filtern Sie nach Kategorie.
+                    und suchen Sie nach &quot;Mirage&quot; oder filtern Sie nach Kategorie.
                   </>
                 ),
               },
@@ -176,7 +176,7 @@ export default function AnleitungPage() {
                 Suchfunktion
               </p>
               <p>
-                Geben Sie im Suchfeld den Produktnamen ein (z.B. &quot;Alpha&quot; oder &quot;Nyos&quot;). Die Ergebnisse werden sofort gefiltert.
+                Geben Sie im Suchfeld den Produktnamen ein (z.B. &quot;Mirage&quot; oder &quot;Brave&quot;). Die Ergebnisse werden sofort gefiltert.
               </p>
             </div>
             <div className="rounded-lg bg-gray-50 p-4">

@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
 Translate the following product data from German to ${langName}. Keep brand names, model names, and technical designations (like EN-A, EN-B, sizes) unchanged. Use the correct paragliding terminology in ${langName}.
 
-For product names: Keep the model name as-is (e.g., "Alpha 7" stays "Alpha 7"). Only translate descriptive parts if any.
+For product names: Keep the model name as-is (e.g., "Mirage 2 RS" stays "Mirage 2 RS"). Only translate descriptive parts if any.
 For descriptions: Translate naturally and professionally, keeping the tone suitable for B2B dealers.
 For use_case: Use the standard ${langName} paragliding terminology (e.g., "XC & Wettbewerb" → "XC & Competition" in English).
 
