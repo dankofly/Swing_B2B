@@ -249,6 +249,7 @@ export interface Dictionary {
       comingSoon: string;
       preorder: string;
       fadeOut: string;
+      action: string;
       limited: string;
       designs: string;
       design: string;
@@ -462,6 +463,7 @@ export interface Dictionary {
         isComingSoon: string;
         isPreorder: string;
         isFadeOut: string;
+        isAction: string;
         enClass: string;
         enClassCustom: string;
         enClassCustomPlaceholder: string;

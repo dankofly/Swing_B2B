@@ -19,6 +19,7 @@ export interface Product {
   is_coming_soon: boolean;
   is_preorder: boolean;
   is_fade_out: boolean;
+  is_action: boolean;
   en_class?: string | null;
   en_class_custom?: string | null;
   classification: string | null;

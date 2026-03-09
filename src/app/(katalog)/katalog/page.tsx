@@ -416,6 +416,7 @@ export default async function KatalogPage({
             const isComingSoon = product.is_coming_soon;
             const isPreorder = product.is_preorder;
             const isFadeOut = product.is_fade_out;
+            const isAction = product.is_action;
 
             const Wrapper = isComingSoon ? "div" : Link;
             const productHref = viewingAsCompanyId
@@ -452,6 +453,11 @@ export default async function KatalogPage({
                     {isFadeOut && (
                       <span className="rounded bg-red-500/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                         {dict.katalog.badges.fadeOut}
+                      </span>
+                    )}
+                    {isAction && (
+                      <span className="badge-action rounded px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                        {dict.katalog.badges.action}
                       </span>
                     )}
                     {product.classification && (

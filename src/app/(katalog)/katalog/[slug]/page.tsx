@@ -125,7 +125,7 @@ export default async function ProduktDetailPage({
               {categoryName}
             </span>
           )}
-          {(enClass || enClassCustom || product.classification || product.use_case || product.is_preorder || product.is_fade_out) && (
+          {(enClass || enClassCustom || product.classification || product.use_case || product.is_preorder || product.is_fade_out || product.is_action) && (
             <div className="flex flex-wrap items-center gap-2">
               {product.is_preorder && (
                 <span className="rounded bg-swing-gold px-3 py-1 text-xs font-bold uppercase tracking-wide text-swing-navy">
@@ -135,6 +135,11 @@ export default async function ProduktDetailPage({
               {product.is_fade_out && (
                 <span className="rounded bg-red-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-red-700">
                   Fade Out
+                </span>
+              )}
+              {product.is_action && (
+                <span className="badge-action rounded px-3 py-1 text-xs font-bold uppercase tracking-wide">
+                  {dict.katalog.badges.action}
                 </span>
               )}
               {enClass && (

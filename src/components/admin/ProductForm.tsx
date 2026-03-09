@@ -260,6 +260,15 @@ export default function ProductForm({
               />
               {tf.isFadeOut}
             </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                name="is_action"
+                type="checkbox"
+                defaultChecked={product?.is_action ?? false}
+                className="rounded border-gray-300 accent-orange-500"
+              />
+              {tf.isAction}
+            </label>
           </div>
 
           <div>

@@ -357,6 +357,33 @@ body::before {
   100% { box-shadow: 0 0 0 0 rgba(252, 185, 35, 0); }
 }
 
+/* ===== Aktion badge — animated eye-catcher ===== */
+.badge-action {
+  background: linear-gradient(135deg, #ff6b35, #ff3d00);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  animation: actionPulse 2s ease-in-out infinite;
+}
+
+.badge-action::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  animation: actionShine 3s ease-in-out infinite;
+}
+
+@keyframes actionPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); }
+  50% { transform: scale(1.05); box-shadow: 0 0 8px 2px rgba(255, 61, 0, 0.25); }
+}
+
+@keyframes actionShine {
+  0%, 70%, 100% { transform: translateX(-100%); }
+  35% { transform: translateX(100%); }
+}
+
 /* ===== Reduced motion ===== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

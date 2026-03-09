@@ -25,6 +25,7 @@ export async function createProduct(formData: FormData) {
   const is_coming_soon = formData.get("is_coming_soon") === "on";
   const is_preorder = formData.get("is_preorder") === "on";
   const is_fade_out = formData.get("is_fade_out") === "on";
+  const is_action = formData.get("is_action") === "on";
   const en_class = formData.get("en_class") as string;
   const en_class_custom = formData.get("en_class_custom") as string;
   const classification = formData.get("classification") as string;
@@ -44,6 +45,7 @@ export async function createProduct(formData: FormData) {
       is_coming_soon,
       is_preorder,
       is_fade_out,
+      is_action,
       en_class: en_class || null,
       en_class_custom: en_class_custom || null,
       tech_specs: {},
@@ -118,6 +120,7 @@ export async function updateProduct(productId: string, formData: FormData) {
   const is_coming_soon = formData.get("is_coming_soon") === "on";
   const is_preorder = formData.get("is_preorder") === "on";
   const is_fade_out = formData.get("is_fade_out") === "on";
+  const is_action = formData.get("is_action") === "on";
   const en_class = formData.get("en_class") as string;
   const en_class_custom = formData.get("en_class_custom") as string;
   const classification = formData.get("classification") as string;
@@ -137,6 +140,7 @@ export async function updateProduct(productId: string, formData: FormData) {
       is_coming_soon,
       is_preorder,
       is_fade_out,
+      is_action,
       en_class: en_class || null,
       en_class_custom: en_class_custom || null,
       tech_specs: {},
