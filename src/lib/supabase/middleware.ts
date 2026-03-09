@@ -40,7 +40,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/api/") ||
     pathname.startsWith("/impressum") ||
     pathname.startsWith("/datenschutz") ||
-    pathname.startsWith("/anleitung");
+    pathname.startsWith("/anleitung") ||
+    pathname.startsWith("/admin-anleitung");
 
   const {
     data: { user },
