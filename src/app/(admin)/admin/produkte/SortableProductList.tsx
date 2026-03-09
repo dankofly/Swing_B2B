@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useId } from "react";
 import {
   DndContext,
   closestCenter,
@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Package, ChevronUp, ChevronDown } from "lucide-react";
+import { GripVertical, Pencil, Package, ChevronUp, ChevronDown, Search, X } from "lucide-react";
 import Link from "next/link";
 import { updateProductSortOrder } from "@/lib/actions/products";
 import { DeleteProductButton, ToggleActiveButton } from "./ProductActions";
@@ -157,6 +157,19 @@ function MobileCard({
 export default function SortableProductList({ products: initialProducts }: { products: ProductRow[] }) {
   const [products, setProducts] = useState(initialProducts);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const dndId = useId();
+
+  const filteredProducts = useMemo(() => {
+    if (!search.trim()) return products;
+    const q = search.toLowerCase();
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.category?.name?.toLowerCase().includes(q) ||
+        p.sizes?.some((s) => s.sku.toLowerCase().includes(q))
+    );
+  }, [products, search]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -200,49 +213,94 @@ export default function SortableProductList({ products: initialProducts }: { pro
     }
   }
 
+  const isSearching = search.trim().length > 0;
+
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={products.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-        {saving && (
-          <div className="px-6 py-2 text-center text-xs font-medium text-swing-gold">
-            Reihenfolge wird gespeichert...
-          </div>
-        )}
-
-        {/* Desktop table */}
-        <table className="hidden w-full text-left text-sm md:table">
-          <thead>
-            <tr className="bg-gray-50/60 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
-              <th className="w-10 px-2 py-3" />
-              <th className="px-4 py-3">Produkt</th>
-              <th className="px-4 py-3">Kategorie</th>
-              <th className="px-4 py-3">Größen</th>
-              <th className="px-4 py-3">Farben</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Aktionen</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {products.map((product) => (
-              <SortableRow key={product.id} product={product} />
-            ))}
-          </tbody>
-        </table>
-
-        {/* Mobile card layout with arrow buttons */}
-        <div className="divide-y divide-gray-50 md:hidden">
-          {products.map((product, index) => (
-            <MobileCard
-              key={product.id}
-              product={product}
-              isFirst={index === 0}
-              isLast={index === products.length - 1}
-              onMoveUp={() => handleMove(index, index - 1)}
-              onMoveDown={() => handleMove(index, index + 1)}
-            />
-          ))}
+    <>
+      {/* Search bar */}
+      <div className="border-b border-gray-100 px-4 py-3 sm:px-6">
+        <div className="relative">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-swing-navy/30" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Produkt suchen (Name, Kategorie, SKU)…"
+            className="w-full rounded border border-gray-200 py-2 pl-9 pr-9 text-sm text-swing-navy placeholder:text-swing-navy/30 focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-swing-navy/30 hover:text-swing-navy/60"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
-      </SortableContext>
-    </DndContext>
+        {isSearching && (
+          <p className="mt-1.5 text-[11px] text-swing-navy/40">
+            {filteredProducts.length} von {products.length} Produkten
+          </p>
+        )}
+      </div>
+
+      <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={filteredProducts.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+          {saving && (
+            <div className="px-6 py-2 text-center text-xs font-medium text-swing-gold">
+              Reihenfolge wird gespeichert...
+            </div>
+          )}
+
+          {filteredProducts.length === 0 && isSearching ? (
+            <div className="px-6 py-10 text-center">
+              <p className="text-sm text-swing-navy/40">Keine Produkte gefunden für &ldquo;{search}&rdquo;</p>
+            </div>
+          ) : (
+            <>
+              {/* Desktop table */}
+              <table className="hidden w-full text-left text-sm md:table">
+                <thead>
+                  <tr className="bg-gray-50/60 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
+                    <th className="w-10 px-2 py-3" />
+                    <th className="px-4 py-3">Produkt</th>
+                    <th className="px-4 py-3">Kategorie</th>
+                    <th className="px-4 py-3">Größen</th>
+                    <th className="px-4 py-3">Farben</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 text-right">Aktionen</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredProducts.map((product) => (
+                    <SortableRow key={product.id} product={product} />
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Mobile card layout with arrow buttons */}
+              <div className="divide-y divide-gray-50 md:hidden">
+                {filteredProducts.map((product, index) => (
+                  <MobileCard
+                    key={product.id}
+                    product={product}
+                    isFirst={index === 0}
+                    isLast={index === filteredProducts.length - 1}
+                    onMoveUp={() => handleMove(
+                      products.findIndex((p) => p.id === product.id),
+                      products.findIndex((p) => p.id === product.id) - 1
+                    )}
+                    onMoveDown={() => handleMove(
+                      products.findIndex((p) => p.id === product.id),
+                      products.findIndex((p) => p.id === product.id) + 1
+                    )}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </SortableContext>
+      </DndContext>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AiInfoTooltip from "@/components/ui/AiInfoTooltip";
 import {
   Upload,
   Check,
@@ -129,8 +130,12 @@ export default function LagerImportClient() {
     <div>
       {/* Upload Card */}
       <div className="glass-card mb-6 rounded p-4 sm:p-6">
-        <h2 className="mb-2 text-base font-bold text-swing-navy">
+        <h2 className="mb-2 flex items-center gap-2 text-base font-bold text-swing-navy">
           WinLine Bestandsliste importieren
+          <AiInfoTooltip
+            action="Die hochgeladene CSV-Datei wird von Google Gemini analysiert. Die KI erkennt automatisch Artikelbezeichnungen und ordnet sie den Katalog-Produkten, Größen und Farbdesigns zu."
+            costNote="Pro CSV-Analyse werden API-Tokens verbraucht, die Kosten verursachen können."
+          />
         </h2>
         <p className="mb-4 text-sm text-swing-gray-dark/60">
           Laden Sie die CSV-Bestandsliste aus Mesonic WinLine hoch. Nur

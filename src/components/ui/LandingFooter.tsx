@@ -22,6 +22,10 @@ export default function LandingFooter() {
 
         {/* Center: Legal links + Language switcher */}
         <div className="flex items-center gap-2">
+          <Link href="/anleitung" className="rounded px-2 py-1.5 text-xs text-white/35 transition-colors hover:text-white/60">
+            Anleitung
+          </Link>
+          <div className="h-3 w-px bg-white/15" />
           <Link href="/impressum" className="rounded px-2 py-1.5 text-xs text-white/35 transition-colors hover:text-white/60">
             {dict.landing.impressum}
           </Link>

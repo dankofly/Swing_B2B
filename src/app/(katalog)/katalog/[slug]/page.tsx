@@ -4,7 +4,10 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import type { ProductSize, ProductColor } from "@/lib/types";
 import ProductDetailClient from "@/components/katalog/ProductDetailClient";
-import { getDictionary } from "@/lib/i18n";
+import ActionCountdown from "@/components/katalog/ActionCountdown";
+import RelatedProductCard from "@/components/katalog/RelatedProductCard";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { localized } from "@/lib/i18n/localized";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +26,7 @@ export default async function ProduktDetailPage({
     .from("products")
     .select(`
       *,
-      category:categories(name, slug),
+      category:categories(name, name_en, name_fr, slug),
       sizes:product_sizes(*),
       colors:product_colors(*)
     `)
@@ -33,7 +36,7 @@ export default async function ProduktDetailPage({
 
   if (!product) notFound();
 
-  const dict = await getDictionary();
+  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
 
   const sizes = ((product.sizes || []) as ProductSize[]).sort(
     (a, b) => a.sort_order - b.sort_order
@@ -87,11 +90,39 @@ export default async function ProduktDetailPage({
     stockMap[`${entry.color_name}::${entry.size_label}`] = entry.stock_quantity;
   }
 
+  // Fetch related products
+  const { data: relationsRaw } = await supabase
+    .from("product_relations")
+    .select("related_product_id, relation_type, sort_order")
+    .eq("product_id", product.id)
+    .order("sort_order");
+
+  const relatedIds = (relationsRaw || []).map((r) => r.related_product_id);
+  let similarProducts: any[] = [];
+  let accessoryProducts: any[] = [];
+
+  if (relatedIds.length > 0) {
+    const { data: relatedRaw } = await supabase
+      .from("products")
+      .select("id, name, name_en, name_fr, slug, description, description_en, description_fr, category:categories(name, name_en, name_fr), en_class, en_class_custom, classification, use_case, use_case_en, use_case_fr, is_action")
+      .in("id", relatedIds)
+      .eq("is_active", true);
+
+    const relatedMap = new Map((relatedRaw || []).map((p) => [p.id, p]));
+    const similarIds = (relationsRaw || []).filter((r) => r.relation_type === "similar").map((r) => r.related_product_id);
+    const accessoryIds = (relationsRaw || []).filter((r) => r.relation_type === "accessory").map((r) => r.related_product_id);
+    similarProducts = similarIds.map((id) => relatedMap.get(id)).filter(Boolean);
+    accessoryProducts = accessoryIds.map((id) => relatedMap.get(id)).filter(Boolean);
+  }
+
   const enClass = product.en_class || product.tech_specs?.["EN-Zertifizierung"];
   const enClassCustom = product.en_class_custom;
-  const categoryName = product.category
-    ? (product.category as unknown as { name: string }).name
-    : null;
+  const rawCategory = product.category as unknown as Record<string, unknown> | null;
+  const categoryName = rawCategory ? localized(rawCategory, "name", locale) : null;
+  const productName = localized(product as unknown as Record<string, unknown>, "name", locale) || product.name;
+  const productDescription = localized(product as unknown as Record<string, unknown>, "description", locale);
+  const productUseCase = localized(product as unknown as Record<string, unknown>, "use_case", locale);
+  const productActionText = localized(product as unknown as Record<string, unknown>, "action_text", locale);
 
   const rawSpecs = product.tech_specs as Record<string, string> | null;
   // Filter out en_class / EN-Zertifizierung — already shown as badge
@@ -159,7 +190,7 @@ export default async function ProduktDetailPage({
               )}
               {product.use_case && (
                 <span className="rounded bg-white/8 px-3 py-1 text-xs font-medium tracking-wide text-white/60">
-                  {product.use_case}
+                  {productUseCase}
                 </span>
               )}
             </div>
@@ -171,12 +202,12 @@ export default async function ProduktDetailPage({
           {/* Left: Name + Description */}
           <div className="flex flex-col justify-center">
             <h1 className="swing-h1">
-              {product.name}
+              {productName}
             </h1>
 
             {product.description && (
               <p className="mt-4 max-w-2xl whitespace-pre-line text-sm leading-relaxed text-white/50">
-                {product.description}
+                {productDescription}
               </p>
             )}
 
@@ -212,6 +243,38 @@ export default async function ProduktDetailPage({
         </div>
       </div>
 
+      {/* Action/Sale Banner */}
+      {product.is_action && product.action_text && (
+        <div className="action-banner relative overflow-hidden rounded-xl border border-orange-200/60 px-5 py-4 sm:px-8 sm:py-5">
+          <div className="action-banner-stripe" />
+          <div className="relative z-10 space-y-3">
+            <div className="flex items-start gap-3 sm:items-center">
+              <span className="shrink-0 rounded bg-linear-to-r from-[#ff6b35] to-[#ff3d00] px-3 py-1 text-xs font-bold uppercase tracking-wide text-white sm:mt-0">
+                {dict.katalog.badges.action}
+              </span>
+              <p className="whitespace-pre-line text-sm font-medium leading-relaxed text-swing-navy/80">
+                {productActionText}
+              </p>
+            </div>
+            {product.action_end && (
+              <div className="flex flex-wrap items-center gap-3">
+                {product.action_start && (
+                  <span className="text-xs text-swing-navy/50">
+                    {new Date(product.action_start).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                    {" — "}
+                    {new Date(product.action_end).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                  </span>
+                )}
+                <ActionCountdown
+                  actionEnd={product.action_end}
+                  label={dict.admin.products.form.actionCountdown}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Color Designs + Size Table */}
       <ProductDetailClient
         productId={product.id}
@@ -223,6 +286,46 @@ export default async function ProduktDetailPage({
         uvpBrutto={product.uvp_brutto ? Number(product.uvp_brutto) : null}
         stockMap={stockMap}
       />
+
+      {/* Similar Products */}
+      {similarProducts.length > 0 && (
+        <div>
+          <h2 className="swing-h2 mb-4">{dict.katalog.detail.similarProducts}</h2>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {similarProducts.map((p: any) => (
+              <RelatedProductCard
+                key={p.id}
+                product={{
+                  ...p,
+                  category: Array.isArray(p.category) ? p.category[0] || null : p.category,
+                }}
+                viewingAsCompanyId={viewingAsCompanyId}
+                locale={locale}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Accessories */}
+      {accessoryProducts.length > 0 && (
+        <div>
+          <h2 className="swing-h2 mb-4">{dict.katalog.detail.accessories}</h2>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {accessoryProducts.map((p: any) => (
+              <RelatedProductCard
+                key={p.id}
+                product={{
+                  ...p,
+                  category: Array.isArray(p.category) ? p.category[0] || null : p.category,
+                }}
+                viewingAsCompanyId={viewingAsCompanyId}
+                locale={locale}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

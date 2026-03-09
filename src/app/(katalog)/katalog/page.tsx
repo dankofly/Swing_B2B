@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { Search, ChevronRight, SlidersHorizontal, PackageOpen, Settings } from "lucide-react";
+import { Search, ChevronRight, SlidersHorizontal, PackageOpen } from "lucide-react";
 import Link from "next/link";
 import type { Product, Category } from "@/lib/types";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { localized } from "@/lib/i18n/localized";
+import AdminEditButton from "@/components/katalog/AdminEditButton";
 
 export const dynamic = "force-dynamic";
 
@@ -63,9 +65,10 @@ export default async function KatalogPage({
   const allParams = { q, kategorie, sub, en, gewicht, als };
 
   // Parallelize independent async calls
-  const [supabase, dict] = await Promise.all([
+  const [supabase, dict, locale] = await Promise.all([
     createClient(),
     getDictionary(),
+    getLocale(),
   ]);
 
   // Parallelize user auth + categories fetch (independent queries)
@@ -92,7 +95,7 @@ export default async function KatalogPage({
     .from("products")
     .select(`
       *,
-      category:categories(name, slug),
+      category:categories(name, name_en, name_fr, slug),
       sizes:product_sizes(id, size_label, stock_quantity, sort_order),
       colors:product_colors(id, color_name, color_image_url, classification, is_limited)
     `)
@@ -256,7 +259,7 @@ export default async function KatalogPage({
                         : "text-swing-navy/60 hover:bg-gray-50 hover:text-swing-navy"
                     }`}
                   >
-                    {cat.name}
+                    {localized(cat as unknown as Record<string, unknown>, "name", locale)}
                   </Link>
                 );
               })}
@@ -293,7 +296,7 @@ export default async function KatalogPage({
                           : "text-swing-navy/60 hover:bg-gray-50"
                       }`}
                     >
-                      {cat.name}
+                      {localized(cat as unknown as Record<string, unknown>, "name", locale)}
                     </Link>
                   );
                 })}
@@ -408,8 +411,9 @@ export default async function KatalogPage({
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {(products as Product[]).map((product) => {
-            const categoryName = product.category
-              ? (product.category as unknown as { name: string }).name
+            const rawCategory = product.category as unknown as Record<string, unknown> | null;
+            const categoryName = rawCategory
+              ? localized(rawCategory, "name", locale)
               : null;
             const enClass = product.en_class || product.tech_specs?.["EN-Zertifizierung"];
             const enClassCustom = product.en_class_custom;
@@ -478,17 +482,11 @@ export default async function KatalogPage({
                   </div>
                   {/* Product title centered */}
                   <span className="mx-3 mt-12 mb-3 w-full text-sm font-bold italic uppercase tracking-wide text-white select-none">
-                    {product.name}
+                    {localized(product as unknown as Record<string, unknown>, "name", locale)}
                   </span>
                   {/* Admin edit gear */}
                   {showAdminUI && (
-                    <Link
-                      href={`/admin/produkte/${product.id}/bearbeiten`}
-                      className="absolute top-2.5 right-2.5 flex h-6 w-6 items-center justify-center rounded bg-white/10 text-white/40 transition-all duration-200 hover:bg-white/25 hover:text-white z-10"
-                      title="Bearbeiten"
-                    >
-                      <Settings size={13} />
-                    </Link>
+                    <AdminEditButton productId={product.id} />
                   )}
                   {/* Arrow */}
                   {!isComingSoon && (
@@ -510,7 +508,7 @@ export default async function KatalogPage({
                       <>
                         <span className="text-swing-navy/15">&middot;</span>
                         <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-gold-dark/50">
-                          {product.use_case}
+                          {localized(product as unknown as Record<string, unknown>, "use_case", locale)}
                         </span>
                       </>
                     )}
@@ -518,7 +516,7 @@ export default async function KatalogPage({
 
                   {product.description && (
                     <p className="mt-1.5 line-clamp-2 text-[12px] leading-relaxed text-swing-gray-dark/50">
-                      {product.description}
+                      {localized(product as unknown as Record<string, unknown>, "description", locale)}
                     </p>
                   )}
 

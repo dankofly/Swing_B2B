@@ -274,7 +274,7 @@ export default async function KundenDetailPage({
         </div>
 
         {/* Card 3: Preislisten + Karte */}
-        <div className="card flex flex-col overflow-hidden lg:col-span-1">
+        <div className="card flex flex-col lg:col-span-1">
           <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/60 px-5 py-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-swing-navy text-white">
               <FileText size={14} strokeWidth={1.75} />
@@ -296,7 +296,7 @@ export default async function KundenDetailPage({
               ? [company.address_street, company.address_zip, company.address_city, company.address_country].filter(Boolean).join(", ")
               : (company.address as string) || "";
             return (
-              <div className="border-t border-gray-100">
+              <div className="overflow-hidden rounded-b-lg border-t border-gray-100">
                 <iframe
                   title={`${company.name}`}
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}

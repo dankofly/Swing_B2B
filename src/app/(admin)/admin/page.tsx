@@ -9,6 +9,7 @@ import {
   Settings,
   Warehouse,
   MessageSquare,
+  FileDown,
 } from "lucide-react";
 import Link from "next/link";
 import { getDictionary, getLocale, getDateLocale } from "@/lib/i18n";
@@ -42,6 +43,7 @@ export default async function AdminDashboard() {
     { count: importerCount },
     { count: importerNetworkCount },
     { data: recentInquiries },
+    { data: recentPriceLists },
   ] = await Promise.all([
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_coming_soon", true),
@@ -64,6 +66,16 @@ export default async function AdminDashboard() {
       company:companies(name),
       user:profiles(full_name, email)
     `).order("created_at", { ascending: false }).limit(6),
+    supabase.from("price_uploads").select(`
+      id,
+      file_url,
+      file_type,
+      status,
+      matched_count,
+      total_count,
+      created_at,
+      company:companies(name)
+    `).order("created_at", { ascending: false }).limit(5),
   ]);
 
   const companyIds = [...new Set((recentInquiries ?? []).map((i: any) => i.company_id).filter(Boolean))];
@@ -304,6 +316,84 @@ export default async function AdminDashboard() {
                     >
                       <Settings size={14} />
                     </Link>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Recent Price Lists */}
+      <div className="overflow-hidden card">
+        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-swing-navy text-white">
+              <FileText size={18} strokeWidth={1.75} />
+            </div>
+            <div>
+              <h2 className="text-[15px] font-bold text-swing-navy">{td.recentPriceLists}</h2>
+              <p className="text-[11px] text-swing-gray-dark/35">{td.recentPriceListsHint}</p>
+            </div>
+          </div>
+        </div>
+
+        {!recentPriceLists || recentPriceLists.length === 0 ? (
+          <div className="flex flex-col items-center justify-center border-t border-gray-100 px-6 py-20">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50">
+              <FileText size={22} className="text-swing-navy/12" />
+            </div>
+            <p className="text-sm font-medium text-swing-navy/40">{td.noPriceLists}</p>
+            <p className="mt-1 text-xs text-swing-gray-dark/25">{td.noPriceListsHint}</p>
+          </div>
+        ) : (
+          <>
+            <div className="hidden items-center gap-3 border-t border-gray-100 bg-gray-50/60 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] text-swing-navy/40 sm:grid sm:grid-cols-[1fr_7rem_9rem_2rem]">
+              <span>{td.dealers}</span>
+              <span className="text-center">{td.status}</span>
+              <span className="text-right">{td.date}</span>
+              <span />
+            </div>
+
+            <div className="divide-y divide-gray-50 border-t border-gray-100 sm:border-t-0">
+              {recentPriceLists.map((upload: any) => {
+                const statusLabel = upload.status === "completed"
+                  ? `${upload.matched_count}/${upload.total_count}`
+                  : upload.status === "failed"
+                  ? "Fehler"
+                  : upload.status === "review"
+                  ? "Review"
+                  : "...";
+                const statusColor = upload.status === "completed"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : upload.status === "failed"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-amber-100 text-amber-700";
+                return (
+                  <div
+                    key={upload.id}
+                    className="px-5 py-4 transition-colors duration-150 hover:bg-swing-gold/4 sm:grid sm:grid-cols-[1fr_7rem_9rem_2rem] sm:items-center sm:gap-3 sm:px-6 sm:py-3.5"
+                  >
+                    <div className="flex items-center justify-between sm:contents">
+                      <span className="truncate text-sm font-semibold text-swing-navy">
+                        {(upload as any).company?.name ?? "—"}
+                      </span>
+                      <span className={`inline-flex w-20 items-center justify-center rounded px-2 py-0.5 text-[10px] font-bold ${statusColor}`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+                    <span className="mt-1 block text-xs tabular-nums text-swing-gray-dark/35 sm:mt-0 sm:text-right">
+                      {new Date(upload.created_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                    <a
+                      href={upload.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hidden rounded-lg p-1.5 text-red-500/60 transition-colors hover:bg-red-50 hover:text-red-600 sm:block"
+                      title="PDF"
+                    >
+                      <FileDown size={14} />
+                    </a>
                   </div>
                 );
               })}

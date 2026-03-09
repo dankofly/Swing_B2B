@@ -39,7 +39,8 @@ export async function updateSession(request: NextRequest) {
     pathname === "/" ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/impressum") ||
-    pathname.startsWith("/datenschutz");
+    pathname.startsWith("/datenschutz") ||
+    pathname.startsWith("/anleitung");
 
   const {
     data: { user },

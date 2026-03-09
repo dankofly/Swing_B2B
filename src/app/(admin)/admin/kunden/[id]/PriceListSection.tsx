@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AiInfoTooltip from "@/components/ui/AiInfoTooltip";
 import { uploadPriceList, deletePriceUpload } from "@/lib/actions/price-uploads";
 import { confirmPrices, type ParsedPriceItem } from "@/lib/actions/prices";
 import {
@@ -299,6 +300,13 @@ export default function PriceListSection({
 
   return (
     <div>
+      <div className="mb-3 flex items-center gap-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-wide text-swing-navy/30">Upload + KI-Zuordnung</span>
+        <AiInfoTooltip
+          action="Beim Upload einer PDF-Preisliste wird diese von Google Gemini analysiert. Die KI erkennt automatisch Modelle, UVP und Händler-EK und ordnet sie den Katalog-Produkten zu."
+          costNote="Pro PDF-Upload werden API-Tokens verbraucht, die Kosten verursachen können."
+        />
+      </div>
       {error && (
         <p className="mb-3 text-xs font-medium text-red-600">{error}</p>
       )}

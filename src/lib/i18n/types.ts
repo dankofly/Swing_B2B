@@ -7,7 +7,6 @@ export interface Dictionary {
       lager: string;
       anfragen: string;
       produkte: string;
-      preislisten: string;
       profil: string;
       abmelden: string;
       menuOpen: string;
@@ -278,6 +277,8 @@ export interface Dictionary {
       addToCart: string;
       added: string;
       viewOnWebsite: string;
+      similarProducts: string;
+      accessories: string;
     };
   };
 
@@ -335,6 +336,11 @@ export interface Dictionary {
       title: string;
       countSuffix: string;
     };
+    myPriceLists: string;
+    myPriceListsHint: string;
+    noPriceLists: string;
+    noPriceListsHint: string;
+    downloadPdf: string;
   };
 
   inquiries: {
@@ -380,6 +386,10 @@ export interface Dictionary {
       status: string;
       date: string;
       open: string;
+      recentPriceLists: string;
+      recentPriceListsHint: string;
+      noPriceLists: string;
+      noPriceListsHint: string;
     };
     customers: {
       title: string;
@@ -464,6 +474,12 @@ export interface Dictionary {
         isPreorder: string;
         isFadeOut: string;
         isAction: string;
+        actionText: string;
+        actionTextPlaceholder: string;
+        actionSection: string;
+        actionStart: string;
+        actionEnd: string;
+        actionCountdown: string;
         enClass: string;
         enClassCustom: string;
         enClassCustomPlaceholder: string;
@@ -492,6 +508,11 @@ export interface Dictionary {
         uploading: string;
         colorNamePlaceholder: string;
         limitedEdition: string;
+        relatedProducts: string;
+        similarProducts: string;
+        accessories: string;
+        searchProducts: string;
+        noRelatedProducts: string;
         saveError: string;
         saving: string;
         save: string;

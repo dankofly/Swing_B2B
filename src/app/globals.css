@@ -59,6 +59,119 @@ body::before {
   pointer-events: none;
 }
 
+/* ===== Header — premium sport brand navigation ===== */
+@layer components {
+  .header-bg {
+    background: linear-gradient(160deg, #0a1820 0%, var(--swing-navy) 50%, #1a2d45 100%);
+  }
+
+  .header-elevated {
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .header-gold-line {
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(252, 185, 35, 0.15) 15%,
+      var(--swing-gold) 50%,
+      rgba(252, 185, 35, 0.15) 85%,
+      transparent 100%
+    );
+    opacity: 0.5;
+  }
+
+  .header-b2b-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: var(--swing-navy);
+    background: var(--swing-gold);
+    border-radius: 2px;
+    line-height: 1.4;
+  }
+
+  .header-nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    transition: color 0.2s ease;
+  }
+  .header-nav-link::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 14px;
+    right: 14px;
+    height: 2px;
+    background: var(--swing-gold);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 1px;
+  }
+  .header-nav-link:hover {
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .header-nav-link:hover::after {
+    transform: scaleX(0.6);
+    opacity: 0.4;
+  }
+  .header-nav-link-active {
+    color: var(--swing-gold) !important;
+  }
+  .header-nav-link-active::after {
+    transform: scaleX(1) !important;
+    opacity: 1 !important;
+  }
+
+  .header-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.45);
+    transition: all 0.2s ease;
+  }
+  .header-icon-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .header-cart-badge {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--swing-navy);
+    background: var(--swing-gold);
+    border-radius: 8px;
+    animation: pulse-ring 2s ease-in-out infinite;
+  }
+}
+
 /* ===== SWING CI Components ===== */
 @layer components {
   .swing-h1 {
@@ -382,6 +495,74 @@ body::before {
 @keyframes actionShine {
   0%, 70%, 100% { transform: translateX(-100%); }
   35% { transform: translateX(100%); }
+}
+
+/* ===== Action banner — product detail promo ===== */
+.action-banner {
+  background-color: #fff;
+  background-image:
+    linear-gradient(
+      120deg,
+      rgba(255, 107, 53, 0.08) 0%,
+      rgba(255, 255, 255, 0) 35%,
+      rgba(255, 61, 0, 0.12) 55%,
+      rgba(255, 255, 255, 0) 75%,
+      rgba(255, 107, 53, 0.06) 100%
+    );
+  background-size: 300% 100%;
+  animation: bannerShimmer 5s ease-in-out infinite;
+}
+
+.action-banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 107, 53, 0.08),
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 107, 53, 0.08),
+    transparent
+  );
+  animation: bannerSweep 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.action-banner-stripe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #ff6b35, #ff3d00, #ff6b35);
+  background-size: 100% 200%;
+  animation: stripeGlow 2s ease-in-out infinite, stripeSlide 3s ease-in-out infinite;
+}
+
+@keyframes bannerShimmer {
+  0%   { background-position: 100% 50%; }
+  50%  { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+@keyframes bannerSweep {
+  0%, 65%  { left: -60%; opacity: 0; }
+  75%      { opacity: 1; }
+  100%     { left: 120%; opacity: 0; }
+}
+
+@keyframes stripeGlow {
+  0%, 100% { box-shadow: 0 0 8px 0 rgba(255, 61, 0, 0.25); }
+  50%      { box-shadow: 0 0 16px 3px rgba(255, 61, 0, 0.45); }
+}
+
+@keyframes stripeSlide {
+  0%, 100% { background-position: 0% 0%; }
+  50%      { background-position: 0% 100%; }
 }
 
 /* ===== Reduced motion ===== */

@@ -15,7 +15,7 @@ export default async function ProduktBearbeitenPage({
   const { id } = await params;
   const supabase = createAdminClient();
 
-  const [{ data: product }, { data: categories }] = await Promise.all([
+  const [{ data: product }, { data: categories }, { data: relations }] = await Promise.all([
     supabase
       .from("products")
       .select(`
@@ -26,6 +26,11 @@ export default async function ProduktBearbeitenPage({
       .eq("id", id)
       .single(),
     supabase.from("categories").select("*").order("sort_order"),
+    supabase
+      .from("product_relations")
+      .select("related_product_id, relation_type, sort_order, related:products!product_relations_related_product_id_fkey(name)")
+      .eq("product_id", id)
+      .order("sort_order"),
   ]);
 
   if (!product) notFound();
@@ -63,6 +68,12 @@ export default async function ProduktBearbeitenPage({
         product={product}
         sizes={product.sizes}
         colors={product.colors}
+        relations={(relations || []).map((r: any) => ({
+          related_product_id: r.related_product_id,
+          relation_type: r.relation_type as "similar" | "accessory",
+          sort_order: r.sort_order,
+          name: r.related?.[0]?.name || r.related?.name || r.related_product_id,
+        }))}
       />
     </div>
   );

@@ -64,7 +64,6 @@ export async function confirmPrices(
     }
   }
 
-  revalidatePath("/admin/preislisten");
   revalidatePath(`/admin/kunden/${companyId}`);
   return { savedCount, productCount: matched.length };
 }

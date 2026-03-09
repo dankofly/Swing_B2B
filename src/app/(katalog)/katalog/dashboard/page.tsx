@@ -12,6 +12,8 @@ import {
   Euro,
   PackageCheck,
   CalendarClock,
+  FileText,
+  FileDown,
 } from "lucide-react";
 import Link from "next/link";
 import { getMyInquiries } from "@/lib/actions/inquiries";
@@ -56,7 +58,7 @@ export default async function KundenDashboardPage({
 
   if (!profile || !effectiveCompanyId) redirect("/katalog");
 
-  const [{ data: company }, inquiries, customerNotes, locale, dict] = await Promise.all([
+  const [{ data: company }, inquiries, customerNotes, locale, dict, { data: priceUploads }] = await Promise.all([
     (viewingAsCompanyId ? createAdminClient() : supabase)
       .from("companies")
       .select("*")
@@ -68,6 +70,13 @@ export default async function KundenDashboardPage({
     getCustomerVisibleNotes(effectiveCompanyId),
     getLocale(),
     getDictionary(),
+    (viewingAsCompanyId ? createAdminClient() : supabase)
+      .from("price_uploads")
+      .select("id, file_url, file_type, status, created_at")
+      .eq("company_id", effectiveCompanyId)
+      .eq("status", "completed")
+      .order("created_at", { ascending: false })
+      .limit(10),
   ]);
 
   if (!company) redirect("/katalog");
@@ -321,6 +330,62 @@ export default async function KundenDashboardPage({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Price Lists */}
+      <div className="card overflow-hidden">
+        <div className="flex items-center gap-3 p-4 sm:p-6">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-swing-navy text-white">
+            <FileText size={18} strokeWidth={1.75} />
+          </div>
+          <div>
+            <h3 className="text-[15px] font-bold text-swing-navy">{dict.dashboard.myPriceLists}</h3>
+            <p className="text-[11px] text-swing-gray-dark/35">{dict.dashboard.myPriceListsHint}</p>
+          </div>
+        </div>
+
+        {!priceUploads || priceUploads.length === 0 ? (
+          <div className="flex flex-col items-center justify-center border-t border-gray-100 px-6 py-12">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-50">
+              <FileText size={20} className="text-swing-navy/12" />
+            </div>
+            <p className="text-sm font-medium text-swing-navy/40">{dict.dashboard.noPriceLists}</p>
+            <p className="mt-1 text-xs text-swing-gray-dark/25">{dict.dashboard.noPriceListsHint}</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50 border-t border-gray-100">
+            {priceUploads.map((upload: any) => (
+              <a
+                key={upload.id}
+                href={upload.file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 px-5 py-3.5 transition-colors duration-150 hover:bg-swing-gold/4 sm:px-6"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
+                  <FileDown size={16} className="text-red-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-swing-navy">
+                    {dict.dashboard.myPriceLists}
+                  </p>
+                  <p className="text-[11px] tabular-nums text-swing-gray-dark/40">
+                    {new Date(upload.created_at).toLocaleDateString(dateLocale, {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-swing-navy/25">
+                  {upload.file_type?.toUpperCase() || "PDF"}
+                </span>
+              </a>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Customer notes */}

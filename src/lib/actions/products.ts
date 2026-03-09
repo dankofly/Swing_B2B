@@ -26,6 +26,9 @@ export async function createProduct(formData: FormData) {
   const is_preorder = formData.get("is_preorder") === "on";
   const is_fade_out = formData.get("is_fade_out") === "on";
   const is_action = formData.get("is_action") === "on";
+  const action_text = formData.get("action_text") as string;
+  const action_start = formData.get("action_start") as string;
+  const action_end = formData.get("action_end") as string;
   const en_class = formData.get("en_class") as string;
   const en_class_custom = formData.get("en_class_custom") as string;
   const classification = formData.get("classification") as string;
@@ -33,6 +36,16 @@ export async function createProduct(formData: FormData) {
   const website_url = formData.get("website_url") as string;
   const imagesJson = formData.get("images") as string;
   const images = imagesJson ? JSON.parse(imagesJson) : [];
+
+  // i18n translation fields
+  const name_en = formData.get("name_en") as string;
+  const name_fr = formData.get("name_fr") as string;
+  const description_en = formData.get("description_en") as string;
+  const description_fr = formData.get("description_fr") as string;
+  const use_case_en = formData.get("use_case_en") as string;
+  const use_case_fr = formData.get("use_case_fr") as string;
+  const action_text_en = formData.get("action_text_en") as string;
+  const action_text_fr = formData.get("action_text_fr") as string;
 
   const { data: product, error } = await supabase
     .from("products")
@@ -46,6 +59,9 @@ export async function createProduct(formData: FormData) {
       is_preorder,
       is_fade_out,
       is_action,
+      action_text: action_text || null,
+      action_start: action_start || null,
+      action_end: action_end || null,
       en_class: en_class || null,
       en_class_custom: en_class_custom || null,
       tech_specs: {},
@@ -53,6 +69,14 @@ export async function createProduct(formData: FormData) {
       use_case: use_case || null,
       website_url: website_url || null,
       images,
+      name_en: name_en || null,
+      name_fr: name_fr || null,
+      description_en: description_en || null,
+      description_fr: description_fr || null,
+      use_case_en: use_case_en || null,
+      use_case_fr: use_case_fr || null,
+      action_text_en: action_text_en || null,
+      action_text_fr: action_text_fr || null,
     })
     .select()
     .single();
@@ -105,6 +129,21 @@ export async function createProduct(formData: FormData) {
     }
   }
 
+  // Save relations
+  const relationsJson = formData.get("relations") as string;
+  if (relationsJson) {
+    const relations = JSON.parse(relationsJson) as Array<{
+      related_product_id: string;
+      relation_type: string;
+      sort_order: number;
+    }>;
+    if (relations.length > 0) {
+      await supabase
+        .from("product_relations")
+        .insert(relations.map((r) => ({ ...r, product_id: product.id })));
+    }
+  }
+
   revalidatePath("/admin/produkte");
   revalidatePath("/katalog");
   redirect("/admin/produkte");
@@ -121,6 +160,9 @@ export async function updateProduct(productId: string, formData: FormData) {
   const is_preorder = formData.get("is_preorder") === "on";
   const is_fade_out = formData.get("is_fade_out") === "on";
   const is_action = formData.get("is_action") === "on";
+  const action_text = formData.get("action_text") as string;
+  const action_start = formData.get("action_start") as string;
+  const action_end = formData.get("action_end") as string;
   const en_class = formData.get("en_class") as string;
   const en_class_custom = formData.get("en_class_custom") as string;
   const classification = formData.get("classification") as string;
@@ -128,6 +170,16 @@ export async function updateProduct(productId: string, formData: FormData) {
   const website_url = formData.get("website_url") as string;
   const imagesJson = formData.get("images") as string;
   const images = imagesJson ? JSON.parse(imagesJson) : [];
+
+  // i18n translation fields
+  const name_en = formData.get("name_en") as string;
+  const name_fr = formData.get("name_fr") as string;
+  const description_en = formData.get("description_en") as string;
+  const description_fr = formData.get("description_fr") as string;
+  const use_case_en = formData.get("use_case_en") as string;
+  const use_case_fr = formData.get("use_case_fr") as string;
+  const action_text_en = formData.get("action_text_en") as string;
+  const action_text_fr = formData.get("action_text_fr") as string;
 
   const { error } = await supabase
     .from("products")
@@ -141,6 +193,9 @@ export async function updateProduct(productId: string, formData: FormData) {
       is_preorder,
       is_fade_out,
       is_action,
+      action_text: action_text || null,
+      action_start: action_start || null,
+      action_end: action_end || null,
       en_class: en_class || null,
       en_class_custom: en_class_custom || null,
       tech_specs: {},
@@ -148,6 +203,14 @@ export async function updateProduct(productId: string, formData: FormData) {
       use_case: use_case || null,
       website_url: website_url || null,
       images,
+      name_en: name_en || null,
+      name_fr: name_fr || null,
+      description_en: description_en || null,
+      description_fr: description_fr || null,
+      use_case_en: use_case_en || null,
+      use_case_fr: use_case_fr || null,
+      action_text_en: action_text_en || null,
+      action_text_fr: action_text_fr || null,
     })
     .eq("id", productId);
 
@@ -202,6 +265,22 @@ export async function updateProduct(productId: string, formData: FormData) {
         .from("product_colors")
         .insert(colors.map((c) => ({ ...c, product_id: productId })));
       if (colorsError) throw new Error(colorsError.message);
+    }
+  }
+
+  // Replace relations
+  const relationsJson = formData.get("relations") as string;
+  if (relationsJson) {
+    await supabase.from("product_relations").delete().eq("product_id", productId);
+    const relations = JSON.parse(relationsJson) as Array<{
+      related_product_id: string;
+      relation_type: string;
+      sort_order: number;
+    }>;
+    if (relations.length > 0) {
+      await supabase
+        .from("product_relations")
+        .insert(relations.map((r) => ({ ...r, product_id: productId })));
     }
   }
 
