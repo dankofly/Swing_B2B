@@ -95,18 +95,38 @@ export async function updateUserRole(userId: string, newRole: string) {
 
   if (!user) return { success: false, error: "Nicht angemeldet" };
 
-  // Only superadmins can change roles
   const { data: callerProfile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
 
-  if (callerProfile?.role !== "superadmin") {
+  const callerRole = callerProfile?.role;
+
+  // Only admins and superadmins can change roles
+  if (callerRole !== "superadmin" && callerRole !== "admin") {
     return { success: false, error: "Keine Berechtigung" };
   }
 
-  // Prevent superadmin from demoting themselves
+  // Only superadmins can assign the superadmin role
+  if (newRole === "superadmin" && callerRole !== "superadmin") {
+    return { success: false, error: "Nur Super Admins können die Super Admin Rolle vergeben" };
+  }
+
+  // Admins cannot change the role of a superadmin
+  if (callerRole === "admin") {
+    const admin = createAdminClient();
+    const { data: targetProfile } = await admin
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+    if (targetProfile?.role === "superadmin") {
+      return { success: false, error: "Keine Berechtigung, Super Admin Rollen zu ändern" };
+    }
+  }
+
+  // Prevent changing own role
   if (userId === user.id) {
     return { success: false, error: "Eigene Rolle kann nicht geändert werden" };
   }
@@ -119,6 +139,96 @@ export async function updateUserRole(userId: string, newRole: string) {
     .eq("id", userId);
 
   if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/profil");
+  return { success: true };
+}
+
+export async function inviteUser(email: string, role: string, fullName: string) {
+  if (!["admin", "buyer"].includes(role)) {
+    // Only superadmins can invite as superadmin - checked below
+    if (role !== "superadmin") {
+      return { success: false, error: "Ungültige Rolle" };
+    }
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, error: "Nicht angemeldet" };
+
+  const { data: callerProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const callerRole = callerProfile?.role;
+
+  if (callerRole !== "superadmin" && callerRole !== "admin") {
+    return { success: false, error: "Keine Berechtigung" };
+  }
+
+  if (role === "superadmin" && callerRole !== "superadmin") {
+    return { success: false, error: "Nur Super Admins können Super Admins einladen" };
+  }
+
+  const admin = createAdminClient();
+
+  // Check if user already exists
+  const { data: existingProfile } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .single();
+
+  if (existingProfile) {
+    return { success: false, error: "Ein Benutzer mit dieser E-Mail existiert bereits" };
+  }
+
+  // Create user via Supabase Admin Auth
+  const { data: newUser, error: createError } = await admin.auth.admin.createUser({
+    email,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  });
+
+  if (createError) {
+    return { success: false, error: createError.message };
+  }
+
+  if (!newUser.user) {
+    return { success: false, error: "Benutzer konnte nicht erstellt werden" };
+  }
+
+  // Update profile role (trigger creates it as 'buyer')
+  if (role !== "buyer") {
+    await admin
+      .from("profiles")
+      .update({ role })
+      .eq("id", newUser.user.id);
+  }
+
+  // Update full_name in profile
+  if (fullName) {
+    await admin
+      .from("profiles")
+      .update({ full_name: fullName })
+      .eq("id", newUser.user.id);
+  }
+
+  // Send password reset so user can set their password
+  const { error: resetError } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email,
+  });
+
+  if (resetError) {
+    // User is created but link failed - not critical
+    console.error("Failed to send magic link:", resetError.message);
+  }
 
   revalidatePath("/admin/profil");
   return { success: true };

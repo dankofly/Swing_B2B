@@ -25,7 +25,7 @@ export default async function AdminProfilPage() {
 
   const dict = await getDictionary();
 
-  // If superadmin, fetch all profiles for role management
+  // If admin or superadmin, fetch all profiles for role management
   let allProfiles: {
     id: string;
     full_name: string | null;
@@ -34,7 +34,7 @@ export default async function AdminProfilPage() {
     company_id: string | null;
   }[] = [];
 
-  if (profile.role === "superadmin") {
+  if (profile.role === "superadmin" || profile.role === "admin") {
     const admin = createAdminClient();
     const { data } = await admin
       .from("profiles")
@@ -64,8 +64,8 @@ export default async function AdminProfilPage() {
         role={profile.role}
       />
 
-      {profile.role === "superadmin" && (
-        <RoleManager profiles={allProfiles} currentUserId={user.id} />
+      {(profile.role === "superadmin" || profile.role === "admin") && (
+        <RoleManager profiles={allProfiles} currentUserId={user.id} callerRole={profile.role} />
       )}
     </div>
   );

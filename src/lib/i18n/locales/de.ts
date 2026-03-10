@@ -730,6 +730,13 @@ const de: Dictionary = {
     roleUpdated: "Rolle aktualisiert",
     roleUpdateError: "Fehler beim Aktualisieren der Rolle",
     noUsers: "Keine Benutzer gefunden",
+    inviteUser: "Benutzer einladen",
+    inviteName: "Name",
+    inviteEmail: "E-Mail",
+    inviteSend: "Einladung senden",
+    inviting: "Wird gesendet...",
+    inviteCancel: "Abbrechen",
+    inviteSuccess: "Benutzer erfolgreich eingeladen",
   },
 
   deleteCompany: {

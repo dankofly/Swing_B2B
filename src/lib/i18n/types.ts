@@ -706,6 +706,13 @@ export interface Dictionary {
     roleUpdated: string;
     roleUpdateError: string;
     noUsers: string;
+    inviteUser: string;
+    inviteName: string;
+    inviteEmail: string;
+    inviteSend: string;
+    inviting: string;
+    inviteCancel: string;
+    inviteSuccess: string;
   };
 
   deleteCompany: {

@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { updateUserRole } from "@/lib/actions/profile";
+import { updateUserRole, inviteUser } from "@/lib/actions/profile";
 import {
   Shield,
   ChevronDown,
   ChevronUp,
   CheckCircle,
   Loader2,
+  UserPlus,
+  Mail,
 } from "lucide-react";
 import { useDict } from "@/lib/i18n/context";
 
@@ -22,12 +24,17 @@ interface Profile {
 const selectClass =
   "w-full rounded border border-gray-200 bg-white px-3 py-2 text-sm transition-all duration-150 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20";
 
+const inputClass =
+  "w-full rounded border border-gray-200 bg-white px-3 py-2 text-sm transition-all duration-150 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20";
+
 export default function RoleManager({
   profiles,
   currentUserId,
+  callerRole,
 }: {
   profiles: Profile[];
   currentUserId: string;
+  callerRole: string;
 }) {
   const dict = useDict();
   const tp = dict.adminProfile;
@@ -35,6 +42,16 @@ export default function RoleManager({
   const [savingId, setSavingId] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Invite form state
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteRole, setInviteRole] = useState("buyer");
+  const [inviting, setInviting] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState(false);
+
+  const isSuperAdmin = callerRole === "superadmin";
 
   async function handleRoleChange(userId: string, newRole: string) {
     setSavingId(userId);
@@ -47,6 +64,29 @@ export default function RoleManager({
     if (result.success) {
       setSuccessId(userId);
       setTimeout(() => setSuccessId(null), 2000);
+    } else {
+      setError(result.error || tp.roleUpdateError);
+    }
+  }
+
+  async function handleInvite(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setInviting(true);
+    setError(null);
+    setInviteSuccess(false);
+
+    const result = await inviteUser(inviteEmail.trim(), inviteRole, inviteName.trim());
+
+    setInviting(false);
+    if (result.success) {
+      setInviteSuccess(true);
+      setInviteEmail("");
+      setInviteName("");
+      setInviteRole("buyer");
+      setTimeout(() => {
+        setInviteSuccess(false);
+        setShowInvite(false);
+      }, 3000);
     } else {
       setError(result.error || tp.roleUpdateError);
     }
@@ -65,6 +105,13 @@ export default function RoleManager({
       return "bg-swing-gold/20 text-swing-navy";
     return "bg-gray-100 text-swing-navy/60";
   };
+
+  function canEditUser(p: Profile) {
+    if (p.id === currentUserId) return false;
+    // Admins cannot edit superadmins
+    if (!isSuperAdmin && p.role === "superadmin") return false;
+    return true;
+  }
 
   return (
     <div className="card overflow-hidden">
@@ -99,12 +146,107 @@ export default function RoleManager({
             <p className="mb-4 text-sm font-medium text-red-600">{error}</p>
           )}
 
+          {/* Invite new user button */}
+          {!showInvite && (
+            <button
+              type="button"
+              onClick={() => setShowInvite(true)}
+              className="mb-4 flex items-center gap-2 rounded bg-swing-gold px-3.5 py-2 text-sm font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark"
+            >
+              <UserPlus size={15} />
+              {tp.inviteUser}
+            </button>
+          )}
+
+          {/* Invite form */}
+          {showInvite && (
+            <form onSubmit={handleInvite} className="mb-5 rounded-lg border border-swing-gold/30 bg-swing-gold/5 p-4">
+              <h4 className="mb-3 flex items-center gap-2 text-sm font-bold text-swing-navy">
+                <UserPlus size={15} />
+                {tp.inviteUser}
+              </h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-swing-navy/50">
+                    {tp.inviteName}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={inviteName}
+                    onChange={(e) => setInviteName(e.target.value)}
+                    placeholder="Max Mustermann"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-swing-navy/50">
+                    {tp.inviteEmail}
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="email@beispiel.de"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-swing-navy/50">
+                    {tp.role}
+                  </label>
+                  <select
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value)}
+                    className={selectClass}
+                  >
+                    {isSuperAdmin && (
+                      <option value="superadmin">{tp.roleSuperAdmin}</option>
+                    )}
+                    <option value="admin">{tp.roleAdmin}</option>
+                    <option value="buyer">{tp.roleBuyer}</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={inviting}
+                  className="flex items-center gap-2 rounded bg-swing-gold px-3.5 py-2 text-sm font-semibold text-swing-navy transition-colors hover:bg-swing-gold-dark disabled:opacity-60"
+                >
+                  {inviting ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Mail size={14} />
+                  )}
+                  {inviting ? tp.inviting : tp.inviteSend}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowInvite(false)}
+                  className="rounded px-3 py-2 text-sm font-medium text-swing-navy/50 transition-colors hover:text-swing-navy"
+                >
+                  {tp.inviteCancel}
+                </button>
+                {inviteSuccess && (
+                  <span className="flex items-center gap-1 text-sm font-medium text-green-600">
+                    <CheckCircle size={14} />
+                    {tp.inviteSuccess}
+                  </span>
+                )}
+              </div>
+            </form>
+          )}
+
+          {/* User list */}
           {profiles.length === 0 ? (
             <p className="text-sm text-swing-navy/40">{tp.noUsers}</p>
           ) : (
             <div className="divide-y divide-gray-100">
               {profiles.map((p) => {
                 const isCurrentUser = p.id === currentUserId;
+                const editable = canEditUser(p);
                 return (
                   <div
                     key={p.id}
@@ -135,7 +277,11 @@ export default function RoleManager({
                     <div className="flex items-center gap-2 sm:w-48">
                       {isCurrentUser ? (
                         <span className="text-xs text-swing-navy/30 italic">
-                          ({tp.roleSuperAdmin})
+                          ({roleLabel(callerRole)})
+                        </span>
+                      ) : !editable ? (
+                        <span className="text-xs text-swing-navy/30 italic">
+                          {tp.roleSuperAdmin}
                         </span>
                       ) : savingId === p.id ? (
                         <Loader2
@@ -150,9 +296,11 @@ export default function RoleManager({
                           }
                           className={selectClass}
                         >
-                          <option value="superadmin">
-                            {tp.roleSuperAdmin}
-                          </option>
+                          {isSuperAdmin && (
+                            <option value="superadmin">
+                              {tp.roleSuperAdmin}
+                            </option>
+                          )}
                           <option value="admin">{tp.roleAdmin}</option>
                           <option value="buyer">{tp.roleBuyer}</option>
                         </select>
