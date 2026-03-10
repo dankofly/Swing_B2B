@@ -362,7 +362,7 @@ export default function ProductForm({
             </div>
 
             {/* Rechte Spalte: Checkboxen */}
-            <div className="flex flex-col gap-3 sm:pt-6">
+            <div className="flex flex-col justify-center gap-3">
               <label className="flex items-center gap-2 text-sm">
                 <input
                   name="is_active"
