@@ -79,14 +79,19 @@ export default function ProductForm({
   const [useCaseFr, setUseCaseFr] = useState(product?.use_case_fr || "");
   const [actionTextEn, setActionTextEn] = useState(product?.action_text_en || "");
   const [actionTextFr, setActionTextFr] = useState(product?.action_text_fr || "");
-  const [translating, setTranslating] = useState<"idle" | "en" | "fr" | "both" | "done" | "error">("idle");
+  const [activeTab, setActiveTab] = useState<"de" | "en" | "fr">("de");
+  const [translatingLocale, setTranslatingLocale] = useState<"idle" | "en" | "fr" | "done" | "error">("idle");
   const [translateError, setTranslateError] = useState("");
 
-  async function handleAutoTranslate() {
-    setTranslating("both");
+  // Controlled DE text fields (so they're always in the form)
+  const [descDe, setDescDe] = useState(product?.description || "");
+  const [useCaseDe, setUseCaseDe] = useState(product?.use_case || "");
+  const [actionTextDe, setActionTextDe] = useState(product?.action_text || "");
+
+  async function handleAutoTranslate(locale: "en" | "fr") {
+    setTranslatingLocale(locale);
     setTranslateError("");
 
-    // Get current form values from DOM
     const form = document.querySelector("form") as HTMLFormElement;
     const fd = new FormData(form);
     const currentName = fd.get("name") as string;
@@ -95,42 +100,39 @@ export default function ProductForm({
     const currentActionText = fd.get("action_text") as string;
 
     try {
-      for (const locale of ["en", "fr"] as const) {
-        setTranslating(locale);
-        const res = await fetch("/api/translate-product", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: currentName,
-            description: currentDesc,
-            use_case: currentUseCase,
-            action_text: currentActionText,
-            targetLocale: locale,
-          }),
-        });
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || `Translation to ${locale.toUpperCase()} failed`);
-        }
-        const { translated } = await res.json();
-        if (locale === "en") {
-          if (translated.name) setNameEn(translated.name);
-          if (translated.description) setDescEn(translated.description);
-          if (translated.use_case) setUseCaseEn(translated.use_case);
-          if (translated.action_text) setActionTextEn(translated.action_text);
-        } else {
-          if (translated.name) setNameFr(translated.name);
-          if (translated.description) setDescFr(translated.description);
-          if (translated.use_case) setUseCaseFr(translated.use_case);
-          if (translated.action_text) setActionTextFr(translated.action_text);
-        }
+      const res = await fetch("/api/translate-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: currentName,
+          description: currentDesc,
+          use_case: currentUseCase,
+          action_text: currentActionText,
+          targetLocale: locale,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || `Translation failed`);
       }
-      setTranslating("done");
-      setTimeout(() => setTranslating("idle"), 3000);
+      const { translated } = await res.json();
+      if (locale === "en") {
+        if (translated.name) setNameEn(translated.name);
+        if (translated.description) setDescEn(translated.description);
+        if (translated.use_case) setUseCaseEn(translated.use_case);
+        if (translated.action_text) setActionTextEn(translated.action_text);
+      } else {
+        if (translated.name) setNameFr(translated.name);
+        if (translated.description) setDescFr(translated.description);
+        if (translated.use_case) setUseCaseFr(translated.use_case);
+        if (translated.action_text) setActionTextFr(translated.action_text);
+      }
+      setTranslatingLocale("done");
+      setTimeout(() => setTranslatingLocale("idle"), 3000);
     } catch (err) {
-      setTranslating("error");
+      setTranslatingLocale("error");
       setTranslateError(err instanceof Error ? err.message : "Translation failed");
-      setTimeout(() => { setTranslating("idle"); setTranslateError(""); }, 5000);
+      setTimeout(() => { setTranslatingLocale("idle"); setTranslateError(""); }, 5000);
     }
   }
 
@@ -389,19 +391,6 @@ export default function ProductForm({
 
           <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              {tf.useCase}
-            </label>
-            <input
-              name="use_case"
-              type="text"
-              defaultValue={product?.use_case || ""}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder={tf.useCasePlaceholder}
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
               {tf.websiteLink}
             </label>
             <input
@@ -412,174 +401,269 @@ export default function ProductForm({
               placeholder={tf.websitePlaceholder}
             />
           </div>
+        </div>
+      </div>
 
-          <div className="sm:col-span-2">
+      {/* Content & Translations – Tabbed */}
+      <div className="rounded bg-white p-4 shadow-sm sm:p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Languages size={18} className="text-swing-navy" />
+          <h2 className="text-lg font-semibold text-swing-navy">
+            {tf.description} & {tf.translations}
+          </h2>
+        </div>
+
+        {/* Tab bar */}
+        <div className="mb-5 flex border-b border-gray-200">
+          {(["de", "en", "fr"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`relative px-5 py-2.5 text-sm font-bold uppercase tracking-wide transition-colors ${
+                activeTab === tab
+                  ? "text-swing-navy after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-swing-gold"
+                  : "text-swing-gray-dark/40 hover:text-swing-navy/60"
+              }`}
+            >
+              {tab === "de" ? "Deutsch" : tab === "en" ? "English" : "Français"}
+              {tab !== "de" && (
+                (tab === "en" ? nameEn : nameFr) ? (
+                  <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-green-400" />
+                ) : (
+                  <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-gray-300" />
+                )
+              )}
+            </button>
+          ))}
+        </div>
+
+        {translateError && (
+          <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {translateError}
+          </div>
+        )}
+
+        {/* DE Tab */}
+        <div className={activeTab === "de" ? "space-y-4" : "hidden"}>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.useCase}
+            </label>
+            <input
+              name="use_case"
+              type="text"
+              value={useCaseDe}
+              onChange={(e) => setUseCaseDe(e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder={tf.useCasePlaceholder}
+            />
+          </div>
+          <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
               {tf.description}
             </label>
             <textarea
               name="description"
               rows={4}
-              defaultValue={product?.description || ""}
+              value={descDe}
+              onChange={(e) => setDescDe(e.target.value)}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder={tf.descriptionPlaceholder}
             />
           </div>
-        </div>
-      </div>
-
-      {/* Translations EN / FR */}
-      <div className="rounded border border-blue-200 bg-blue-50/30 p-4 shadow-sm sm:p-6">
-        <div className="mb-4 flex items-center gap-2">
-          <Languages size={18} className="text-blue-600" />
-          <h2 className="text-lg font-semibold text-blue-800">
-            Übersetzungen
-          </h2>
-          <div className="ml-auto flex items-center gap-1">
-            <AiInfoTooltip
-              action="Übersetzt Produktname, Beschreibung, Einsatzbereich und Aktionstext automatisch von Deutsch nach Englisch und Französisch mit Gemini AI."
-              costNote="Es werden 2 API-Aufrufe gesendet (EN + FR). Token-Kosten entstehen pro Übersetzung."
-            />
-            <button
-              type="button"
-              onClick={handleAutoTranslate}
-              disabled={translating !== "idle" && translating !== "done" && translating !== "error"}
-              className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold transition-colors ${
-                translating === "done"
-                  ? "bg-green-100 text-green-700"
-                  : translating === "error"
-                    ? "bg-red-100 text-red-700"
-                    : translating !== "idle"
-                      ? "animate-pulse bg-blue-100 text-blue-600"
-                      : "bg-swing-gold text-swing-navy hover:bg-swing-gold-dark"
-              }`}
-            >
-              {translating === "en" || translating === "fr" || translating === "both" ? (
-                <><Loader2 size={12} className="animate-spin" /> {translating === "en" ? "EN..." : translating === "fr" ? "FR..." : "..."}</>
-              ) : translating === "done" ? (
-                <><Check size={12} /> OK</>
-              ) : translating === "error" ? (
-                <><AlertCircle size={12} /> Fehler</>
-              ) : (
-                <><Languages size={12} /> Auto-Translate</>
-              )}
-            </button>
-          </div>
-        </div>
-        {translateError && (
-          <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-            {translateError}
-          </div>
-        )}
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* Name EN / FR */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-blue-800">
-              {tf.productName} (EN)
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.actionText}
+            </label>
+            <textarea
+              name="action_text"
+              rows={2}
+              value={actionTextDe}
+              onChange={(e) => setActionTextDe(e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder={tf.actionTextPlaceholder}
+            />
+          </div>
+        </div>
+
+        {/* EN Tab */}
+        <div className={activeTab === "en" ? "space-y-4" : "hidden"}>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-swing-gray-dark/50">
+              {tf.translateFrom}
+            </p>
+            <div className="flex items-center gap-1">
+              <AiInfoTooltip
+                action={tf.autoTranslateTooltip}
+                costNote={tf.autoTranslateCost}
+              />
+              <button
+                type="button"
+                onClick={() => handleAutoTranslate("en")}
+                disabled={translatingLocale !== "idle" && translatingLocale !== "done" && translatingLocale !== "error"}
+                className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold transition-colors ${
+                  translatingLocale === "done"
+                    ? "bg-green-100 text-green-700"
+                    : translatingLocale === "error"
+                      ? "bg-red-100 text-red-700"
+                      : translatingLocale === "en"
+                        ? "animate-pulse bg-blue-100 text-blue-600"
+                        : "bg-swing-gold text-swing-navy hover:bg-swing-gold-dark"
+                }`}
+              >
+                {translatingLocale === "en" ? (
+                  <><Loader2 size={12} className="animate-spin" /> Translating...</>
+                ) : translatingLocale === "done" ? (
+                  <><Check size={12} /> OK</>
+                ) : translatingLocale === "error" ? (
+                  <><AlertCircle size={12} /> Error</>
+                ) : (
+                  <><Languages size={12} /> Auto-Translate EN</>
+                )}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.productName}
             </label>
             <input
               name="name_en"
               type="text"
               value={nameEn}
               onChange={(e) => setNameEn(e.target.value)}
-              className="w-full rounded border border-blue-200 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="English product name"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-blue-800">
-              {tf.productName} (FR)
-            </label>
-            <input
-              name="name_fr"
-              type="text"
-              value={nameFr}
-              onChange={(e) => setNameFr(e.target.value)}
-              className="w-full rounded border border-blue-200 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder="Nom du produit en français"
-            />
-          </div>
-
-          {/* Use Case EN / FR */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-blue-800">
-              {tf.useCase} (EN)
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.useCase}
             </label>
             <input
               name="use_case_en"
               type="text"
               value={useCaseEn}
               onChange={(e) => setUseCaseEn(e.target.value)}
-              className="w-full rounded border border-blue-200 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="e.g. XC & Competition"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-blue-800">
-              {tf.useCase} (FR)
-            </label>
-            <input
-              name="use_case_fr"
-              type="text"
-              value={useCaseFr}
-              onChange={(e) => setUseCaseFr(e.target.value)}
-              className="w-full rounded border border-blue-200 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder="p.ex. XC & Compétition"
-            />
-          </div>
-
-          {/* Description EN / FR */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-blue-800">
-              {tf.description} (EN)
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.description}
             </label>
             <textarea
               name="description_en"
-              rows={3}
+              rows={4}
               value={descEn}
               onChange={(e) => setDescEn(e.target.value)}
-              className="w-full rounded border border-blue-200 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="English description"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-blue-800">
-              {tf.description} (FR)
-            </label>
-            <textarea
-              name="description_fr"
-              rows={3}
-              value={descFr}
-              onChange={(e) => setDescFr(e.target.value)}
-              className="w-full rounded border border-blue-200 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder="Description en français"
-            />
-          </div>
-
-          {/* Action Text EN / FR */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-blue-800">
-              {tf.actionText} (EN)
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.actionText}
             </label>
             <textarea
               name="action_text_en"
               rows={2}
               value={actionTextEn}
               onChange={(e) => setActionTextEn(e.target.value)}
-              className="w-full rounded border border-blue-200 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="English action text"
             />
           </div>
+        </div>
+
+        {/* FR Tab */}
+        <div className={activeTab === "fr" ? "space-y-4" : "hidden"}>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-swing-gray-dark/50">
+              {tf.translateFrom}
+            </p>
+            <div className="flex items-center gap-1">
+              <AiInfoTooltip
+                action={tf.autoTranslateTooltipFr}
+                costNote={tf.autoTranslateCost}
+              />
+              <button
+                type="button"
+                onClick={() => handleAutoTranslate("fr")}
+                disabled={translatingLocale !== "idle" && translatingLocale !== "done" && translatingLocale !== "error"}
+                className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold transition-colors ${
+                  translatingLocale === "done"
+                    ? "bg-green-100 text-green-700"
+                    : translatingLocale === "error"
+                      ? "bg-red-100 text-red-700"
+                      : translatingLocale === "fr"
+                        ? "animate-pulse bg-blue-100 text-blue-600"
+                        : "bg-swing-gold text-swing-navy hover:bg-swing-gold-dark"
+                }`}
+              >
+                {translatingLocale === "fr" ? (
+                  <><Loader2 size={12} className="animate-spin" /> Traduction...</>
+                ) : translatingLocale === "done" ? (
+                  <><Check size={12} /> OK</>
+                ) : translatingLocale === "error" ? (
+                  <><AlertCircle size={12} /> Erreur</>
+                ) : (
+                  <><Languages size={12} /> Auto-Translate FR</>
+                )}
+              </button>
+            </div>
+          </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-blue-800">
-              {tf.actionText} (FR)
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.productName}
+            </label>
+            <input
+              name="name_fr"
+              type="text"
+              value={nameFr}
+              onChange={(e) => setNameFr(e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder="Nom du produit en français"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.useCase}
+            </label>
+            <input
+              name="use_case_fr"
+              type="text"
+              value={useCaseFr}
+              onChange={(e) => setUseCaseFr(e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder="p.ex. XC & Compétition"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.description}
+            </label>
+            <textarea
+              name="description_fr"
+              rows={4}
+              value={descFr}
+              onChange={(e) => setDescFr(e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder="Description en français"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.actionText}
             </label>
             <textarea
               name="action_text_fr"
               rows={2}
               value={actionTextFr}
               onChange={(e) => setActionTextFr(e.target.value)}
-              className="w-full rounded border border-blue-200 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="Texte d'action en français"
             />
           </div>
@@ -603,18 +687,6 @@ export default function ProductForm({
           </label>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-semibold text-orange-700">
-              {tf.actionText}
-            </label>
-            <textarea
-              name="action_text"
-              rows={3}
-              defaultValue={product?.action_text || ""}
-              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder={tf.actionTextPlaceholder}
-            />
-          </div>
           <div>
             <label className="mb-1 block text-sm font-semibold text-orange-700">
               {tf.actionStart}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { deleteCompany } from "@/lib/actions/customers";
+import { useDict } from "@/lib/i18n/context";
 
 interface DeleteCompanyButtonProps {
   companyId: string;
@@ -16,6 +17,8 @@ export default function DeleteCompanyButton({
   companyName,
   variant = "icon",
 }: DeleteCompanyButtonProps) {
+  const dict = useDict();
+  const t = dict.deleteCompany;
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
@@ -27,7 +30,7 @@ export default function DeleteCompanyButton({
       router.push("/admin/kunden");
       router.refresh();
     } else {
-      alert("Fehler beim Löschen: " + (result.error || "Unbekannter Fehler"));
+      alert(t.errorPrefix + " " + (result.error || ""));
       setDeleting(false);
       setShowConfirm(false);
     }
@@ -40,7 +43,7 @@ export default function DeleteCompanyButton({
           type="button"
           onClick={() => setShowConfirm(true)}
           className="flex cursor-pointer items-center gap-1 rounded px-3 py-1.5 text-xs font-bold text-red-500/60 transition-all duration-200 hover:bg-red-50 hover:text-red-600"
-          title="Kunde löschen"
+          title={t.button}
         >
           <Trash2 size={14} />
         </button>
@@ -51,7 +54,7 @@ export default function DeleteCompanyButton({
           className="flex cursor-pointer items-center gap-2 rounded-lg bg-white/10 px-5 py-2.5 text-sm font-bold text-white/60 transition-colors hover:bg-red-500/20 hover:text-red-300"
         >
           <Trash2 size={14} />
-          Löschen
+          {t.button}
         </button>
       )}
 
@@ -63,12 +66,10 @@ export default function DeleteCompanyButton({
               <Trash2 size={22} className="text-red-500" />
             </div>
             <h3 className="text-lg font-bold text-swing-navy">
-              Kunde löschen?
+              {t.confirmTitle}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-swing-gray-dark/60">
-              Möchten Sie <strong>{companyName}</strong> wirklich löschen? Alle
-              zugehörigen Daten (Benutzer, Preislisten, Anfragen) werden
-              unwiderruflich entfernt.
+              {t.confirmMessage.replace("{name}", companyName)}
             </p>
             <div className="mt-6 flex gap-3">
               <button
@@ -77,7 +78,7 @@ export default function DeleteCompanyButton({
                 disabled={deleting}
                 className="flex-1 cursor-pointer rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-semibold text-swing-navy transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
-                Abbrechen
+                {t.cancel}
               </button>
               <button
                 type="button"
@@ -85,7 +86,7 @@ export default function DeleteCompanyButton({
                 disabled={deleting}
                 className="flex-1 cursor-pointer rounded-lg bg-red-500 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
               >
-                {deleting ? "Wird gelöscht..." : "Endgültig löschen"}
+                {deleting ? t.deleting : t.confirmDelete}
               </button>
             </div>
           </div>

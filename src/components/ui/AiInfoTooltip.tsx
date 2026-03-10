@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { HelpCircle, Sparkles } from "lucide-react";
+import { useDict } from "@/lib/i18n/context";
 
 interface AiInfoTooltipProps {
   /** What happens when the user clicks the button */
@@ -17,9 +18,12 @@ interface AiInfoTooltipProps {
 export default function AiInfoTooltip({
   action,
   model = "Google Gemini 2.0 Flash",
-  costNote = "Pro Aufruf werden API-Tokens verbraucht, die Kosten verursachen können.",
+  costNote,
   dark = false,
 }: AiInfoTooltipProps) {
+  const dict = useDict();
+  const ai = dict.aiTooltip;
+  const resolvedCostNote = costNote ?? ai.defaultCostNote;
   const [open, setOpen] = useState(false);
   const [alignLeft, setAlignLeft] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -67,7 +71,7 @@ export default function AiInfoTooltip({
           <div className="mb-2 flex items-center gap-1.5">
             <Sparkles size={13} className="text-swing-gold" />
             <span className="text-[11px] font-bold uppercase tracking-wide text-swing-navy/60">
-              KI-Funktion
+              {ai.aiFeature}
             </span>
           </div>
           <p className="text-[12px] leading-relaxed text-swing-gray-dark/80">
@@ -75,10 +79,10 @@ export default function AiInfoTooltip({
           </p>
           <div className="mt-2.5 rounded bg-amber-50 px-2.5 py-2">
             <p className="text-[11px] font-semibold text-amber-800">
-              Modell: {model}
+              {ai.modelLabel}: {model}
             </p>
             <p className="mt-0.5 text-[11px] leading-relaxed text-amber-700">
-              {costNote}
+              {resolvedCostNote}
             </p>
           </div>
         </div>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import AiInfoTooltip from "@/components/ui/AiInfoTooltip";
 import { uploadPriceList, deletePriceUpload } from "@/lib/actions/price-uploads";
-import { confirmPrices, type ParsedPriceItem } from "@/lib/actions/prices";
+import { confirmPrices, type MatchedPriceItem } from "@/lib/actions/prices";
 import {
   Upload,
   FileText,
@@ -13,6 +13,8 @@ import {
   X,
   AlertTriangle,
   Eye,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { useDict, useLocale } from "@/lib/i18n/context";
 import { getDateLocale } from "@/lib/i18n/shared";
@@ -32,9 +34,71 @@ interface CategoryConfig {
   label: string;
 }
 
+/** Shape returned by /api/parse-pricelist for matched items */
+interface ApiMatchedItem {
+  portal_product_id: string;
+  portal_model: string;
+  portal_size: string;
+  pdf_category: string;
+  pdf_model_raw: string;
+  pdf_model_normalized: string;
+  pdf_size_raw: string;
+  pdf_size_normalized: string;
+  uvp_incl_vat_eur: string;
+  dealer_net_eur: string;
+  confidence: string;
+  match_basis: string;
+  product_size_id: string;
+  product_id: string | null;
+  sku: string | null;
+  uvp_incl_vat: number | null;
+  ek_netto: number | null;
+}
+
+interface ApiPdfProduct {
+  category: string;
+  model_raw: string;
+  model_normalized: string;
+  size_raw: string;
+  size_normalized: string;
+  uvp_incl_vat_eur: string;
+  dealer_net_eur: string;
+}
+
+interface ApiReviewItem {
+  pdf_product: ApiPdfProduct;
+  portal_candidates: Array<{
+    portal_product_id: string;
+    portal_model: string;
+    portal_size: string;
+  }>;
+  reason: string;
+}
+
+interface ApiNoMatchItem {
+  pdf_product: ApiPdfProduct;
+  reason: string;
+}
+
+interface ApiMissingItem {
+  portal_product_id: string;
+  portal_model: string;
+  portal_size: string;
+  reason: string;
+}
+
 interface ParseResult {
-  items: ParsedPriceItem[];
-  summary: { total: number; matched: number; unmatched: number };
+  matched: ApiMatchedItem[];
+  review_needed: ApiReviewItem[];
+  no_match: ApiNoMatchItem[];
+  missing_in_price_list: ApiMissingItem[];
+  summary: {
+    total_pdf: number;
+    matched: number;
+    review_needed: number;
+    no_match: number;
+    missing_in_price_list: number;
+  };
 }
 
 export default function PriceListSection({
@@ -51,10 +115,6 @@ export default function PriceListSection({
   const dl = getDateLocale(locale);
   const tp = dict.admin.priceLists;
 
-  function eur(value: number) {
-    return value.toLocaleString(dl, { style: "currency", currency: "EUR" });
-  }
-
   const [uploads, setUploads] = useState(initialUploads);
   const [uploadingCategory, setUploadingCategory] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,12 +123,48 @@ export default function PriceListSection({
   const [parsing, setParsing] = useState(false);
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [parseCategory, setParseCategory] = useState<string | null>(null);
-  const [discounts, setDiscounts] = useState<Record<number, number>>({});
   const [saving, setSaving] = useState(false);
   const [savedInfo, setSavedInfo] = useState<{
     savedCount: number;
     productCount: number;
   } | null>(null);
+
+  // Editable prices: keyed by product_size_id
+  const [editedPrices, setEditedPrices] = useState<
+    Record<string, { uvp: number | null; ek: number | null }>
+  >({});
+
+  // Collapsed sections
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    matched: true,
+    review: false,
+    noMatch: false,
+    missing: false,
+  });
+
+  function toggleSection(key: string) {
+    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function getPrice(item: ApiMatchedItem) {
+    const edited = editedPrices[item.product_size_id];
+    return {
+      uvp: edited?.uvp ?? item.uvp_incl_vat,
+      ek: edited?.ek ?? item.ek_netto,
+    };
+  }
+
+  function updatePrice(sizeId: string, field: "uvp" | "ek", value: string) {
+    const num = parseFloat(value);
+    setEditedPrices((prev) => ({
+      ...prev,
+      [sizeId]: {
+        uvp: prev[sizeId]?.uvp ?? null,
+        ek: prev[sizeId]?.ek ?? null,
+        [field]: isNaN(num) ? null : num,
+      },
+    }));
+  }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>, category: string) {
     const file = e.target.files?.[0];
@@ -80,7 +176,7 @@ export default function PriceListSection({
     setSavedInfo(null);
     setParseCategory(null);
 
-    // Step 1: Upload file to storage + save to price_uploads
+    // Step 1: Upload file to storage
     const formData = new FormData();
     formData.append("file", file);
 
@@ -116,7 +212,7 @@ export default function PriceListSection({
           setError(data.error || tp.parseError);
         } else {
           setParseResult(data);
-          setDiscounts({});
+          setEditedPrices({});
           didParse = true;
         }
       } catch {
@@ -141,12 +237,22 @@ export default function PriceListSection({
     setError(null);
 
     try {
-      const itemsWithDiscount = parseResult.items.map((item, i) => ({
-        ...item,
-        discount: discounts[i] ?? 0,
-        ek_netto: item.ek_netto * (1 - (discounts[i] ?? 0) / 100),
-      }));
-      const info = await confirmPrices(companyId, itemsWithDiscount);
+      const items: MatchedPriceItem[] = parseResult.matched.map((item) => {
+        const prices = getPrice(item);
+        return {
+          product_size_id: item.product_size_id,
+          product_id: item.product_id,
+          portal_model: item.portal_model,
+          portal_size: item.portal_size,
+          sku: item.sku,
+          uvp_incl_vat: prices.uvp,
+          ek_netto: prices.ek,
+          pdf_model_raw: item.pdf_model_raw,
+          pdf_category: item.pdf_category,
+        };
+      });
+
+      const info = await confirmPrices(companyId, items);
       setSavedInfo(info);
       setParseResult(null);
     } catch (err) {
@@ -159,7 +265,7 @@ export default function PriceListSection({
   function handleCancelParse() {
     setParseResult(null);
     setParseCategory(null);
-    setDiscounts({});
+    setEditedPrices({});
   }
 
   async function handleDelete(id: string) {
@@ -169,8 +275,24 @@ export default function PriceListSection({
     }
   }
 
-  // If we have a parse result, show the preview overlay
+  // Group matched items by model for display
+  function groupByModel(items: ApiMatchedItem[]) {
+    const groups = new Map<string, ApiMatchedItem[]>();
+    for (const item of items) {
+      const key = item.portal_model;
+      const arr = groups.get(key) ?? [];
+      arr.push(item);
+      groups.set(key, arr);
+    }
+    return groups;
+  }
+
+  // ──────────────────────────────────────────────
+  // REVIEW / PREVIEW VIEW
+  // ──────────────────────────────────────────────
   if (parseResult && !savedInfo) {
+    const grouped = groupByModel(parseResult.matched);
+
     return (
       <div>
         <h3 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-swing-navy/50">
@@ -190,86 +312,209 @@ export default function PriceListSection({
           </div>
         )}
 
-        <div className="mb-3 flex gap-3 text-xs">
-          <span className="flex items-center gap-1 text-green-700">
+        {/* Summary badges */}
+        <div className="mb-4 flex flex-wrap gap-2 text-xs">
+          <span className="flex items-center gap-1 rounded bg-green-100 px-2 py-1 font-medium text-green-800">
             <Check size={12} />
             {parseResult.summary.matched} {tp.matched}
           </span>
-          <span className="flex items-center gap-1 text-red-600">
-            <X size={12} />
-            {parseResult.summary.unmatched} {tp.notFound}
-          </span>
+          {parseResult.summary.review_needed > 0 && (
+            <span className="flex items-center gap-1 rounded bg-yellow-100 px-2 py-1 font-medium text-yellow-800">
+              <AlertTriangle size={12} />
+              {parseResult.summary.review_needed} prüfen
+            </span>
+          )}
+          {parseResult.summary.no_match > 0 && (
+            <span className="flex items-center gap-1 rounded bg-red-100 px-2 py-1 font-medium text-red-700">
+              <X size={12} />
+              {parseResult.summary.no_match} {tp.notFound}
+            </span>
+          )}
+          {parseResult.summary.missing_in_price_list > 0 && (
+            <span className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1 font-medium text-gray-600">
+              {parseResult.summary.missing_in_price_list} fehlen in PDF
+            </span>
+          )}
         </div>
 
-        <div className="max-h-100 overflow-auto rounded border border-gray-200">
-          <table className="w-full text-left text-xs">
-            <thead className="sticky top-0 border-b bg-gray-50 text-[10px] uppercase tracking-wider text-swing-gray-dark/50">
-              <tr>
-                <th className="px-2 py-2"></th>
-                <th className="px-2 py-2">{tp.modelPdf}</th>
-                <th className="px-2 py-2 text-right">{tp.uvpGross}</th>
-                <th className="px-2 py-2 text-right">{tp.dealerNet}</th>
-                <th className="px-2 py-2 text-right">{tp.discount}</th>
-                <th className="px-2 py-2 text-right">{tp.finalPrice}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {parseResult.items.map((item, i) => (
-                <tr
-                  key={i}
-                  className={item.status === "unmatched" ? "bg-red-50/50" : ""}
-                >
-                  <td className="px-2 py-1.5">
-                    {item.status === "matched" ? (
-                      <Check size={12} className="text-green-600" />
-                    ) : (
-                      <X size={12} className="text-red-500" />
-                    )}
-                  </td>
-                  <td className="px-2 py-1.5">
+        {/* ── MATCHED SECTION ── */}
+        <SectionHeader
+          title={`Zugeordnete Preise (${parseResult.summary.matched})`}
+          expanded={expandedSections.matched}
+          onToggle={() => toggleSection("matched")}
+          variant="green"
+        />
+        {expandedSections.matched && (
+          <div className="mb-4 max-h-125 overflow-auto rounded border border-gray-200">
+            <table className="w-full text-left text-xs">
+              <thead className="sticky top-0 border-b bg-gray-50 text-[10px] uppercase tracking-wider text-swing-gray-dark/50">
+                <tr>
+                  <th className="px-3 py-2">Modell</th>
+                  <th className="px-2 py-2">Größe</th>
+                  <th className="px-2 py-2 text-right">{tp.uvpGross}</th>
+                  <th className="px-2 py-2 text-right">{tp.dealerNet}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {Array.from(grouped.entries()).map(([model, items]) => (
+                  items.map((item, idx) => (
+                    <tr key={item.product_size_id} className="hover:bg-gray-50/50">
+                      {idx === 0 && (
+                        <td
+                          className="px-3 py-1.5 font-medium text-swing-navy"
+                          rowSpan={items.length}
+                        >
+                          <div>{model}</div>
+                          {item.pdf_model_raw !== model && (
+                            <div className="text-[10px] text-swing-gray-dark/40">
+                              PDF: {item.pdf_model_raw}
+                            </div>
+                          )}
+                          <div className="text-[10px] text-swing-gray-dark/30">
+                            {item.pdf_category}
+                          </div>
+                        </td>
+                      )}
+                      <td className="px-2 py-1.5 font-medium">
+                        {item.portal_size}
+                        {item.sku && (
+                          <span className="ml-1 text-[10px] text-swing-gray-dark/30">
+                            {item.sku}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-2 py-1.5 text-right">
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={getPrice(item).uvp ?? ""}
+                          onChange={(e) =>
+                            updatePrice(item.product_size_id, "uvp", e.target.value)
+                          }
+                          className="w-24 rounded border border-gray-200 px-1.5 py-0.5 text-right text-[11px] text-swing-gray-dark/60 focus:border-swing-gold focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5 text-right">
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={getPrice(item).ek ?? ""}
+                          onChange={(e) =>
+                            updatePrice(item.product_size_id, "ek", e.target.value)
+                          }
+                          className="w-24 rounded border border-gray-200 px-1.5 py-0.5 text-right text-[11px] font-semibold text-swing-navy focus:border-swing-gold focus:outline-none"
+                        />
+                      </td>
+                    </tr>
+                  ))
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ── REVIEW NEEDED SECTION ── */}
+        {parseResult.review_needed.length > 0 && (
+          <>
+            <SectionHeader
+              title={`Prüfung nötig (${parseResult.review_needed.length})`}
+              expanded={expandedSections.review}
+              onToggle={() => toggleSection("review")}
+              variant="yellow"
+            />
+            {expandedSections.review && (
+              <div className="mb-4 space-y-2">
+                {parseResult.review_needed.map((item, i) => (
+                  <div
+                    key={i}
+                    className="rounded border border-yellow-200 bg-yellow-50/50 p-2.5 text-xs"
+                  >
                     <div className="font-medium text-swing-navy">
-                      {item.modell_pdf}
+                      {item.pdf_product.model_raw} – {item.pdf_product.size_raw}
                     </div>
-                    {item.product_name && item.product_name !== item.modell_pdf && (
-                      <div className="text-[10px] text-swing-gray-dark/40">
-                        {item.product_name} ({item.product_sizes.length} SKUs)
+                    <div className="text-[10px] text-yellow-800">{item.reason}</div>
+                    {item.portal_candidates.length > 0 && (
+                      <div className="mt-1 text-[10px] text-swing-gray-dark/50">
+                        Mögliche Zuordnungen:{" "}
+                        {item.portal_candidates
+                          .map((c) => `${c.portal_model} ${c.portal_size}`)
+                          .join(", ")}
                       </div>
                     )}
-                  </td>
-                  <td className="px-2 py-1.5 text-right text-swing-gray-dark/60">
-                    {eur(item.uvp_brutto)}
-                  </td>
-                  <td className="px-2 py-1.5 text-right font-medium text-swing-navy">
-                    {eur(item.ek_netto)}
-                  </td>
-                  <td className="px-2 py-1.5 text-right">
-                    <div className="inline-flex items-center gap-0.5">
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={discounts[i] ?? 0}
-                        onChange={(e) =>
-                          setDiscounts((prev) => ({
-                            ...prev,
-                            [i]: Math.max(0, Math.min(100, Number(e.target.value) || 0)),
-                          }))
-                        }
-                        className="w-12 rounded border border-gray-300 px-1 py-0.5 text-right text-[11px] focus:border-swing-gold focus:outline-none"
-                      />
-                      <span className="text-[10px] text-swing-gray-dark/50">%</span>
+                    <div className="mt-1 flex gap-3 text-[10px] text-swing-gray-dark/40">
+                      <span>UVP: {item.pdf_product.uvp_incl_vat_eur}</span>
+                      <span>EK: {item.pdf_product.dealer_net_eur}</span>
                     </div>
-                  </td>
-                  <td className="px-2 py-1.5 text-right font-medium text-swing-navy">
-                    {eur(item.ek_netto * (1 - (discounts[i] ?? 0) / 100))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
-        <div className="mt-3 flex items-center justify-between">
+        {/* ── NO MATCH SECTION ── */}
+        {parseResult.no_match.length > 0 && (
+          <>
+            <SectionHeader
+              title={`Nicht zugeordnet (${parseResult.no_match.length})`}
+              expanded={expandedSections.noMatch}
+              onToggle={() => toggleSection("noMatch")}
+              variant="red"
+            />
+            {expandedSections.noMatch && (
+              <div className="mb-4 space-y-1">
+                {parseResult.no_match.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-2 rounded bg-red-50/50 px-2.5 py-1.5 text-xs"
+                  >
+                    <X size={12} className="mt-0.5 shrink-0 text-red-400" />
+                    <div>
+                      <span className="font-medium text-swing-navy">
+                        {item.pdf_product.model_raw}
+                      </span>
+                      <span className="ml-1 text-swing-gray-dark/40">
+                        {item.pdf_product.size_raw}
+                      </span>
+                      <span className="ml-2 text-[10px] text-red-600">
+                        {item.reason}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── MISSING IN PRICE LIST ── */}
+        {parseResult.missing_in_price_list.length > 0 && (
+          <>
+            <SectionHeader
+              title={`Fehlen in Preisliste (${parseResult.missing_in_price_list.length})`}
+              expanded={expandedSections.missing}
+              onToggle={() => toggleSection("missing")}
+              variant="gray"
+            />
+            {expandedSections.missing && (
+              <div className="mb-4 space-y-1">
+                {parseResult.missing_in_price_list.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 rounded bg-gray-50 px-2.5 py-1.5 text-xs text-swing-gray-dark/50"
+                  >
+                    <span className="font-medium">
+                      {item.portal_model} – {item.portal_size}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Actions */}
+        <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3">
           <button
             onClick={handleCancelParse}
             className="cursor-pointer rounded border border-gray-300 px-3 py-1.5 text-xs text-swing-gray-dark hover:bg-gray-50"
@@ -279,7 +524,7 @@ export default function PriceListSection({
           <button
             onClick={handleConfirm}
             disabled={saving || parseResult.summary.matched === 0}
-            className="flex cursor-pointer items-center gap-1.5 rounded bg-swing-gold px-3 py-1.5 text-xs font-semibold text-swing-navy hover:bg-swing-gold-dark disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-1.5 rounded bg-swing-gold px-4 py-1.5 text-xs font-semibold text-swing-navy hover:bg-swing-gold-dark disabled:opacity-50"
           >
             {saving ? (
               <>
@@ -298,6 +543,9 @@ export default function PriceListSection({
     );
   }
 
+  // ──────────────────────────────────────────────
+  // DEFAULT VIEW (upload buttons + file list)
+  // ──────────────────────────────────────────────
   return (
     <div>
       <div className="mb-3 flex items-center gap-1.5">
@@ -341,7 +589,7 @@ export default function PriceListSection({
       <div className="space-y-2.5">
         {categories.map((cat) => {
           const catUploads = uploads.filter((u) => u.category === cat.key);
-          const latestUpload = catUploads[0]; // most recent
+          const latestUpload = catUploads[0];
           const isUploading = uploadingCategory === cat.key;
 
           return (
@@ -352,7 +600,6 @@ export default function PriceListSection({
 
               {latestUpload ? (
                 <div className="flex items-center gap-1.5">
-                  {/* View button - full width */}
                   <a
                     href={latestUpload.file_url}
                     target="_blank"
@@ -374,7 +621,6 @@ export default function PriceListSection({
                     </span>
                   </a>
 
-                  {/* Replace upload */}
                   <label
                     className={`flex shrink-0 cursor-pointer items-center gap-1 rounded bg-swing-gold/15 px-2 py-2 text-[10px] font-semibold text-swing-navy transition-colors hover:bg-swing-gold/30 ${isUploading ? "opacity-50" : ""}`}
                   >
@@ -392,7 +638,6 @@ export default function PriceListSection({
                     />
                   </label>
 
-                  {/* Delete */}
                   <button
                     onClick={() => handleDelete(latestUpload.id)}
                     className="shrink-0 cursor-pointer rounded p-2 text-swing-navy/20 transition-colors hover:bg-red-50 hover:text-red-500"
@@ -429,5 +674,35 @@ export default function PriceListSection({
         })}
       </div>
     </div>
+  );
+}
+
+// ── Collapsible section header ──
+function SectionHeader({
+  title,
+  expanded,
+  onToggle,
+  variant,
+}: {
+  title: string;
+  expanded: boolean;
+  onToggle: () => void;
+  variant: "green" | "yellow" | "red" | "gray";
+}) {
+  const colors = {
+    green: "border-green-200 bg-green-50/50 text-green-800",
+    yellow: "border-yellow-200 bg-yellow-50/50 text-yellow-800",
+    red: "border-red-200 bg-red-50/50 text-red-700",
+    gray: "border-gray-200 bg-gray-50 text-gray-600",
+  };
+
+  return (
+    <button
+      onClick={onToggle}
+      className={`mb-1 flex w-full cursor-pointer items-center gap-1.5 rounded border px-2.5 py-1.5 text-left text-[11px] font-semibold ${colors[variant]}`}
+    >
+      {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+      {title}
+    </button>
   );
 }

@@ -44,6 +44,7 @@ export default function PendingRequests({
   requests: PendingCompany[];
 }) {
   const dict = useDict();
+  const t = dict.pendingRequests;
   const locale = useLocale();
   const dl = getDateLocale(locale);
   const router = useRouter();
@@ -96,10 +97,10 @@ export default function PendingRequests({
     const diffH = Math.floor(diffMs / (1000 * 60 * 60));
     const diffD = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffH < 1) return "gerade eben";
-    if (diffH < 24) return `vor ${diffH}h`;
-    if (diffD === 1) return "gestern";
-    return `vor ${diffD} Tagen`;
+    if (diffH < 1) return t.justNow;
+    if (diffH < 24) return t.hoursAgo.replace("{n}", String(diffH));
+    if (diffD === 1) return t.yesterday;
+    return t.daysAgo.replace("{n}", String(diffD));
   }
 
   return (
@@ -111,13 +112,13 @@ export default function PendingRequests({
         </div>
         <div className="flex-1">
           <h2 className="text-sm font-bold text-swing-navy">
-            Neue Zugangsanfragen
+            {t.title}
           </h2>
           <p className="text-[11px] text-swing-navy/50">
             {requests.length}{" "}
             {requests.length === 1
-              ? "Händler wartet auf Freischaltung"
-              : "Händler warten auf Freischaltung"}
+              ? t.singularWaiting
+              : t.pluralWaiting}
           </p>
         </div>
       </div>
@@ -176,7 +177,7 @@ export default function PendingRequests({
                     className="flex h-9 cursor-pointer items-center gap-1.5 rounded bg-emerald-500 px-3 text-xs font-bold text-white transition-colors hover:bg-emerald-600 disabled:opacity-50 sm:px-4"
                   >
                     <CheckCircle size={14} />
-                    <span className="hidden sm:inline">Freischalten</span>
+                    <span className="hidden sm:inline">{t.approve}</span>
                   </button>
                   <button
                     onClick={() => handleReject(req.id)}
@@ -184,7 +185,7 @@ export default function PendingRequests({
                     className="flex h-9 cursor-pointer items-center gap-1.5 rounded bg-red-50 px-3 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
                   >
                     <XCircle size={14} />
-                    <span className="hidden sm:inline">Ablehnen</span>
+                    <span className="hidden sm:inline">{t.reject}</span>
                   </button>
                 </div>
               </button>
@@ -202,7 +203,7 @@ export default function PendingRequests({
                         />
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-wider text-swing-navy/30">
-                            Firma
+                            {t.company}
                           </p>
                           <p className="text-sm font-semibold text-swing-navy">
                             {req.name}
@@ -228,7 +229,7 @@ export default function PendingRequests({
                           />
                           <div>
                             <p className="text-[10px] font-bold uppercase tracking-wider text-swing-navy/30">
-                              Adresse
+                              {t.address}
                             </p>
                             <p className="text-sm text-swing-navy/70">
                               {req.address}
@@ -247,7 +248,7 @@ export default function PendingRequests({
                         />
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-wider text-swing-navy/30">
-                            Kontakt
+                            {t.contact}
                           </p>
                           {req.contact_person && (
                             <p className="text-sm font-semibold text-swing-navy">
@@ -277,7 +278,7 @@ export default function PendingRequests({
                           />
                           <div>
                             <p className="text-[10px] font-bold uppercase tracking-wider text-swing-navy/30">
-                              Telefon
+                              {t.phone}
                             </p>
                             <a
                               href={`tel:${req.phone}`}
@@ -296,7 +297,7 @@ export default function PendingRequests({
                         />
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-wider text-swing-navy/30">
-                            Registriert am
+                            {t.registeredAt}
                           </p>
                           <p className="text-sm text-swing-navy/70">
                             {new Date(req.created_at).toLocaleDateString(dl, {
@@ -318,7 +319,7 @@ export default function PendingRequests({
                       href={`/admin/kunden/${req.id}`}
                       className="text-xs font-semibold text-swing-navy/40 transition-colors hover:text-swing-gold-dark"
                     >
-                      Vollständiges Profil anzeigen →
+                      {t.viewFullProfile}
                     </Link>
                   </div>
                 </div>

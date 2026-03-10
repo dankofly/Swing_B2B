@@ -1,6 +1,63 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
+import {
+  buildExtractionAndMatchingPrompt,
+  type PortalProductForMatching,
+} from "@/lib/gemini-prompts";
+
+/**
+ * Gemini response shape – mirrors the JSON schema in the prompt.
+ */
+interface GeminiMatchedItem {
+  portal_product_id: string;
+  portal_model: string;
+  portal_size: string;
+  pdf_category: string;
+  pdf_model_raw: string;
+  pdf_model_normalized: string;
+  pdf_size_raw: string;
+  pdf_size_normalized: string;
+  uvp_incl_vat_eur: string;
+  dealer_net_eur: string;
+  confidence: string;
+  match_basis: string;
+}
+
+interface GeminiPdfProduct {
+  category: string;
+  model_raw: string;
+  model_normalized: string;
+  size_raw: string;
+  size_normalized: string;
+  uvp_incl_vat_eur: string;
+  dealer_net_eur: string;
+}
+
+interface GeminiReviewItem {
+  pdf_product: GeminiPdfProduct;
+  portal_candidates: PortalProductForMatching[];
+  reason: string;
+}
+
+interface GeminiNoMatchItem {
+  pdf_product: GeminiPdfProduct;
+  reason: string;
+}
+
+interface GeminiMissingItem {
+  portal_product_id: string;
+  portal_model: string;
+  portal_size: string;
+  reason: string;
+}
+
+interface GeminiResponse {
+  matched: GeminiMatchedItem[];
+  review_needed: GeminiReviewItem[];
+  no_match: GeminiNoMatchItem[];
+  missing_in_price_list: GeminiMissingItem[];
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,6 +66,7 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const companyId = formData.get("company_id") as string;
@@ -23,66 +81,48 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const base64 = Buffer.from(bytes).toString("base64");
 
-    // Fetch all products with their sizes for name-based matching
+    // Fetch all active products with their sizes for portal matching
     const { data: allProducts } = await supabase
       .from("products")
       .select("id, name, slug")
       .eq("is_active", true)
       .order("name");
 
-    const productNames = (allProducts ?? []).map((p) => p.name).join(", ");
+    const { data: allSizes } = await supabase
+      .from("product_sizes")
+      .select("id, sku, size_label, product_id")
+      .order("sort_order");
 
-    // Call Gemini to parse the PDF — match by model name, extract UVP + EK
+    // Build portal products list for Gemini (one entry per product+size)
+    const productMap = new Map(
+      (allProducts ?? []).map((p) => [p.id, p])
+    );
+
+    const portalProducts: PortalProductForMatching[] = (allSizes ?? [])
+      .filter((s) => productMap.has(s.product_id))
+      .map((s) => ({
+        portal_product_id: s.id, // product_size_id is the unique key
+        portal_model: productMap.get(s.product_id)!.name,
+        portal_size: s.size_label,
+      }));
+
+    // Build prompt and call Gemini
+    const prompt = buildExtractionAndMatchingPrompt(portalProducts);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const prompt = `Du bist ein Assistent für B2B-Preislisten-Parsing für SWING PARAGLIDERS.
-Analysiere dieses PDF-Dokument und extrahiere ALLE Produktzeilen mit Preisen.
-
-Für jede Produktzeile extrahiere:
-- "modell": Der Modellname des Produkts (z.B. "MITO 2 RS", "NYOS 2 RS", "CONNECT REVERSE 3", "ESCAPE M")
-- "uvp_brutto": Der UVP inkl. MwSt. als Zahl (nur Zahl, kein €-Zeichen)
-- "ek_netto": Der Händler EK netto als Zahl (nur Zahl, kein €-Zeichen)
-- "groessen": Die verfügbaren Größen als String (z.B. "XS, S, SM, ML, L")
-
-Bekannte Modelle in unserem System: ${productNames}
-
-Wichtige Regeln:
-- Extrahiere jedes Modell nur EINMAL (nicht pro Größe, außer der Preis ist pro Größe unterschiedlich wie bei Wave RS)
-- Wenn ein Modell mehrere Größen mit UNTERSCHIEDLICHEN Preisen hat (z.B. Wave RS D-Lite), erstelle eine Zeile pro Preis
-- Ignoriere Packsäcke, Sonderfarben, Sonderdesigns, Einzelpreise und Protektoren
-- Ignoriere Modelle mit "(phase-out model)" im Namen
-- Bei Rettungsschirmen (Escape, Cross): Jede Größe hat einen eigenen Preis → eine Zeile pro Größe mit Größe im Modellnamen (z.B. "ESCAPE M", "CROSS L")
-
-Antworte NUR mit einem JSON-Array. Kein Markdown, kein Codeblock, nur das Array:
-[{"modell": "...", "uvp_brutto": 3590.00, "ek_netto": 1960.92, "groessen": "XS, S, SM, ML, L"}, ...]
-
-Wenn keine Preisdaten gefunden werden, antworte mit: []`;
-
-    // Parallelize Gemini call with sizes fetch (sizes not needed for prompt)
-    const [geminiResult, { data: allSizes }] = await Promise.all([
-      model.generateContent([
-        { text: prompt },
-        {
-          inlineData: {
-            mimeType: file.type || "application/pdf",
-            data: base64,
-          },
+    const geminiResult = await model.generateContent([
+      { text: prompt },
+      {
+        inlineData: {
+          mimeType: file.type || "application/pdf",
+          data: base64,
         },
-      ]),
-      supabase
-        .from("product_sizes")
-        .select("id, sku, size_label, product_id")
-        .order("sort_order"),
+      },
     ]);
 
     const responseText = geminiResult.response.text().trim();
 
-    let parsed: Array<{
-      modell: string;
-      uvp_brutto: number;
-      ek_netto: number;
-      groessen: string;
-    }>;
+    let parsed: GeminiResponse;
     try {
       const jsonStr = responseText
         .replace(/^```json?\s*/i, "")
@@ -96,65 +136,39 @@ Wenn keine Preisdaten gefunden werden, antworte mit: []`;
       );
     }
 
-    // Build a name-based matching map (lowercase for fuzzy matching)
-    const productMap = new Map(
-      (allProducts ?? []).map((p) => [p.name.toLowerCase(), p])
+    // Enrich matched items with product_id (we use product_size_id as portal_product_id)
+    const sizeMap = new Map(
+      (allSizes ?? []).map((s) => [s.id, s])
     );
 
-    const sizesByProduct = new Map<
-      string,
-      Array<{ id: string; sku: string; size_label: string }>
-    >();
-    for (const s of allSizes ?? []) {
-      const arr = sizesByProduct.get(s.product_id) ?? [];
-      arr.push(s);
-      sizesByProduct.set(s.product_id, arr);
-    }
-
-    const items = parsed.map((row) => {
-      // Try exact match first, then fuzzy
-      let product = productMap.get(row.modell.toLowerCase());
-      if (!product) {
-        // Try partial match (e.g. "STING RS" matches "Sting RS")
-        for (const [key, val] of productMap) {
-          if (
-            key.includes(row.modell.toLowerCase()) ||
-            row.modell.toLowerCase().includes(key)
-          ) {
-            product = val;
-            break;
-          }
-        }
-      }
-
-      const productSizes = product
-        ? sizesByProduct.get(product.id) ?? []
-        : [];
-
+    const matched = (parsed.matched ?? []).map((item) => {
+      const size = sizeMap.get(item.portal_product_id);
       return {
-        modell_pdf: row.modell,
-        uvp_brutto: row.uvp_brutto,
-        ek_netto: row.ek_netto,
-        groessen: row.groessen,
-        discount: 0,
-        status: product
-          ? ("matched" as const)
-          : ("unmatched" as const),
-        product_id: product?.id ?? null,
-        product_name: product?.name ?? null,
-        product_sizes: productSizes,
+        ...item,
+        product_size_id: item.portal_product_id,
+        product_id: size?.product_id ?? null,
+        sku: size?.sku ?? null,
+        uvp_incl_vat: parsePrice(item.uvp_incl_vat_eur),
+        ek_netto: parsePrice(item.dealer_net_eur),
       };
     });
 
-    const matched = items.filter((i) => i.status === "matched").length;
+    const summary = {
+      total_pdf: (parsed.matched?.length ?? 0) +
+        (parsed.review_needed?.length ?? 0) +
+        (parsed.no_match?.length ?? 0),
+      matched: parsed.matched?.length ?? 0,
+      review_needed: parsed.review_needed?.length ?? 0,
+      no_match: parsed.no_match?.length ?? 0,
+      missing_in_price_list: parsed.missing_in_price_list?.length ?? 0,
+    };
 
     return NextResponse.json({
-      items,
-      summary: {
-        total: items.length,
-        matched,
-        unmatched: items.length - matched,
-      },
+      matched,
+      review_needed: parsed.review_needed ?? [],
+      no_match: parsed.no_match ?? [],
+      missing_in_price_list: parsed.missing_in_price_list ?? [],
+      summary,
     });
   } catch (error) {
     console.error("Parse error:", error);
@@ -163,4 +177,13 @@ Wenn keine Preisdaten gefunden werden, antworte mit: []`;
       { status: 500 }
     );
   }
+}
+
+/** Parse a price string like "3590.00" or "1 960,92" to a number. Returns null for "auf Anfrage" etc. */
+function parsePrice(value: string): number | null {
+  if (!value) return null;
+  // Remove spaces, replace comma with dot
+  const cleaned = value.replace(/\s/g, "").replace(",", ".");
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? null : num;
 }

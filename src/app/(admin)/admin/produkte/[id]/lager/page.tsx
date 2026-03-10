@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, Package } from "lucide-react";
 import type { ProductSize, ProductColor } from "@/lib/types";
 import StockMatrixClient from "@/components/admin/StockMatrixClient";
+import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,8 @@ export default async function LagerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const dict = await getDictionary();
+  const t = dict.productStock;
   const supabase = createAdminClient();
 
   const { data: product } = await supabase
@@ -58,7 +61,7 @@ export default async function LagerPage({
           </Link>
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
-              Lagerbestand
+              {t.stockTitle}
             </p>
             <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
               {product.name}
@@ -73,16 +76,15 @@ export default async function LagerPage({
             <Package size={24} className="text-swing-navy/25" />
           </div>
           <p className="text-sm font-bold text-swing-navy/25">
-            Keine {colors.length === 0 ? "Farbdesigns" : "Größen"} vorhanden
+            {t.noItemsMessage.replace("{item}", colors.length === 0 ? t.noColors : t.noSizes)}
           </p>
           <p className="mt-1 text-[13px] text-swing-gray-dark/25">
-            Bitte zuerst im Produkt anlegen.
           </p>
           <Link
             href={`/admin/produkte/${id}/bearbeiten`}
             className="mt-5 inline-flex items-center gap-2 rounded-lg bg-swing-gold px-5 py-2.5 text-sm font-bold text-swing-navy transition-colors hover:bg-swing-gold-dark"
           >
-            Produkt bearbeiten
+            {t.editProduct}
           </Link>
         </div>
       ) : (

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { deleteProduct, toggleProductActive } from "@/lib/actions/products";
 import { useState } from "react";
+import { useDict } from "@/lib/i18n/context";
 
 export function ToggleActiveButton({
   productId,
@@ -13,6 +14,8 @@ export function ToggleActiveButton({
   isActive: boolean;
 }) {
   const router = useRouter();
+  const dict = useDict();
+  const t = dict.productActions;
   const [loading, setLoading] = useState(false);
 
   async function handleToggle() {
@@ -31,21 +34,21 @@ export function ToggleActiveButton({
           ? "bg-green-100 text-green-700 hover:bg-green-200"
           : "bg-red-100 text-red-600 hover:bg-red-200"
       } ${loading ? "opacity-50" : ""}`}
-      title={isActive ? "Klicken zum Deaktivieren" : "Klicken zum Aktivieren"}
+      title={isActive ? t.clickToDeactivate : t.clickToActivate}
     >
       {isActive ? (
         <>
           <span className="flex h-4 w-7 items-center rounded-full bg-green-500 px-0.5">
             <span className="ml-auto h-3 w-3 rounded-full bg-white" />
           </span>
-          Aktiv
+          {t.active}
         </>
       ) : (
         <>
           <span className="flex h-4 w-7 items-center rounded-full bg-red-400 px-0.5">
             <span className="h-3 w-3 rounded-full bg-white" />
           </span>
-          Gesperrt
+          {t.locked}
         </>
       )}
     </button>
@@ -60,9 +63,11 @@ export function DeleteProductButton({
   productName: string;
 }) {
   const router = useRouter();
+  const dict = useDict();
+  const t = dict.productActions;
 
   async function handleDelete() {
-    if (!confirm(`"${productName}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
+    if (!confirm(t.deleteConfirm.replace("{name}", productName))) {
       return;
     }
     await deleteProduct(productId);
@@ -73,7 +78,7 @@ export function DeleteProductButton({
     <button
       onClick={handleDelete}
       className="rounded p-1 text-swing-gray-dark/40 hover:bg-red-50 hover:text-red-600"
-      title="Löschen"
+      title={t.deleteTitle}
     >
       <Trash2 size={16} />
     </button>

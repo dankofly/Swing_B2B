@@ -518,6 +518,11 @@ export interface Dictionary {
         save: string;
         createProduct: string;
         cancel: string;
+        translations: string;
+        translateFrom: string;
+        autoTranslateTooltip: string;
+        autoTranslateTooltipFr: string;
+        autoTranslateCost: string;
       };
     };
     stock: {
@@ -701,5 +706,98 @@ export interface Dictionary {
     roleUpdated: string;
     roleUpdateError: string;
     noUsers: string;
+  };
+
+  deleteCompany: {
+    button: string;
+    deleting: string;
+    confirmTitle: string;
+    confirmMessage: string;
+    confirmDelete: string;
+    cancel: string;
+    errorPrefix: string;
+  };
+
+  pendingRequests: {
+    title: string;
+    singularWaiting: string;
+    pluralWaiting: string;
+    justNow: string;
+    hoursAgo: string;
+    yesterday: string;
+    daysAgo: string;
+    approve: string;
+    reject: string;
+    company: string;
+    address: string;
+    contact: string;
+    phone: string;
+    registeredAt: string;
+    viewFullProfile: string;
+  };
+
+  stockImport: {
+    title: string;
+    aiTooltipAction: string;
+    aiTooltipCost: string;
+    description: string;
+    nlTag: string;
+    neTag: string;
+    geminiAnalyzing: string;
+    selectFile: string;
+    csvRows: string;
+    nlNeItems: string;
+    assigned: string;
+    notFound: string;
+    assignedItems: string;
+    positions: string;
+    pieces: string;
+    reset: string;
+    updateStock: string;
+    saving: string;
+    savedLabel: string;
+    stockUpdated: string;
+    singlePieces: string;
+    productLabel: string;
+    totalPieces: string;
+    before: string;
+    unassigned: string;
+    unassignedHint: string;
+    designation: string;
+    recognizedProduct: string;
+    size: string;
+    color: string;
+    pcs: string;
+    colorNotInCatalog: string;
+    networkError: string;
+    error: string;
+  };
+
+  productActions: {
+    active: string;
+    locked: string;
+    clickToDeactivate: string;
+    clickToActivate: string;
+    deleteConfirm: string;
+    deleteTitle: string;
+  };
+
+  productStock: {
+    stockTitle: string;
+    noColors: string;
+    noSizes: string;
+    noItemsMessage: string;
+    editProduct: string;
+  };
+
+  aiTooltip: {
+    aiFeature: string;
+    modelLabel: string;
+    defaultCostNote: string;
+  };
+
+  meta: {
+    title: string;
+    description: string;
   };
 }
