@@ -473,19 +473,6 @@ export default function ProductForm({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-semibold text-orange-700">
-              {tf.actionText}
-            </label>
-            <textarea
-              name="action_text"
-              rows={2}
-              value={actionTextDe}
-              onChange={(e) => setActionTextDe(e.target.value)}
-              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder={tf.actionTextPlaceholder}
-            />
-          </div>
-          <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
               {tf.websiteLink}
             </label>
@@ -496,6 +483,19 @@ export default function ProductForm({
               onChange={(e) => setWebsiteUrlDe(e.target.value)}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="https://swing.de/produkt/..."
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-orange-700">
+              {tf.actionText}
+            </label>
+            <textarea
+              name="action_text"
+              rows={2}
+              value={actionTextDe}
+              onChange={(e) => setActionTextDe(e.target.value)}
+              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder={tf.actionTextPlaceholder}
             />
           </div>
         </div>
@@ -577,19 +577,6 @@ export default function ProductForm({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-semibold text-orange-700">
-              {tf.actionText}
-            </label>
-            <textarea
-              name="action_text_en"
-              rows={2}
-              value={actionTextEn}
-              onChange={(e) => setActionTextEn(e.target.value)}
-              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder="English action text"
-            />
-          </div>
-          <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
               {tf.websiteLink}
             </label>
@@ -600,6 +587,19 @@ export default function ProductForm({
               onChange={(e) => setWebsiteUrlEn(e.target.value)}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="https://swing.de/en/product/..."
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-orange-700">
+              {tf.actionText}
+            </label>
+            <textarea
+              name="action_text_en"
+              rows={2}
+              value={actionTextEn}
+              onChange={(e) => setActionTextEn(e.target.value)}
+              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder="English action text"
             />
           </div>
         </div>
@@ -681,19 +681,6 @@ export default function ProductForm({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-semibold text-orange-700">
-              {tf.actionText}
-            </label>
-            <textarea
-              name="action_text_fr"
-              rows={2}
-              value={actionTextFr}
-              onChange={(e) => setActionTextFr(e.target.value)}
-              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder="Texte d'action en français"
-            />
-          </div>
-          <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
               {tf.websiteLink}
             </label>
@@ -704,6 +691,19 @@ export default function ProductForm({
               onChange={(e) => setWebsiteUrlFr(e.target.value)}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="https://swing.de/fr/produit/..."
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-orange-700">
+              {tf.actionText}
+            </label>
+            <textarea
+              name="action_text_fr"
+              rows={2}
+              value={actionTextFr}
+              onChange={(e) => setActionTextFr(e.target.value)}
+              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder="Texte d'action en français"
             />
           </div>
         </div>
