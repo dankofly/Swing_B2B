@@ -272,8 +272,9 @@ export default function ProductForm({
         <h2 className="mb-4 text-lg font-semibold text-swing-navy">
           {tf.basicData}
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
+        <div className="space-y-4">
+          {/* Produktname */}
+          <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
               {tf.productName} *
             </label>
@@ -287,113 +288,119 @@ export default function ProductForm({
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              {tf.category}
-            </label>
-            <select
-              name="category_id"
-              defaultValue={product?.category_id || ""}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-            >
-              <option value="">{tf.noCategory}</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Dropdowns links, Checkboxen rechts */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Linke Spalte: Dropdowns */}
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+                  {tf.category}
+                </label>
+                <select
+                  name="category_id"
+                  defaultValue={product?.category_id || ""}
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+                >
+                  <option value="">{tf.noCategory}</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div className="flex flex-col justify-end gap-2">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                name="is_active"
-                type="checkbox"
-                defaultChecked={product?.is_active ?? true}
-                className="rounded border-gray-300 accent-swing-gold"
-              />
-              {tf.isActive}
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                name="is_coming_soon"
-                type="checkbox"
-                defaultChecked={product?.is_coming_soon ?? false}
-                className="rounded border-gray-300 accent-swing-navy"
-              />
-              {tf.isComingSoon}
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                name="is_preorder"
-                type="checkbox"
-                defaultChecked={product?.is_preorder ?? false}
-                className="rounded border-gray-300 accent-swing-gold"
-              />
-              {tf.isPreorder}
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                name="is_fade_out"
-                type="checkbox"
-                defaultChecked={product?.is_fade_out ?? false}
-                className="rounded border-gray-300 accent-red-500"
-              />
-              {tf.isFadeOut}
-            </label>
-          </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+                  {tf.weightClass}
+                </label>
+                <select
+                  name="classification"
+                  defaultValue={product?.classification || ""}
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+                >
+                  <option value="">{tf.none}</option>
+                  <option value="D-LITE">D-LITE</option>
+                  <option value="U-LITE">U-LITE</option>
+                  <option value="N-LITE">N-LITE</option>
+                </select>
+              </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              {tf.enClass}
-            </label>
-            <select
-              name="en_class"
-              defaultValue={product?.en_class || ""}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-            >
-              <option value="">{tf.none}</option>
-              <option value="EN-A">EN-A</option>
-              <option value="EN-A/B">EN-A/B</option>
-              <option value="LOW EN-B">LOW EN-B</option>
-              <option value="MID EN-B">MID EN-B</option>
-              <option value="HIGH EN-B">HIGH EN-B</option>
-              <option value="EN-C 2-Liner">EN-C 2-Liner</option>
-              <option value="EN-D 2-Liner">EN-D 2-Liner</option>
-              <option value="EN-926-1">EN-926-1</option>
-            </select>
-          </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+                  {tf.enClass}
+                </label>
+                <select
+                  name="en_class"
+                  defaultValue={product?.en_class || ""}
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+                >
+                  <option value="">{tf.none}</option>
+                  <option value="EN-A">EN-A</option>
+                  <option value="EN-A/B">EN-A/B</option>
+                  <option value="LOW EN-B">LOW EN-B</option>
+                  <option value="MID EN-B">MID EN-B</option>
+                  <option value="HIGH EN-B">HIGH EN-B</option>
+                  <option value="EN-C 2-Liner">EN-C 2-Liner</option>
+                  <option value="EN-D 2-Liner">EN-D 2-Liner</option>
+                  <option value="EN-926-1">EN-926-1</option>
+                </select>
+              </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              {tf.enClassCustom}
-            </label>
-            <input
-              name="en_class_custom"
-              type="text"
-              defaultValue={product?.en_class_custom || ""}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder={tf.enClassCustomPlaceholder}
-            />
-          </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+                  {tf.enClassCustom}
+                </label>
+                <input
+                  name="en_class_custom"
+                  type="text"
+                  defaultValue={product?.en_class_custom || ""}
+                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+                  placeholder={tf.enClassCustomPlaceholder}
+                />
+              </div>
+            </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              {tf.weightClass}
-            </label>
-            <select
-              name="classification"
-              defaultValue={product?.classification || ""}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-            >
-              <option value="">{tf.none}</option>
-              <option value="D-LITE">D-LITE</option>
-              <option value="U-LITE">U-LITE</option>
-              <option value="N-LITE">N-LITE</option>
-            </select>
+            {/* Rechte Spalte: Checkboxen */}
+            <div className="flex flex-col gap-3 sm:pt-6">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  name="is_active"
+                  type="checkbox"
+                  defaultChecked={product?.is_active ?? true}
+                  className="rounded border-gray-300 accent-swing-gold"
+                />
+                {tf.isActive}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  name="is_coming_soon"
+                  type="checkbox"
+                  defaultChecked={product?.is_coming_soon ?? false}
+                  className="rounded border-gray-300 accent-swing-navy"
+                />
+                {tf.isComingSoon}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  name="is_preorder"
+                  type="checkbox"
+                  defaultChecked={product?.is_preorder ?? false}
+                  className="rounded border-gray-300 accent-swing-gold"
+                />
+                {tf.isPreorder}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  name="is_fade_out"
+                  type="checkbox"
+                  defaultChecked={product?.is_fade_out ?? false}
+                  className="rounded border-gray-300 accent-red-500"
+                />
+                {tf.isFadeOut}
+              </label>
+            </div>
           </div>
-
         </div>
       </div>
 
@@ -466,7 +473,7 @@ export default function ProductForm({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+            <label className="mb-1 block text-sm font-semibold text-orange-700">
               {tf.actionText}
             </label>
             <textarea
@@ -474,7 +481,7 @@ export default function ProductForm({
               rows={2}
               value={actionTextDe}
               onChange={(e) => setActionTextDe(e.target.value)}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder={tf.actionTextPlaceholder}
             />
           </div>
@@ -490,47 +497,6 @@ export default function ProductForm({
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="https://swing.de/produkt/..."
             />
-          </div>
-          {/* Action / Sale inline */}
-          <div className="rounded border border-orange-200 bg-orange-50/50 p-4">
-            <div className="mb-3 flex items-center gap-3">
-              <h3 className="text-sm font-semibold text-orange-700">
-                {tf.actionSection}
-              </h3>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  name="is_action"
-                  type="checkbox"
-                  defaultChecked={product?.is_action ?? false}
-                  className="rounded border-gray-300 accent-orange-500"
-                />
-                {tf.isAction}
-              </label>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-orange-700">
-                  {tf.actionStart}
-                </label>
-                <input
-                  name="action_start"
-                  type="datetime-local"
-                  defaultValue={product?.action_start ? product.action_start.slice(0, 16) : ""}
-                  className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-orange-700">
-                  {tf.actionEnd}
-                </label>
-                <input
-                  name="action_end"
-                  type="datetime-local"
-                  defaultValue={product?.action_end ? product.action_end.slice(0, 16) : ""}
-                  className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-                />
-              </div>
-            </div>
           </div>
         </div>
 
@@ -611,7 +577,7 @@ export default function ProductForm({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+            <label className="mb-1 block text-sm font-semibold text-orange-700">
               {tf.actionText}
             </label>
             <textarea
@@ -619,7 +585,7 @@ export default function ProductForm({
               rows={2}
               value={actionTextEn}
               onChange={(e) => setActionTextEn(e.target.value)}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="English action text"
             />
           </div>
@@ -715,7 +681,7 @@ export default function ProductForm({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+            <label className="mb-1 block text-sm font-semibold text-orange-700">
               {tf.actionText}
             </label>
             <textarea
@@ -723,7 +689,7 @@ export default function ProductForm({
               rows={2}
               value={actionTextFr}
               onChange={(e) => setActionTextFr(e.target.value)}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="Texte d'action en français"
             />
           </div>
@@ -738,6 +704,48 @@ export default function ProductForm({
               onChange={(e) => setWebsiteUrlFr(e.target.value)}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="https://swing.de/fr/produit/..."
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Action / Sale Section */}
+      <div className="rounded border border-orange-200 bg-orange-50/50 p-4 shadow-sm sm:p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-orange-700">
+            {tf.actionSection}
+          </h2>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              name="is_action"
+              type="checkbox"
+              defaultChecked={product?.is_action ?? false}
+              className="rounded border-gray-300 accent-orange-500"
+            />
+            {tf.isAction}
+          </label>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-orange-700">
+              {tf.actionStart}
+            </label>
+            <input
+              name="action_start"
+              type="datetime-local"
+              defaultValue={product?.action_start ? product.action_start.slice(0, 16) : ""}
+              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-orange-700">
+              {tf.actionEnd}
+            </label>
+            <input
+              name="action_end"
+              type="datetime-local"
+              defaultValue={product?.action_end ? product.action_end.slice(0, 16) : ""}
+              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
             />
           </div>
         </div>
