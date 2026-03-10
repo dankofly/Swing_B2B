@@ -88,6 +88,11 @@ export default function ProductForm({
   const [useCaseDe, setUseCaseDe] = useState(product?.use_case || "");
   const [actionTextDe, setActionTextDe] = useState(product?.action_text || "");
 
+  // Controlled website URL fields per language
+  const [websiteUrlDe, setWebsiteUrlDe] = useState(product?.website_url || "");
+  const [websiteUrlEn, setWebsiteUrlEn] = useState(product?.website_url_en || "");
+  const [websiteUrlFr, setWebsiteUrlFr] = useState(product?.website_url_fr || "");
+
   async function handleAutoTranslate(locale: "en" | "fr") {
     setTranslatingLocale(locale);
     setTranslateError("");
@@ -389,18 +394,6 @@ export default function ProductForm({
             </select>
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
-              {tf.websiteLink}
-            </label>
-            <input
-              name="website_url"
-              type="url"
-              defaultValue={product?.website_url || ""}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-              placeholder={tf.websitePlaceholder}
-            />
-          </div>
         </div>
       </div>
 
@@ -483,6 +476,19 @@ export default function ProductForm({
               onChange={(e) => setActionTextDe(e.target.value)}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder={tf.actionTextPlaceholder}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.websiteLink}
+            </label>
+            <input
+              name="website_url"
+              type="url"
+              value={websiteUrlDe}
+              onChange={(e) => setWebsiteUrlDe(e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder="https://swing.de/produkt/..."
             />
           </div>
         </div>
@@ -576,6 +582,19 @@ export default function ProductForm({
               placeholder="English action text"
             />
           </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.websiteLink}
+            </label>
+            <input
+              name="website_url_en"
+              type="url"
+              value={websiteUrlEn}
+              onChange={(e) => setWebsiteUrlEn(e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder="https://swing.de/en/product/..."
+            />
+          </div>
         </div>
 
         {/* FR Tab */}
@@ -665,6 +684,19 @@ export default function ProductForm({
               onChange={(e) => setActionTextFr(e.target.value)}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="Texte d'action en français"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
+              {tf.websiteLink}
+            </label>
+            <input
+              name="website_url_fr"
+              type="url"
+              value={websiteUrlFr}
+              onChange={(e) => setWebsiteUrlFr(e.target.value)}
+              className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+              placeholder="https://swing.de/fr/produit/..."
             />
           </div>
         </div>

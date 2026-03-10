@@ -46,6 +46,8 @@ export async function createProduct(formData: FormData) {
   const use_case_fr = formData.get("use_case_fr") as string;
   const action_text_en = formData.get("action_text_en") as string;
   const action_text_fr = formData.get("action_text_fr") as string;
+  const website_url_en = formData.get("website_url_en") as string;
+  const website_url_fr = formData.get("website_url_fr") as string;
 
   const { data: product, error } = await supabase
     .from("products")
@@ -77,6 +79,8 @@ export async function createProduct(formData: FormData) {
       use_case_fr: use_case_fr || null,
       action_text_en: action_text_en || null,
       action_text_fr: action_text_fr || null,
+      website_url_en: website_url_en || null,
+      website_url_fr: website_url_fr || null,
     })
     .select()
     .single();
@@ -180,6 +184,8 @@ export async function updateProduct(productId: string, formData: FormData) {
   const use_case_fr = formData.get("use_case_fr") as string;
   const action_text_en = formData.get("action_text_en") as string;
   const action_text_fr = formData.get("action_text_fr") as string;
+  const website_url_en = formData.get("website_url_en") as string;
+  const website_url_fr = formData.get("website_url_fr") as string;
 
   const { error } = await supabase
     .from("products")
@@ -211,6 +217,8 @@ export async function updateProduct(productId: string, formData: FormData) {
       use_case_fr: use_case_fr || null,
       action_text_en: action_text_en || null,
       action_text_fr: action_text_fr || null,
+      website_url_en: website_url_en || null,
+      website_url_fr: website_url_fr || null,
     })
     .eq("id", productId);
 

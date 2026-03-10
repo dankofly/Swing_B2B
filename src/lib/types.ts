@@ -38,6 +38,8 @@ export interface Product {
   action_text_en?: string | null;
   action_text_fr?: string | null;
   website_url: string | null;
+  website_url_en?: string | null;
+  website_url_fr?: string | null;
   created_at: string;
   category?: Category;
   sizes?: ProductSize[];
