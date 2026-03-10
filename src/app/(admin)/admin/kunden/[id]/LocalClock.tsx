@@ -129,9 +129,9 @@ export default function LocalClock({ country }: { country: string }) {
   if (!tz || !time) return null;
 
   return (
-    <div className="flex items-center gap-1.5 text-[10px] text-swing-navy/30">
-      <Clock size={10} />
-      <span>{dict.admin.customers.detail.localTime} {country}: <span className="font-medium text-swing-navy/50">{time}</span></span>
+    <div className="flex items-center gap-1.5 text-[11px] text-swing-navy/50">
+      <Clock size={11} />
+      <span>{dict.admin.customers.detail.localTime} {country}: <span className="font-semibold text-swing-navy/70">{time}</span></span>
     </div>
   );
 }
