@@ -64,7 +64,8 @@ export default async function AdminDashboard() {
       created_at,
       company_id,
       company:companies(name),
-      user:profiles(full_name, email)
+      user:profiles(full_name, email),
+      inquiry_items(quantity, unit_price)
     `).order("created_at", { ascending: false }).limit(6),
     supabase.from("price_uploads").select(`
       id,
@@ -77,19 +78,6 @@ export default async function AdminDashboard() {
       company:companies(name)
     `).order("created_at", { ascending: false }).limit(5),
   ]);
-
-  const companyIds = [...new Set((recentInquiries ?? []).map((i: any) => i.company_id).filter(Boolean))];
-  const { data: openCounts } = companyIds.length > 0
-    ? await supabase
-        .from("inquiries")
-        .select("company_id")
-        .in("company_id", companyIds)
-        .in("status", ["new", "in_progress"])
-    : { data: [] };
-  const openCountMap: Record<string, number> = {};
-  (openCounts ?? []).forEach((row: any) => {
-    openCountMap[row.company_id] = (openCountMap[row.company_id] ?? 0) + 1;
-  });
 
   const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
     new: { label: ts.new, color: "text-blue-700", bg: "bg-blue-100" },
@@ -262,65 +250,39 @@ export default async function AdminDashboard() {
             <p className="mt-1 text-xs text-swing-gray-dark/25">{td.noInquiriesHint}</p>
           </div>
         ) : (
-          <>
-            <div className="hidden items-center gap-3 border-t border-gray-100 bg-gray-50/60 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] text-swing-navy/40 sm:grid sm:grid-cols-[1fr_7.5rem_9rem_4rem_2rem]">
-              <span>{td.dealers}</span>
-              <span className="text-center">{td.status}</span>
-              <span className="text-right">{td.date}</span>
-              <span className="text-center">{td.open}</span>
-              <span />
-            </div>
+          <div className="divide-y divide-gray-50 border-t border-gray-100">
+            {recentInquiries.map((inquiry: any) => {
+              const status = statusConfig[inquiry.status] ?? statusConfig.new;
+              const items = inquiry.inquiry_items ?? [];
+              const itemCount = items.reduce((sum: number, it: any) => sum + (it.quantity ?? 0), 0);
+              const totalValue = items.reduce((sum: number, it: any) => sum + ((it.quantity ?? 0) * (parseFloat(it.unit_price) || 0)), 0);
+              const companyName = (inquiry as any).company?.name ?? "—";
+              const dateStr = new Date(inquiry.created_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
-            <div className="divide-y divide-gray-50 border-t border-gray-100 sm:border-t-0">
-              {recentInquiries.map((inquiry: any) => {
-                const status = statusConfig[inquiry.status] ?? statusConfig.new;
-                const openCount = openCountMap[inquiry.company_id] ?? 0;
-                return (
-                  <div
-                    key={inquiry.id}
-                    className="px-5 py-4 transition-colors duration-150 hover:bg-swing-gold/4 sm:grid sm:grid-cols-[1fr_7.5rem_9rem_4rem_2rem] sm:items-center sm:gap-3 sm:px-6 sm:py-3.5"
-                  >
-                    <div className="flex items-center justify-between sm:contents">
-                      <span className="truncate text-sm font-semibold text-swing-navy">
-                        {(inquiry as any).company?.name ?? "—"}
-                      </span>
-                      <span className={`inline-flex w-28 items-center justify-center rounded px-2 py-0.5 text-[10px] font-bold ${status.bg} ${status.color}`}>
-                        {status.label}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-swing-gray-dark/35 sm:hidden">
-                      <span className="tabular-nums">
-                        {new Date(inquiry.created_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                      {openCount > 0 && (
-                        <>
-                          <span>·</span>
-                          <span className="font-semibold text-amber-600">{openCount} {td.open.toLowerCase()}</span>
-                        </>
-                      )}
-                    </div>
-                    <span className="hidden text-right text-xs tabular-nums text-swing-gray-dark/35 sm:block">
-                      {new Date(inquiry.created_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                    <span className="hidden text-center text-xs font-semibold sm:block">
-                      {openCount > 0 ? (
-                        <span className="text-amber-600">{openCount}</span>
-                      ) : (
-                        <span className="text-swing-navy/20">0</span>
-                      )}
-                    </span>
-                    <Link
-                      href={inquiry.company_id ? `/admin/kunden/${inquiry.company_id}?inquiry=${inquiry.id}` : "/admin/anfragen"}
-                      className="hidden rounded-lg p-1.5 text-swing-gray-dark/30 transition-colors hover:bg-swing-navy/5 hover:text-swing-navy sm:block"
-                      title={dict.admin.inquiries.openAtCustomer}
-                    >
-                      <Settings size={14} />
-                    </Link>
+              return (
+                <Link
+                  key={inquiry.id}
+                  href={inquiry.company_id ? `/admin/kunden/${inquiry.company_id}?inquiry=${inquiry.id}` : "/admin/anfragen"}
+                  className="flex items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-swing-gold/4 sm:px-6"
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-swing-navy">{companyName}</span>
+                    <span className="mt-0.5 block text-xs tabular-nums text-swing-gray-dark/40">{dateStr}</span>
                   </div>
-                );
-              })}
-            </div>
-          </>
+                  <span className="hidden shrink-0 text-xs text-swing-gray-dark/50 sm:block">
+                    {itemCount} {itemCount === 1 ? "Artikel" : "Artikel"}
+                  </span>
+                  <span className="shrink-0 text-sm font-bold tabular-nums text-swing-navy">
+                    {totalValue.toLocaleString(dl, { style: "currency", currency: "EUR" })}
+                  </span>
+                  <span className={`inline-flex shrink-0 items-center justify-center rounded px-2.5 py-1 text-[10px] font-bold ${status.bg} ${status.color}`}>
+                    {status.label}
+                  </span>
+                  <Settings size={14} className="shrink-0 text-swing-gray-dark/25" />
+                </Link>
+              );
+            })}
+          </div>
         )}
       </div>
 
