@@ -289,9 +289,9 @@ export default function ProductForm({
           </div>
 
           {/* Dropdowns links, Checkboxen rechts */}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
             {/* Linke Spalte: Dropdowns */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
                 <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
                   {tf.category}

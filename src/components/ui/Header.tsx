@@ -94,7 +94,7 @@ export default function Header({
       <div className="header-bg">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6">
           {/* Left: Logo + Nav */}
-          <div className="flex items-center gap-6 lg:gap-10">
+          <div className="flex items-center gap-4 lg:gap-6">
             {/* Logo */}
             <Link
               href={isAdmin ? "/admin" : `/katalog${alsSuffix}`}
