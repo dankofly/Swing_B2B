@@ -8,6 +8,7 @@ function extractCompanyFields(formData: FormData) {
   return {
     name: formData.get("name") as string,
     contact_email: formData.get("contact_email") as string,
+    contact_person: (formData.get("contact_person") as string) || null,
     phone: (formData.get("phone") as string) || null,
     phone_whatsapp: formData.get("phone_whatsapp") === "on",
     address_street: (formData.get("address_street") as string) || null,

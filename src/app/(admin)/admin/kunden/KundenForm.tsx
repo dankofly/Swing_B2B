@@ -26,6 +26,7 @@ interface Company {
   company_type: string;
   sells_paragliders: boolean;
   sells_miniwings: boolean;
+  contact_person: string | null;
   sells_parakites: boolean;
   is_approved: boolean;
 }
@@ -157,6 +158,16 @@ export default function KundenForm({ company }: { company?: Company }) {
           <h3 className="text-sm font-bold text-swing-navy">{tf.contact}</h3>
         </div>
         <div className="grid gap-5 p-4 sm:p-6 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label className={labelClass}>{tf.contactPerson}</label>
+            <input
+              name="contact_person"
+              defaultValue={company?.contact_person ?? ""}
+              className={inputClass}
+              placeholder="Max Mustermann"
+            />
+          </div>
+
           <div>
             <label className={labelClass}>{tf.email} *</label>
             <input

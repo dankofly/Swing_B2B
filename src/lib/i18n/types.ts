@@ -443,6 +443,7 @@ export interface Dictionary {
         paragliders: string;
         miniwings: string;
         parakites: string;
+        contactPerson: string;
         contact: string;
         email: string;
         phone: string;

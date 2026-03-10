@@ -467,6 +467,7 @@ const en: Dictionary = {
         paragliders: "Paragliders",
         miniwings: "Miniwings",
         parakites: "Parakites",
+        contactPerson: "Contact Person",
         contact: "Contact",
         email: "Email",
         phone: "Phone",
