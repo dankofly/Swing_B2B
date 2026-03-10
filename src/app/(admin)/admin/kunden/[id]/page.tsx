@@ -225,6 +225,14 @@ export default async function KundenDetailPage({
               <p className="text-sm tabular-nums text-swing-navy">{company.vat_id || "—"}</p>
             </div>
 
+            {/* Ansprechpartner */}
+            {company.contact_person && (
+              <div className="px-5 py-2.5">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">{dict.admin.customers.form.contactPerson}</p>
+                <p className="text-sm text-swing-navy">{company.contact_person}</p>
+              </div>
+            )}
+
             {/* Kunde seit */}
             <div className="px-5 py-2.5">
               <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">{td.customerSince}</p>
