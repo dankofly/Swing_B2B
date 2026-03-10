@@ -7,8 +7,10 @@ CREATE TABLE companies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
   contact_email VARCHAR(255) NOT NULL,
+  contact_person TEXT,
   phone VARCHAR(50),
   phone_whatsapp BOOLEAN DEFAULT FALSE,
+  address TEXT,
   address_street VARCHAR(255),
   address_zip VARCHAR(20),
   address_city VARCHAR(100),
@@ -41,6 +43,8 @@ CREATE TABLE categories (
   slug VARCHAR(255) UNIQUE NOT NULL,
   parent_id UUID REFERENCES categories(id),
   sort_order INT DEFAULT 0,
+  name_en VARCHAR(255),
+  name_fr VARCHAR(255),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -55,14 +59,31 @@ CREATE TABLE products (
   images TEXT[] DEFAULT '{}',
   uvp_brutto DECIMAL(10,2),
   en_class VARCHAR(30),
-  classification VARCHAR(30),
-  use_case VARCHAR(100),
+  en_class_custom VARCHAR(255),
+  classification TEXT,
+  use_case TEXT,
   website_url TEXT,
   is_active BOOLEAN DEFAULT TRUE,
   is_coming_soon BOOLEAN NOT NULL DEFAULT false,
   is_preorder BOOLEAN NOT NULL DEFAULT false,
   is_fade_out BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  is_action BOOLEAN NOT NULL DEFAULT false,
+  action_text TEXT,
+  action_start TIMESTAMPTZ,
+  action_end TIMESTAMPTZ,
+  sort_order INT NOT NULL DEFAULT 0,
+  -- Englisch
+  name_en VARCHAR(255),
+  description_en TEXT,
+  use_case_en VARCHAR(255),
+  action_text_en TEXT,
+  -- Französisch
+  name_fr VARCHAR(255),
+  description_fr TEXT,
+  use_case_fr VARCHAR(255),
+  action_text_fr TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NULL
 );
 
 -- Größenvarianten
@@ -83,6 +104,8 @@ CREATE TABLE product_colors (
   product_id UUID REFERENCES products(id) ON DELETE CASCADE,
   color_name VARCHAR(100) NOT NULL,
   color_image_url TEXT,
+  slogan TEXT,
+  classification TEXT,
   is_limited BOOLEAN NOT NULL DEFAULT false,
   sort_order INT DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -146,7 +169,10 @@ CREATE TABLE inquiries (
   user_id UUID REFERENCES profiles(id),
   status VARCHAR(20) DEFAULT 'new' CHECK (status IN ('new', 'in_progress', 'shipped', 'completed')),
   notes TEXT,
+  tracking_number TEXT,
+  shipping_carrier TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NULL,
   status_timestamps JSONB DEFAULT '{}'
 );
 
@@ -313,8 +339,48 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- ============================================
+-- Views (SECURITY INVOKER)
+-- ============================================
+
+-- Anfragen-Übersicht für Admin
+CREATE OR REPLACE VIEW v_inquiry_overview
+  WITH (security_invoker = on)
+AS
+SELECT
+  i.id AS inquiry_id,
+  i.status,
+  i.notes,
+  i.created_at,
+  i.tracking_number,
+  i.shipping_carrier,
+  co.id AS company_id,
+  co.name AS company_name,
+  pr.full_name AS user_name,
+  pr.email AS user_email,
+  COUNT(ii.id) AS item_count,
+  SUM(ii.quantity::NUMERIC * ii.unit_price) AS total_value
+FROM inquiries i
+JOIN companies co ON co.id = i.company_id
+JOIN profiles pr ON pr.id = i.user_id
+LEFT JOIN inquiry_items ii ON ii.inquiry_id = i.id
+GROUP BY i.id, co.id, co.name, pr.full_name, pr.email;
+
+-- Produktkatalog-Übersicht
+CREATE OR REPLACE VIEW v_product_catalog
+  WITH (security_invoker = on)
+AS
+SELECT
+  p.*,
+  c.name AS category_name,
+  c.slug AS category_slug,
+  (SELECT COUNT(*) FROM product_sizes ps WHERE ps.product_id = p.id) AS size_count,
+  (SELECT COUNT(*) FROM product_colors pc WHERE pc.product_id = p.id) AS color_count
+FROM products p
+LEFT JOIN categories c ON c.id = p.category_id;
