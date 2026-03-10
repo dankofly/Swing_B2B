@@ -491,6 +491,47 @@ export default function ProductForm({
               placeholder="https://swing.de/produkt/..."
             />
           </div>
+          {/* Action / Sale inline */}
+          <div className="rounded border border-orange-200 bg-orange-50/50 p-4">
+            <div className="mb-3 flex items-center gap-3">
+              <h3 className="text-sm font-semibold text-orange-700">
+                {tf.actionSection}
+              </h3>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  name="is_action"
+                  type="checkbox"
+                  defaultChecked={product?.is_action ?? false}
+                  className="rounded border-gray-300 accent-orange-500"
+                />
+                {tf.isAction}
+              </label>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-orange-700">
+                  {tf.actionStart}
+                </label>
+                <input
+                  name="action_start"
+                  type="datetime-local"
+                  defaultValue={product?.action_start ? product.action_start.slice(0, 16) : ""}
+                  className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-orange-700">
+                  {tf.actionEnd}
+                </label>
+                <input
+                  name="action_end"
+                  type="datetime-local"
+                  defaultValue={product?.action_end ? product.action_end.slice(0, 16) : ""}
+                  className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* EN Tab */}
@@ -697,48 +738,6 @@ export default function ProductForm({
               onChange={(e) => setWebsiteUrlFr(e.target.value)}
               className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
               placeholder="https://swing.de/fr/produit/..."
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Action / Sale Section */}
-      <div className="rounded border border-orange-200 bg-orange-50/50 p-4 shadow-sm sm:p-6">
-        <div className="mb-4 flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-orange-700">
-            {tf.actionSection}
-          </h2>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              name="is_action"
-              type="checkbox"
-              defaultChecked={product?.is_action ?? false}
-              className="rounded border-gray-300 accent-orange-500"
-            />
-            {tf.isAction}
-          </label>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-orange-700">
-              {tf.actionStart}
-            </label>
-            <input
-              name="action_start"
-              type="datetime-local"
-              defaultValue={product?.action_start ? product.action_start.slice(0, 16) : ""}
-              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-orange-700">
-              {tf.actionEnd}
-            </label>
-            <input
-              name="action_end"
-              type="datetime-local"
-              defaultValue={product?.action_end ? product.action_end.slice(0, 16) : ""}
-              className="w-full rounded border border-orange-300 bg-white px-3 py-2 text-sm focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
             />
           </div>
         </div>
