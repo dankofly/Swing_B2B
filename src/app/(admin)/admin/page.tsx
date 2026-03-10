@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Inbox,
   Activity,
-  Settings,
   Warehouse,
   MessageSquare,
   FileDown,
@@ -254,31 +253,34 @@ export default async function AdminDashboard() {
             {recentInquiries.map((inquiry: any) => {
               const status = statusConfig[inquiry.status] ?? statusConfig.new;
               const items = inquiry.inquiry_items ?? [];
-              const itemCount = items.reduce((sum: number, it: any) => sum + (it.quantity ?? 0), 0);
+              const itemCount = items.length;
               const totalValue = items.reduce((sum: number, it: any) => sum + ((it.quantity ?? 0) * (parseFloat(it.unit_price) || 0)), 0);
               const companyName = (inquiry as any).company?.name ?? "—";
-              const dateStr = new Date(inquiry.created_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+              const dateStr = new Date(inquiry.created_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "numeric" });
 
               return (
                 <Link
                   key={inquiry.id}
                   href={inquiry.company_id ? `/admin/kunden/${inquiry.company_id}?inquiry=${inquiry.id}` : "/admin/anfragen"}
-                  className="flex items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-swing-gold/4 sm:px-6"
+                  className="flex min-h-11 w-full cursor-pointer flex-col gap-1.5 px-4 py-3 transition-colors duration-150 hover:bg-swing-gold/4 sm:flex-row sm:items-center sm:gap-4"
                 >
-                  <div className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-swing-navy">{companyName}</span>
-                    <span className="mt-0.5 block text-xs tabular-nums text-swing-gray-dark/40">{dateStr}</span>
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <span className="min-w-0 shrink text-sm text-swing-navy">
+                      {companyName} — {dateStr}
+                    </span>
                   </div>
-                  <span className="hidden shrink-0 text-xs text-swing-gray-dark/50 sm:block">
-                    {itemCount} {itemCount === 1 ? "Artikel" : "Artikel"}
-                  </span>
-                  <span className="shrink-0 text-sm font-bold tabular-nums text-swing-navy">
-                    {totalValue.toLocaleString(dl, { style: "currency", currency: "EUR" })}
-                  </span>
-                  <span className={`inline-flex shrink-0 items-center justify-center rounded px-2.5 py-1 text-[10px] font-bold ${status.bg} ${status.color}`}>
-                    {status.label}
-                  </span>
-                  <Settings size={14} className="shrink-0 text-swing-gray-dark/25" />
+
+                  <div className="flex flex-wrap items-center gap-2 sm:flex-1 sm:justify-end sm:gap-3">
+                    <span className="text-xs text-swing-navy/40">
+                      {itemCount} Pos.
+                    </span>
+                    <span className="text-sm font-semibold text-swing-navy">
+                      {totalValue.toLocaleString(dl, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                    </span>
+                    <span className={`inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-semibold ${status.bg} ${status.color}`}>
+                      {status.label}
+                    </span>
+                  </div>
                 </Link>
               );
             })}
