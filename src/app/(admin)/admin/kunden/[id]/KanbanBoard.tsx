@@ -148,11 +148,11 @@ export default function KanbanBoard({
               className="flex w-full cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 bg-white px-4 py-3 text-left transition-colors duration-150 hover:bg-gray-50/40 sm:flex-nowrap sm:gap-4 sm:px-5 sm:py-4"
             >
               {/* Date */}
-              <span className="shrink-0 text-sm font-bold text-swing-navy sm:w-44">
+              <span className="whitespace-nowrap text-sm font-bold text-swing-navy">
                 {tk.inquiryFrom}{" "}
                 {new Date(inquiry.created_at).toLocaleDateString(dl, {
                   day: "2-digit",
-                  month: "long",
+                  month: "short",
                   year: "numeric",
                 })}
               </span>
