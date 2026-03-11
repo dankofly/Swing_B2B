@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient, guardReadOnly } from "@/lib/supabase/server";
+import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 interface StockEntry {
@@ -13,7 +13,7 @@ export async function updateColorSizeStock(
   productId: string,
   stockData: StockEntry[]
 ) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   // Delete existing entries for this product, then insert fresh
@@ -54,7 +54,7 @@ interface CSVStockEntry {
 export async function importStockFromCSV(
   stockData: CSVStockEntry[]
 ): Promise<{ updated: number }> {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
   let updated = 0;
 

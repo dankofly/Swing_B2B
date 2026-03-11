@@ -54,3 +54,20 @@ export async function guardReadOnly() {
     throw new Error("Testadmin: Nur Lesezugriff");
   }
 }
+
+/** Throws if the current user is not an admin or superadmin. Blocks buyers AND testadmin writes. */
+export async function guardAdmin() {
+  const role = await getCurrentRole();
+  if (!role) throw new Error("Nicht angemeldet");
+  if (role === "testadmin") throw new Error("Testadmin: Nur Lesezugriff");
+  if (!["superadmin", "admin"].includes(role)) {
+    throw new Error("Keine Berechtigung");
+  }
+}
+
+/** Throws if the current user is not logged in. Returns the role. */
+export async function guardAuthenticated(): Promise<string> {
+  const role = await getCurrentRole();
+  if (!role) throw new Error("Nicht angemeldet");
+  return role;
+}

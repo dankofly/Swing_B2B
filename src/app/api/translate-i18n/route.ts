@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createClient } from "@/lib/supabase/server";
 
 const SYSTEM_PROMPT = `Du bist ein erfahrener Sales-Experte und professioneller Gleitschirm-Pilot, der mehrere Sprachen auf C2-Niveau beherrscht. Du kennst die gesamte Fachsprache der Paragliding-Szene in allen Sprachen perfekt — von EN-Klassifizierungen über Gurtzeuge bis hin zu Flugmanövern.
 
@@ -19,6 +20,17 @@ WICHTIGE REGELN:
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard: admin only
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+    }
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    if (!profile || !["superadmin", "admin"].includes(profile.role)) {
+      return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
+    }
+
     const { targetLocale, sourceDict } = await request.json();
 
     if (!targetLocale || !sourceDict) {

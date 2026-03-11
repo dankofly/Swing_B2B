@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient, guardReadOnly } from "@/lib/supabase/server";
+import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -16,7 +16,7 @@ function generateSlug(name: string): string {
 }
 
 export async function createProduct(formData: FormData) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   const name = formData.get("name") as string;
@@ -155,7 +155,7 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(productId: string, formData: FormData) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   const name = formData.get("name") as string;
@@ -300,7 +300,7 @@ export async function updateProduct(productId: string, formData: FormData) {
 }
 
 export async function deleteProduct(productId: string) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -315,7 +315,7 @@ export async function deleteProduct(productId: string) {
 }
 
 export async function updateProductSortOrder(orderedIds: string[]) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   const updates = orderedIds.map((id, index) =>
@@ -329,7 +329,7 @@ export async function updateProductSortOrder(orderedIds: string[]) {
 }
 
 export async function toggleProductActive(productId: string, isActive: boolean) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase

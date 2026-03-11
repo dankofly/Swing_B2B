@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient, createAdminClient, guardReadOnly } from "@/lib/supabase/server";
+import { createClient, createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function updateMyProfile(formData: FormData) {
@@ -59,7 +59,7 @@ export async function updateMyProfile(formData: FormData) {
 }
 
 export async function updateAdminProfile(formData: FormData) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = await createClient();
   const {
     data: { user },
@@ -84,7 +84,7 @@ export async function updateAdminProfile(formData: FormData) {
 }
 
 export async function updateUserRole(userId: string, newRole: string) {
-  await guardReadOnly();
+  await guardAdmin();
   if (!["superadmin", "admin", "buyer", "testadmin"].includes(newRole)) {
     return { success: false, error: "Ungültige Rolle" };
   }
@@ -146,7 +146,7 @@ export async function updateUserRole(userId: string, newRole: string) {
 }
 
 export async function inviteUser(email: string, role: string, fullName: string) {
-  await guardReadOnly();
+  await guardAdmin();
   if (!["admin", "buyer", "testadmin"].includes(role)) {
     // Only superadmins can invite as superadmin - checked below
     if (role !== "superadmin") {

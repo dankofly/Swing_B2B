@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: NextRequest) {
   try {
+    // Auth guard: admin only
+    const authClient = await createClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+    }
+    const { data: profile } = await authClient.from("profiles").select("role").eq("id", user.id).single();
+    if (!profile || !["superadmin", "admin"].includes(profile.role)) {
+      return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
+    }
+
     const supabase = createAdminClient();
     const { data: categories, error } = await supabase
       .from("categories")

@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient, guardReadOnly } from "@/lib/supabase/server";
+import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 /** A single matched price row ready to be saved (one per product_size). */
@@ -24,7 +24,7 @@ export async function confirmPrices(
   companyId: string,
   items: MatchedPriceItem[]
 ) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   const valid = items.filter(

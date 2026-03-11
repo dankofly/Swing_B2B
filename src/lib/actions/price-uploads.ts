@@ -1,10 +1,10 @@
 "use server";
 
-import { createAdminClient, guardReadOnly } from "@/lib/supabase/server";
+import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function uploadPriceList(companyId: string, formData: FormData, category: string = "general") {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
   const file = formData.get("file") as File;
 
@@ -62,7 +62,7 @@ export async function getCompanyPriceUploads(companyId: string) {
 }
 
 export async function deletePriceUpload(id: string, companyId: string) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase.from("price_uploads").delete().eq("id", id);

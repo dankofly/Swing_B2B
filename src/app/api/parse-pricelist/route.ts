@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createAuthClient } from "@/lib/supabase/server";
 import {
   buildExtractionAndMatchingPrompt,
   type PortalProductForMatching,
@@ -61,6 +62,17 @@ interface GeminiResponse {
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard: admin only
+    const authClient = await createAuthClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+    }
+    const { data: profile } = await authClient.from("profiles").select("role").eq("id", user.id).single();
+    if (!profile || !["superadmin", "admin"].includes(profile.role)) {
+      return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
+    }
+
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient, guardReadOnly } from "@/lib/supabase/server";
+import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function getActiveNews() {
@@ -29,7 +29,7 @@ export async function getAllNews() {
 }
 
 export async function createNews(message: string, messageEn?: string, messageFr?: string) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase.from("news_ticker").insert({
@@ -51,7 +51,7 @@ export async function updateNews(
   messageEn?: string,
   messageFr?: string
 ) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -72,7 +72,7 @@ export async function updateNews(
 }
 
 export async function toggleNewsActive(id: string, isActive: boolean) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -88,7 +88,7 @@ export async function toggleNewsActive(id: string, isActive: boolean) {
 }
 
 export async function deleteNews(id: string) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase.from("news_ticker").delete().eq("id", id);
@@ -101,7 +101,7 @@ export async function deleteNews(id: string) {
 }
 
 export async function reorderNews(ids: string[]) {
-  await guardReadOnly();
+  await guardAdmin();
   const supabase = createAdminClient();
 
   for (let i = 0; i < ids.length; i++) {
