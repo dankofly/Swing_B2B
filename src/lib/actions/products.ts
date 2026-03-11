@@ -2,7 +2,6 @@
 
 import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 function generateSlug(name: string): string {
   return name
@@ -152,7 +151,6 @@ export async function createProduct(formData: FormData) {
 
   revalidatePath("/admin/produkte");
   revalidatePath("/katalog");
-  redirect("/admin/produkte");
 }
 
 export async function updateProduct(productId: string, formData: FormData) {
@@ -299,7 +297,6 @@ export async function updateProduct(productId: string, formData: FormData) {
 
   revalidatePath("/admin/produkte");
   revalidatePath("/katalog");
-  redirect("/admin/produkte");
 }
 
 export async function deleteProduct(productId: string) {

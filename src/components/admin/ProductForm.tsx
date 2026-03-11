@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Trash2, Upload, X, Languages, Loader2, Check, AlertCircle } from "lucide-react";
 import type { Product, ProductSize, ProductColor, Category } from "@/lib/types";
 import { useDict } from "@/lib/i18n/context";
@@ -45,6 +46,7 @@ export default function ProductForm({
   colors: initialColors,
   relations: initialRelations,
 }: ProductFormProps) {
+  const router = useRouter();
   const dict = useDict();
   const tf = dict.admin.products.form;
   const [formError, setFormError] = useState<string | null>(null);
@@ -255,12 +257,9 @@ export default function ProductForm({
         setFormError(null);
         try {
           await action(formData);
+          router.push("/admin/produkte");
         } catch (err) {
-          // Next.js redirect() throws a special error — let it propagate
-          if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
-          if (typeof err === "object" && err !== null && "digest" in err) throw err;
           setFormError(err instanceof Error ? err.message : tf.saveError);
-        } finally {
           setSubmitting(false);
         }
       }}
