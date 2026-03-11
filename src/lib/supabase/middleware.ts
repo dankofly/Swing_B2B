@@ -67,7 +67,7 @@ export async function updateSession(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (!profile || (profile.role !== "admin" && profile.role !== "superadmin")) {
+    if (!profile || !["superadmin", "admin", "testadmin"].includes(profile.role)) {
       const url = request.nextUrl.clone();
       url.pathname = "/katalog";
       return NextResponse.redirect(url);

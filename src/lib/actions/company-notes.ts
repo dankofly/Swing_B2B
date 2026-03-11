@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, guardReadOnly } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function getCompanyNotes(companyId: string) {
@@ -34,6 +34,7 @@ export async function createCompanyNote(
   content: string,
   visibleToCustomer: boolean = false
 ) {
+  await guardReadOnly();
   const supabase = createAdminClient();
 
   const { error } = await supabase.from("company_notes").insert({
@@ -50,6 +51,7 @@ export async function createCompanyNote(
 }
 
 export async function toggleNoteVisibility(noteId: string, companyId: string, visible: boolean) {
+  await guardReadOnly();
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -64,6 +66,7 @@ export async function toggleNoteVisibility(noteId: string, companyId: string, vi
 }
 
 export async function deleteCompanyNote(noteId: string, companyId: string) {
+  await guardReadOnly();
   const supabase = createAdminClient();
 
   const { error } = await supabase

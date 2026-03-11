@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient, guardReadOnly } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendEmail, buildInquiryStatusEmail, buildTrackingEmail } from "@/lib/email";
 
@@ -160,6 +160,7 @@ export async function updateInquiryStatus(
   inquiryId: string,
   status: "new" | "in_progress" | "shipped" | "completed"
 ) {
+  await guardReadOnly();
   const supabase = createAdminClient();
 
   // Fetch current inquiry with company email
@@ -194,6 +195,7 @@ export async function updateInquiryStatus(
 }
 
 export async function updateInquiryNotes(inquiryId: string, notes: string) {
+  await guardReadOnly();
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -210,6 +212,7 @@ export async function updateInquiryTracking(
   carrier: string,
   trackingNumber: string
 ) {
+  await guardReadOnly();
   const supabase = createAdminClient();
 
   // Fetch current inquiry with company email

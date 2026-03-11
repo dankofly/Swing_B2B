@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, guardReadOnly } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendEmail, buildApprovalEmail } from "@/lib/email";
 
@@ -24,6 +24,7 @@ function extractCompanyFields(formData: FormData) {
 }
 
 export async function createCompany(formData: FormData) {
+  await guardReadOnly();
   const supabase = createAdminClient();
   const fields = extractCompanyFields(formData);
 
@@ -40,6 +41,7 @@ export async function createCompany(formData: FormData) {
 }
 
 export async function updateCompany(id: string, formData: FormData) {
+  await guardReadOnly();
   const supabase = createAdminClient();
   const fields = extractCompanyFields(formData);
 
@@ -56,6 +58,7 @@ export async function updateCompany(id: string, formData: FormData) {
 }
 
 export async function updateCompanyNotes(id: string, notes: string) {
+  await guardReadOnly();
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -70,6 +73,7 @@ export async function updateCompanyNotes(id: string, notes: string) {
 }
 
 export async function toggleCompanyApproval(id: string, approved: boolean) {
+  await guardReadOnly();
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -102,6 +106,7 @@ export async function toggleCompanyApproval(id: string, approved: boolean) {
 }
 
 export async function deleteCompany(id: string) {
+  await guardReadOnly();
   const supabase = createAdminClient();
 
   // Get inquiry IDs for this company to delete their items first
