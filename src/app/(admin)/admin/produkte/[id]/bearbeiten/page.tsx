@@ -37,7 +37,7 @@ export default async function ProduktBearbeitenPage({
 
   async function handleUpdate(formData: FormData) {
     "use server";
-    await updateProduct(id, formData);
+    return updateProduct(id, formData);
   }
 
   return (

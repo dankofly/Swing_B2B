@@ -30,7 +30,7 @@ interface ColorInput {
 }
 
 interface ProductFormProps {
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<{ error?: string }>;
   categories: Category[];
   product?: Product;
   sizes?: ProductSize[];
@@ -255,12 +255,12 @@ export default function ProductForm({
       action={async (formData) => {
         setSubmitting(true);
         setFormError(null);
-        try {
-          await action(formData);
-          router.push("/admin/produkte");
-        } catch (err) {
-          setFormError(err instanceof Error ? err.message : tf.saveError);
+        const result = await action(formData);
+        if (result?.error) {
+          setFormError(result.error);
           setSubmitting(false);
+        } else {
+          router.push("/admin/produkte");
         }
       }}
       className="space-y-8"

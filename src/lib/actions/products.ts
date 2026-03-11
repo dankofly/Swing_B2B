@@ -14,8 +14,12 @@ function generateSlug(name: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export async function createProduct(formData: FormData) {
-  await guardAdmin();
+export async function createProduct(formData: FormData): Promise<{ error?: string }> {
+  try {
+    await guardAdmin();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Keine Berechtigung" };
+  }
   const supabase = createAdminClient();
 
   const name = formData.get("name") as string;
@@ -85,7 +89,7 @@ export async function createProduct(formData: FormData) {
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) return { error: error.message };
 
   // Save sizes
   const sizesJson = formData.get("sizes") as string;
@@ -109,9 +113,9 @@ export async function createProduct(formData: FormData) {
         await supabase.from("products").delete().eq("id", product.id);
         if (sizesError.code === "23505") {
           const dupSku = sizes.map((s) => s.sku).join(", ");
-          throw new Error(`SKU bereits vergeben. Bitte eindeutige SKUs verwenden: ${dupSku}`);
+          return { error: `SKU bereits vergeben. Bitte eindeutige SKUs verwenden: ${dupSku}` };
         }
-        throw new Error(sizesError.message);
+        return { error: sizesError.message };
       }
     }
   }
@@ -129,7 +133,7 @@ export async function createProduct(formData: FormData) {
       const { error: colorsError } = await supabase
         .from("product_colors")
         .insert(colors.map((c) => ({ ...c, product_id: product.id })));
-      if (colorsError) throw new Error(colorsError.message);
+      if (colorsError) return { error: colorsError.message };
     }
   }
 
@@ -151,10 +155,15 @@ export async function createProduct(formData: FormData) {
 
   revalidatePath("/admin/produkte");
   revalidatePath("/katalog");
+  return {};
 }
 
-export async function updateProduct(productId: string, formData: FormData) {
-  await guardAdmin();
+export async function updateProduct(productId: string, formData: FormData): Promise<{ error?: string }> {
+  try {
+    await guardAdmin();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Keine Berechtigung" };
+  }
   const supabase = createAdminClient();
 
   const name = formData.get("name") as string;
@@ -223,14 +232,14 @@ export async function updateProduct(productId: string, formData: FormData) {
     })
     .eq("id", productId);
 
-  if (error) throw new Error(error.message);
+  if (error) return { error: error.message };
 
   // Replace sizes: delete existing, insert new
   const sizesJson = formData.get("sizes") as string;
   if (sizesJson) {
     const { error: deleteSizesError } = await supabase.from("product_sizes").delete().eq("product_id", productId);
     if (deleteSizesError) {
-      throw new Error(`Größen konnten nicht gelöscht werden: ${deleteSizesError.message}`);
+      return { error: `Größen konnten nicht gelöscht werden: ${deleteSizesError.message}` };
     }
     const sizes = JSON.parse(sizesJson) as Array<{
       size_label: string;
@@ -249,9 +258,9 @@ export async function updateProduct(productId: string, formData: FormData) {
       if (sizesError) {
         if (sizesError.code === "23505") {
           const dupSku = sizes.map((s) => s.sku).join(", ");
-          throw new Error(`SKU bereits vergeben. Bitte eindeutige SKUs verwenden: ${dupSku}`);
+          return { error: `SKU bereits vergeben. Bitte eindeutige SKUs verwenden: ${dupSku}` };
         }
-        throw new Error(sizesError.message);
+        return { error: sizesError.message };
       }
     }
   }
@@ -261,7 +270,7 @@ export async function updateProduct(productId: string, formData: FormData) {
   if (colorsJson) {
     const { error: deleteColorsError } = await supabase.from("product_colors").delete().eq("product_id", productId);
     if (deleteColorsError) {
-      throw new Error(`Farben konnten nicht gelöscht werden: ${deleteColorsError.message}`);
+      return { error: `Farben konnten nicht gelöscht werden: ${deleteColorsError.message}` };
     }
     const colors = JSON.parse(colorsJson) as Array<{
       color_name: string;
@@ -273,7 +282,7 @@ export async function updateProduct(productId: string, formData: FormData) {
       const { error: colorsError } = await supabase
         .from("product_colors")
         .insert(colors.map((c) => ({ ...c, product_id: productId })));
-      if (colorsError) throw new Error(colorsError.message);
+      if (colorsError) return { error: colorsError.message };
     }
   }
 
@@ -297,6 +306,7 @@ export async function updateProduct(productId: string, formData: FormData) {
 
   revalidatePath("/admin/produkte");
   revalidatePath("/katalog");
+  return {};
 }
 
 export async function deleteProduct(productId: string) {
