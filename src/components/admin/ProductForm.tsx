@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Upload, X, Languages, Loader2, Check, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Upload, X, Languages, Loader2, Check, AlertCircle, Wand2 } from "lucide-react";
 import type { Product, ProductSize, ProductColor, Category } from "@/lib/types";
 import { useDict } from "@/lib/i18n/context";
 import AiInfoTooltip from "@/components/ui/AiInfoTooltip";
@@ -95,44 +95,48 @@ export default function ProductForm({
   const [websiteUrlEn, setWebsiteUrlEn] = useState(product?.website_url_en || "");
   const [websiteUrlFr, setWebsiteUrlFr] = useState(product?.website_url_fr || "");
 
-  async function handleAutoTranslate(locale: "en" | "fr") {
-    setTranslatingLocale(locale);
-    setTranslateError("");
-
+  async function translateToLocale(locale: "en" | "fr") {
     const form = document.querySelector("form") as HTMLFormElement;
     const fd = new FormData(form);
-    const currentName = fd.get("name") as string;
-    const currentDesc = fd.get("description") as string;
-    const currentUseCase = fd.get("use_case") as string;
-    const currentActionText = fd.get("action_text") as string;
+    const res = await fetch("/api/translate-product", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: fd.get("name") as string,
+        description: fd.get("description") as string,
+        use_case: fd.get("use_case") as string,
+        action_text: fd.get("action_text") as string,
+        targetLocale: locale,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || `Translation failed`);
+    }
+    const { translated } = await res.json();
+    if (locale === "en") {
+      if (translated.name) setNameEn(translated.name);
+      if (translated.description) setDescEn(translated.description);
+      if (translated.use_case) setUseCaseEn(translated.use_case);
+      if (translated.action_text) setActionTextEn(translated.action_text);
+    } else {
+      if (translated.name) setNameFr(translated.name);
+      if (translated.description) setDescFr(translated.description);
+      if (translated.use_case) setUseCaseFr(translated.use_case);
+      if (translated.action_text) setActionTextFr(translated.action_text);
+    }
+  }
 
+  async function handleAutoTranslate(locale: "en" | "fr" | "both") {
+    setTranslatingLocale(locale === "both" ? "en" : locale);
+    setTranslateError("");
     try {
-      const res = await fetch("/api/translate-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: currentName,
-          description: currentDesc,
-          use_case: currentUseCase,
-          action_text: currentActionText,
-          targetLocale: locale,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || `Translation failed`);
-      }
-      const { translated } = await res.json();
-      if (locale === "en") {
-        if (translated.name) setNameEn(translated.name);
-        if (translated.description) setDescEn(translated.description);
-        if (translated.use_case) setUseCaseEn(translated.use_case);
-        if (translated.action_text) setActionTextEn(translated.action_text);
+      if (locale === "both") {
+        await translateToLocale("en");
+        setTranslatingLocale("fr");
+        await translateToLocale("fr");
       } else {
-        if (translated.name) setNameFr(translated.name);
-        if (translated.description) setDescFr(translated.description);
-        if (translated.use_case) setUseCaseFr(translated.use_case);
-        if (translated.action_text) setActionTextFr(translated.action_text);
+        await translateToLocale(locale);
       }
       setTranslatingLocale("done");
       setTimeout(() => setTranslatingLocale("idle"), 3000);
@@ -173,6 +177,27 @@ export default function ProductForm({
       img.onerror = () => reject(new Error("Image load failed"));
       img.src = URL.createObjectURL(file);
     });
+  }
+
+  function generateSkuBase(name: string): string {
+    return name
+      .toUpperCase()
+      .replace(/[äÄ]/g, "AE").replace(/[öÖ]/g, "OE").replace(/[üÜ]/g, "UE").replace(/ß/g, "SS")
+      .replace(/[^A-Z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+
+  function autoFillSkus() {
+    const form = document.querySelector("form") as HTMLFormElement;
+    const productName = (new FormData(form).get("name") as string) || "";
+    const base = generateSkuBase(productName);
+    if (!base) return;
+    setSizes((prev) =>
+      prev.map((s) => ({
+        ...s,
+        sku: s.size_label ? `${base}-${s.size_label.toUpperCase()}` : base,
+      }))
+    );
   }
 
   function addSize() {
@@ -225,7 +250,7 @@ export default function ProductForm({
     setColorUploadError(null);
 
     try {
-      const pngBlob = await resizeImageToPng(file, 120);
+      const pngBlob = await resizeImageToPng(file, 240);
 
       const formData = new FormData();
       formData.append("file", pngBlob, "pictogram.png");
@@ -416,7 +441,7 @@ export default function ProductForm({
         </div>
 
         {/* Tab bar */}
-        <div className="mb-5 flex border-b border-gray-200">
+        <div className="mb-5 flex items-center border-b border-gray-200">
           {(["de", "en", "fr"] as const).map((tab) => (
             <button
               key={tab}
@@ -438,6 +463,38 @@ export default function ProductForm({
               )}
             </button>
           ))}
+          {/* Translate both EN + FR */}
+          <div className="ml-auto flex items-center gap-1">
+            <AiInfoTooltip
+              action={tf.autoTranslateTooltip}
+              costNote={tf.autoTranslateCost}
+            />
+            <button
+              type="button"
+              onClick={() => handleAutoTranslate("both")}
+              disabled={translatingLocale !== "idle" && translatingLocale !== "done" && translatingLocale !== "error"}
+              className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                translatingLocale === "done"
+                  ? "bg-green-100 text-green-700"
+                  : translatingLocale === "error"
+                    ? "bg-red-100 text-red-700"
+                    : translatingLocale === "en" || translatingLocale === "fr"
+                      ? "animate-pulse bg-blue-100 text-blue-600"
+                      : "bg-swing-gold/10 text-swing-navy hover:bg-swing-gold/20"
+              }`}
+              title="DE → EN + FR übersetzen"
+            >
+              {translatingLocale === "en" || translatingLocale === "fr" ? (
+                <><Loader2 size={12} className="animate-spin" /> {translatingLocale.toUpperCase()}...</>
+              ) : translatingLocale === "done" ? (
+                <><Check size={12} /> EN + FR</>
+              ) : translatingLocale === "error" ? (
+                <><AlertCircle size={12} /> Fehler</>
+              ) : (
+                <><Languages size={12} /> EN + FR</>
+              )}
+            </button>
+          </div>
         </div>
 
         {translateError && (
@@ -504,41 +561,6 @@ export default function ProductForm({
 
         {/* EN Tab */}
         <div className={activeTab === "en" ? "space-y-4" : "hidden"}>
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-swing-gray-dark/50">
-              {tf.translateFrom}
-            </p>
-            <div className="flex items-center gap-1">
-              <AiInfoTooltip
-                action={tf.autoTranslateTooltip}
-                costNote={tf.autoTranslateCost}
-              />
-              <button
-                type="button"
-                onClick={() => handleAutoTranslate("en")}
-                disabled={translatingLocale !== "idle" && translatingLocale !== "done" && translatingLocale !== "error"}
-                className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold transition-colors ${
-                  translatingLocale === "done"
-                    ? "bg-green-100 text-green-700"
-                    : translatingLocale === "error"
-                      ? "bg-red-100 text-red-700"
-                      : translatingLocale === "en"
-                        ? "animate-pulse bg-blue-100 text-blue-600"
-                        : "bg-swing-gold text-swing-navy hover:bg-swing-gold-dark"
-                }`}
-              >
-                {translatingLocale === "en" ? (
-                  <><Loader2 size={12} className="animate-spin" /> Translating...</>
-                ) : translatingLocale === "done" ? (
-                  <><Check size={12} /> OK</>
-                ) : translatingLocale === "error" ? (
-                  <><AlertCircle size={12} /> Error</>
-                ) : (
-                  <><Languages size={12} /> Auto-Translate EN</>
-                )}
-              </button>
-            </div>
-          </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
               {tf.productName}
@@ -608,41 +630,6 @@ export default function ProductForm({
 
         {/* FR Tab */}
         <div className={activeTab === "fr" ? "space-y-4" : "hidden"}>
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-swing-gray-dark/50">
-              {tf.translateFrom}
-            </p>
-            <div className="flex items-center gap-1">
-              <AiInfoTooltip
-                action={tf.autoTranslateTooltipFr}
-                costNote={tf.autoTranslateCost}
-              />
-              <button
-                type="button"
-                onClick={() => handleAutoTranslate("fr")}
-                disabled={translatingLocale !== "idle" && translatingLocale !== "done" && translatingLocale !== "error"}
-                className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold transition-colors ${
-                  translatingLocale === "done"
-                    ? "bg-green-100 text-green-700"
-                    : translatingLocale === "error"
-                      ? "bg-red-100 text-red-700"
-                      : translatingLocale === "fr"
-                        ? "animate-pulse bg-blue-100 text-blue-600"
-                        : "bg-swing-gold text-swing-navy hover:bg-swing-gold-dark"
-                }`}
-              >
-                {translatingLocale === "fr" ? (
-                  <><Loader2 size={12} className="animate-spin" /> Traduction...</>
-                ) : translatingLocale === "done" ? (
-                  <><Check size={12} /> OK</>
-                ) : translatingLocale === "error" ? (
-                  <><AlertCircle size={12} /> Erreur</>
-                ) : (
-                  <><Languages size={12} /> Auto-Translate FR</>
-                )}
-              </button>
-            </div>
-          </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-swing-gray-dark">
               {tf.productName}
@@ -759,14 +746,27 @@ export default function ProductForm({
           <h2 className="text-lg font-semibold text-swing-navy">
             {tf.sizes}
           </h2>
-          <button
-            type="button"
-            onClick={addSize}
-            className="flex items-center gap-1 rounded bg-swing-navy px-3 py-1.5 text-xs font-medium text-white hover:bg-swing-navy/80"
-          >
-            <Plus size={14} />
-            {tf.addSize}
-          </button>
+          <div className="flex items-center gap-2">
+            {sizes.length > 0 && (
+              <button
+                type="button"
+                onClick={autoFillSkus}
+                className="flex items-center gap-1 rounded bg-swing-gold/10 px-3 py-1.5 text-xs font-medium text-swing-navy hover:bg-swing-gold/20"
+                title="SKUs aus Produktname + Größe generieren"
+              >
+                <Wand2 size={14} />
+                SKU Auto-Fill
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={addSize}
+              className="flex items-center gap-1 rounded bg-swing-navy px-3 py-1.5 text-xs font-medium text-white hover:bg-swing-navy/80"
+            >
+              <Plus size={14} />
+              {tf.addSize}
+            </button>
+          </div>
         </div>
         {sizes.length === 0 ? (
           <p className="text-sm text-swing-gray-dark/60">
@@ -875,6 +875,7 @@ export default function ProductForm({
                         <>
                           <Upload size={18} className="text-gray-400" />
                           <span className="mt-1 text-[10px] leading-tight text-center">{tf.uploadImage}</span>
+                          <span className="mt-0.5 text-[9px] text-gray-300">PNG · 240×240px</span>
                         </>
                       )}
                       <input

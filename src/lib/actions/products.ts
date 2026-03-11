@@ -309,6 +309,80 @@ export async function updateProduct(productId: string, formData: FormData): Prom
   return {};
 }
 
+export async function duplicateProduct(productId: string): Promise<{ error?: string; newId?: string }> {
+  try {
+    await guardAdmin();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Keine Berechtigung" };
+  }
+  const supabase = createAdminClient();
+
+  // Fetch original product with sizes, colors, relations
+  const { data: original, error: fetchError } = await supabase
+    .from("products")
+    .select("*, sizes:product_sizes(*), colors:product_colors(*)")
+    .eq("id", productId)
+    .single();
+
+  if (fetchError || !original) return { error: fetchError?.message || "Produkt nicht gefunden" };
+
+  // Create copy with "(Kopie)" suffix
+  const { sizes, colors, id, created_at, updated_at, slug, ...productData } = original;
+  const newName = `${productData.name} (Kopie)`;
+
+  const { data: newProduct, error: insertError } = await supabase
+    .from("products")
+    .insert({
+      ...productData,
+      name: newName,
+      slug: generateSlug(newName),
+      is_active: false,
+    })
+    .select()
+    .single();
+
+  if (insertError) return { error: insertError.message };
+
+  // Duplicate sizes with new SKUs
+  if (sizes && sizes.length > 0) {
+    const { error: sizesError } = await supabase
+      .from("product_sizes")
+      .insert(sizes.map(({ id: _id, product_id: _pid, created_at: _ca, ...s }: Record<string, unknown>) => ({
+        ...s,
+        sku: `${s.sku}-KOPIE`,
+        product_id: newProduct.id,
+      })));
+    if (sizesError) console.error("Duplicate sizes error:", sizesError);
+  }
+
+  // Duplicate colors
+  if (colors && colors.length > 0) {
+    const { error: colorsError } = await supabase
+      .from("product_colors")
+      .insert(colors.map(({ id: _id, product_id: _pid, created_at: _ca, ...c }: Record<string, unknown>) => ({
+        ...c,
+        product_id: newProduct.id,
+      })));
+    if (colorsError) console.error("Duplicate colors error:", colorsError);
+  }
+
+  // Duplicate relations
+  const { data: relations } = await supabase
+    .from("product_relations")
+    .select("related_product_id, relation_type, sort_order")
+    .eq("product_id", productId);
+
+  if (relations && relations.length > 0) {
+    const { error: relError } = await supabase
+      .from("product_relations")
+      .insert(relations.map((r) => ({ ...r, product_id: newProduct.id })));
+    if (relError) console.error("Duplicate relations error:", relError);
+  }
+
+  revalidatePath("/admin/produkte");
+  return { newId: newProduct.id };
+}
+
 export async function deleteProduct(productId: string) {
   await guardAdmin();
   const supabase = createAdminClient();

@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Trash2 } from "lucide-react";
-import { deleteProduct, toggleProductActive } from "@/lib/actions/products";
+import { Copy, Trash2 } from "lucide-react";
+import { deleteProduct, duplicateProduct, toggleProductActive } from "@/lib/actions/products";
 import { useState } from "react";
 import { useDict } from "@/lib/i18n/context";
 
@@ -51,6 +51,37 @@ export function ToggleActiveButton({
           {t.locked}
         </>
       )}
+    </button>
+  );
+}
+
+export function DuplicateProductButton({
+  productId,
+}: {
+  productId: string;
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  async function handleDuplicate() {
+    setLoading(true);
+    const result = await duplicateProduct(productId);
+    if (result.newId) {
+      router.push(`/admin/produkte/${result.newId}/bearbeiten`);
+    } else {
+      alert(result.error || "Fehler beim Duplizieren");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <button
+      onClick={handleDuplicate}
+      disabled={loading}
+      className={`rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-blue-50 hover:text-blue-600 ${loading ? "opacity-50" : ""}`}
+      title="Produkt duplizieren"
+    >
+      <Copy size={16} />
     </button>
   );
 }

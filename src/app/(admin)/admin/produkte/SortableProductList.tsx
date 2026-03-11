@@ -22,7 +22,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Pencil, Package, ChevronUp, ChevronDown, Search, X } from "lucide-react";
 import Link from "next/link";
 import { updateProductSortOrder } from "@/lib/actions/products";
-import { DeleteProductButton, ToggleActiveButton } from "./ProductActions";
+import { DeleteProductButton, DuplicateProductButton, ToggleActiveButton } from "./ProductActions";
 import { useToast } from "@/components/ui/Toast";
 
 type ProductRow = {
@@ -88,6 +88,7 @@ function SortableRow({ product }: { product: ProductRow }) {
         <div className="flex items-center justify-end gap-1">
           <Link href={`/admin/produkte/${product.id}/lager`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10 hover:text-swing-navy" title="Lagerbestand"><Package size={16} /></Link>
           <Link href={`/admin/produkte/${product.id}/bearbeiten`} className="rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-swing-gold/10 hover:text-swing-navy" title="Bearbeiten"><Pencil size={16} /></Link>
+          <DuplicateProductButton productId={product.id} />
           <DeleteProductButton productId={product.id} productName={product.name} />
         </div>
       </td>
@@ -148,6 +149,7 @@ function MobileCard({
         <div className="flex items-center gap-1">
           <Link href={`/admin/produkte/${product.id}/lager`} className="flex h-11 w-11 items-center justify-center rounded-lg text-swing-navy/40 transition-colors hover:bg-swing-gold/10" title="Lagerbestand"><Package size={18} /></Link>
           <Link href={`/admin/produkte/${product.id}/bearbeiten`} className="flex h-11 w-11 items-center justify-center rounded-lg text-swing-navy/40 transition-colors hover:bg-swing-gold/10" title="Bearbeiten"><Pencil size={18} /></Link>
+          <DuplicateProductButton productId={product.id} />
           <DeleteProductButton productId={product.id} productName={product.name} />
         </div>
       </div>
