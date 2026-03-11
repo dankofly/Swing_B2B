@@ -146,7 +146,7 @@ export async function createProduct(formData: FormData) {
       const { error: relError } = await supabase
         .from("product_relations")
         .insert(relations.map((r) => ({ ...r, product_id: product.id })));
-      if (relError) throw new Error(relError.message);
+      if (relError) console.error("Relations insert error:", relError);
     }
   }
 
@@ -283,7 +283,7 @@ export async function updateProduct(productId: string, formData: FormData) {
   const relationsJson = formData.get("relations") as string;
   if (relationsJson) {
     const { error: delRelErr } = await supabase.from("product_relations").delete().eq("product_id", productId);
-    if (delRelErr) throw new Error(delRelErr.message);
+    if (delRelErr) console.error("Relations delete error:", delRelErr);
     const relations = JSON.parse(relationsJson) as Array<{
       related_product_id: string;
       relation_type: string;
@@ -293,7 +293,7 @@ export async function updateProduct(productId: string, formData: FormData) {
       const { error: relError } = await supabase
         .from("product_relations")
         .insert(relations.map((r) => ({ ...r, product_id: productId })));
-      if (relError) throw new Error(relError.message);
+      if (relError) console.error("Relations insert error:", relError);
     }
   }
 
