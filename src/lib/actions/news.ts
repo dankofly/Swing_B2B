@@ -8,7 +8,7 @@ export async function getActiveNews() {
 
   const { data } = await supabase
     .from("news_ticker")
-    .select("id, message")
+    .select("id, message, message_en, message_fr")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
@@ -21,18 +21,22 @@ export async function getAllNews() {
 
   const { data } = await supabase
     .from("news_ticker")
-    .select("id, message, is_active, sort_order, created_at")
+    .select("id, message, message_en, message_fr, is_active, sort_order, created_at")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   return data ?? [];
 }
 
-export async function createNews(message: string) {
+export async function createNews(message: string, messageEn?: string, messageFr?: string) {
   await guardReadOnly();
   const supabase = createAdminClient();
 
-  const { error } = await supabase.from("news_ticker").insert({ message });
+  const { error } = await supabase.from("news_ticker").insert({
+    message,
+    message_en: messageEn || null,
+    message_fr: messageFr || null,
+  });
 
   if (error) return { success: false, error: error.message };
 
@@ -41,13 +45,23 @@ export async function createNews(message: string) {
   return { success: true };
 }
 
-export async function updateNews(id: string, message: string) {
+export async function updateNews(
+  id: string,
+  message: string,
+  messageEn?: string,
+  messageFr?: string
+) {
   await guardReadOnly();
   const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("news_ticker")
-    .update({ message, updated_at: new Date().toISOString() })
+    .update({
+      message,
+      message_en: messageEn || null,
+      message_fr: messageFr || null,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", id);
 
   if (error) return { success: false, error: error.message };
