@@ -256,6 +256,9 @@ export default function ProductForm({
         try {
           await action(formData);
         } catch (err) {
+          // Next.js redirect() throws a special error — let it propagate
+          if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
+          if (typeof err === "object" && err !== null && "digest" in err) throw err;
           setFormError(err instanceof Error ? err.message : tf.saveError);
         } finally {
           setSubmitting(false);
