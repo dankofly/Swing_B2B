@@ -434,7 +434,7 @@ export default async function KatalogPage({
               <Wrapper
                 key={product.id}
                 {...(wrapperProps as any)}
-                className={`card group overflow-hidden ${
+                className={`card group flex flex-col overflow-hidden ${
                   isComingSoon
                     ? "opacity-75"
                     : "card-interactive"
@@ -497,7 +497,7 @@ export default async function KatalogPage({
                 </div>
 
                 {/* Content */}
-                <div className="p-3.5">
+                <div className="flex flex-1 flex-col p-3.5">
                   <div className="flex items-center gap-1.5">
                     {categoryName && (
                       <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
@@ -515,14 +515,14 @@ export default async function KatalogPage({
                   </div>
 
                   {product.description && (
-                    <p className="mt-1.5 line-clamp-2 text-[12px] leading-relaxed text-swing-gray-dark/50">
+                    <p className="mt-1.5 mb-2 line-clamp-2 text-[12px] leading-relaxed text-swing-gray-dark/50">
                       {localized(product as unknown as Record<string, unknown>, "description", locale)}
                     </p>
                   )}
 
                   {/* Sizes + Colors */}
                   {((product.sizes && product.sizes.length > 0) || (product.colors && product.colors.length > 0)) && (
-                    <div className="mt-2.5 flex items-center gap-3 border-t border-gray-50 pt-2">
+                    <div className="mt-auto flex items-center gap-3 border-t border-gray-50 pt-2.5">
                       {product.sizes && product.sizes.length > 0 && (
                         <div className="flex gap-0.5">
                           {product.sizes
