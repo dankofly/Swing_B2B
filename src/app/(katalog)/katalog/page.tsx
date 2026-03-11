@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { Search, ChevronRight, SlidersHorizontal, PackageOpen } from "lucide-react";
+import { Search, ChevronRight, PackageOpen } from "lucide-react";
 import Link from "next/link";
 import type { Product, Category } from "@/lib/types";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { localized } from "@/lib/i18n/localized";
 import AdminEditButton from "@/components/katalog/AdminEditButton";
+import CollapsibleFilters from "@/components/katalog/CollapsibleFilters";
 
 export const dynamic = "force-dynamic";
 
@@ -227,11 +228,10 @@ export default async function KatalogPage({
       </div>
 
       {/* Filter Bar */}
-      <div className="card overflow-hidden">
+      <CollapsibleFilters label="Filter" activeCount={activeCount}>
         {/* Row 1: Kategorie — horizontally scrollable on mobile */}
         <div className="space-y-1 px-4 pt-4 sm:grid sm:grid-cols-[7rem_1fr] sm:items-center sm:gap-x-4 sm:space-y-0 sm:px-6 sm:pt-5">
-          <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
-            <SlidersHorizontal size={13} />
+          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
             {dict.katalog.filters.category}
           </span>
           <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
@@ -389,7 +389,7 @@ export default async function KatalogPage({
             </div>
           </div>
         )}
-      </div>
+      </CollapsibleFilters>
 
       {/* Product Grid */}
       {!products || products.length === 0 ? (
