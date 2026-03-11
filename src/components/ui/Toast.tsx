@@ -9,6 +9,7 @@ interface Toast {
   id: number;
   message: string;
   type: ToastType;
+  exiting?: boolean;
 }
 
 interface ToastContextValue {
@@ -22,17 +23,18 @@ let nextId = 0;
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  const dismissToast = useCallback((id: number) => {
+    setToasts((prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t));
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 200);
+  }, []);
+
   const addToast = useCallback((message: string, type: ToastType = "info") => {
     const id = nextId++;
     setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
-  }, []);
-
-  const removeToast = useCallback((id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+    setTimeout(() => dismissToast(id), 4000);
+  }, [dismissToast]);
 
   return (
     <ToastContext.Provider value={{ toast: addToast }}>
@@ -40,7 +42,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {/* Toast container */}
       <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2 sm:bottom-6 sm:right-6">
         {toasts.map((t) => (
-          <ToastItem key={t.id} toast={t} onClose={() => removeToast(t.id)} />
+          <ToastItem key={t.id} toast={t} onClose={() => dismissToast(t.id)} />
         ))}
       </div>
     </ToastContext.Provider>
@@ -73,7 +75,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
 
   return (
     <div
-      className={`pointer-events-auto flex w-80 max-w-[calc(100vw-2rem)] items-start gap-3 rounded-lg border p-3.5 shadow-lg fade-in-up ${colorMap[toast.type]}`}
+      className={`pointer-events-auto flex w-80 max-w-[calc(100vw-2rem)] items-start gap-3 rounded-lg border p-3.5 shadow-lg ${toast.exiting ? "toast-exit" : "toast-enter"} ${colorMap[toast.type]}`}
     >
       <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${iconColorMap[toast.type]}`} />
       <p className="flex-1 text-sm font-medium">{toast.message}</p>

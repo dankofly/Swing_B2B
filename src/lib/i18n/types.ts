@@ -253,6 +253,10 @@ export interface Dictionary {
       designs: string;
       design: string;
     };
+    tooltips: {
+      enClass: string;
+      classification: string;
+    };
     noProductsSearch: string;
     noProductsFilter: string;
     viewingAs: string;
@@ -818,6 +822,10 @@ export interface Dictionary {
       message: string;
       retry: string;
       backHome: string;
+      recoveryTitle: string;
+      recoveryHint1: string;
+      recoveryHint2: string;
+      recoveryHint3: string;
     };
   };
 

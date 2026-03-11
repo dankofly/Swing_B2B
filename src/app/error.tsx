@@ -30,7 +30,24 @@ export default function GlobalError({
           </div>
         </div>
         <h1 className="mb-2 text-2xl font-extrabold text-swing-navy">{t.heading}</h1>
-        <p className="mb-8 text-swing-gray-dark/70">{t.message}</p>
+        <p className="mb-5 text-swing-gray-dark/70">{t.message}</p>
+        <div className="mx-auto mb-6 max-w-xs rounded-lg bg-gray-50 px-5 py-4 text-left">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">{t.recoveryTitle}</p>
+          <ul className="mt-2 space-y-1.5 text-xs text-swing-gray-dark/50">
+            <li className="flex items-start gap-2">
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-swing-gold" />
+              {t.recoveryHint1}
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-swing-gold" />
+              {t.recoveryHint2}
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-swing-gold" />
+              {t.recoveryHint3}
+            </li>
+          </ul>
+        </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button
             onClick={reset}

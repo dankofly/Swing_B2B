@@ -20,6 +20,7 @@ import { getMyInquiries } from "@/lib/actions/inquiries";
 import { getCustomerVisibleNotes } from "@/lib/actions/company-notes";
 import InquiryBoard from "@/components/katalog/InquiryBoard";
 import CustomerNotes from "@/components/katalog/CustomerNotes";
+import WelcomeBanner from "@/components/katalog/WelcomeBanner";
 import { getDictionary, getLocale, getDateLocale } from "@/lib/i18n";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCompanyInquiriesForDashboard } from "@/lib/actions/inquiries";
@@ -184,6 +185,16 @@ export default async function KundenDashboardPage({
           </div>
         </div>
       </div>
+
+      {/* Welcome banner for new dealers */}
+      <WelcomeBanner
+        firstName={firstName}
+        links={{
+          catalog: `/katalog${alsSuffix}`,
+          profile: `/katalog/profil${alsSuffix}`,
+          inquiries: `/katalog/anfragen${alsSuffix}`,
+        }}
+      />
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

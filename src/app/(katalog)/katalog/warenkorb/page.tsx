@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Trash2, ShoppingCart, Send, ArrowLeft, FileText, Loader2 } from "lucide-react";
+import { Trash2, ShoppingCart, Send, ArrowLeft, FileText, Loader2, CheckCircle } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { submitInquiry } from "@/lib/actions/inquiries";
 import { useDict, useLocale } from "@/lib/i18n/context";
@@ -61,8 +61,8 @@ export default function WarenkorbPage() {
         </div>
 
         <div className="card bounce-in p-10 text-center">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50">
-            <Send size={28} className="text-emerald-600" />
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+            <CheckCircle size={28} className="text-emerald-600" />
           </div>
           <h2 className="mb-2 text-xl font-extrabold text-swing-navy">
             {tc.successSubtitle}

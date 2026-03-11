@@ -29,28 +29,17 @@ export function ToggleActiveButton({
     <button
       onClick={handleToggle}
       disabled={loading}
-      className={`flex cursor-pointer items-center gap-2 rounded px-2.5 py-1 text-xs font-semibold transition-colors ${
+      className={`btn-press flex cursor-pointer items-center gap-2 rounded px-2.5 py-1 text-xs font-semibold transition-colors ${
         isActive
           ? "bg-green-100 text-green-700 hover:bg-green-200"
           : "bg-red-100 text-red-600 hover:bg-red-200"
       } ${loading ? "opacity-50" : ""}`}
       title={isActive ? t.clickToDeactivate : t.clickToActivate}
     >
-      {isActive ? (
-        <>
-          <span className="flex h-4 w-7 items-center rounded-full bg-green-500 px-0.5">
-            <span className="ml-auto h-3 w-3 rounded-full bg-white" />
-          </span>
-          {t.active}
-        </>
-      ) : (
-        <>
-          <span className="flex h-4 w-7 items-center rounded-full bg-red-400 px-0.5">
-            <span className="h-3 w-3 rounded-full bg-white" />
-          </span>
-          {t.locked}
-        </>
-      )}
+      <span className={`flex h-4 w-7 items-center rounded-full px-0.5 transition-colors duration-200 ${isActive ? "bg-green-500" : "bg-red-400"}`}>
+        <span className={`toggle-knob h-3 w-3 rounded-full bg-white ${isActive ? "ml-auto" : "ml-0"}`} />
+      </span>
+      {isActive ? t.active : t.locked}
     </button>
   );
 }
@@ -78,7 +67,7 @@ export function DuplicateProductButton({
     <button
       onClick={handleDuplicate}
       disabled={loading}
-      className={`rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-blue-50 hover:text-blue-600 ${loading ? "opacity-50" : ""}`}
+      className={`btn-press rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-blue-50 hover:text-blue-600 ${loading ? "opacity-50" : ""}`}
       title="Produkt duplizieren"
     >
       <Copy size={16} />
@@ -108,7 +97,7 @@ export function DeleteProductButton({
   return (
     <button
       onClick={handleDelete}
-      className="rounded p-1 text-swing-gray-dark/40 hover:bg-red-50 hover:text-red-600"
+      className="btn-press rounded p-1 text-swing-gray-dark/40 transition-colors hover:bg-red-50 hover:text-red-600"
       title={t.deleteTitle}
     >
       <Trash2 size={16} />

@@ -277,6 +277,10 @@ const en: Dictionary = {
       designs: "Designs",
       design: "Design",
     },
+    tooltips: {
+      enClass: "EN certification per European standard — defines the required pilot level (A = beginner to D = expert)",
+      classification: "Weight classification — defines the recommended pilot weight range",
+    },
     noProductsSearch: "No products found for \"{query}\"",
     noProductsFilter: "No products found for these filters",
     viewingAs: "Viewing catalog as",
@@ -842,6 +846,10 @@ const en: Dictionary = {
       message: "An unexpected error occurred. Please try again.",
       retry: "Try Again",
       backHome: "Back to Home",
+      recoveryTitle: "What you can try:",
+      recoveryHint1: "Reload the page or click \"Try Again\"",
+      recoveryHint2: "Check your internet connection",
+      recoveryHint3: "If the problem persists, contact vertrieb@swing.de",
     },
   },
 

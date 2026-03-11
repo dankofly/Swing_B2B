@@ -465,17 +465,17 @@ export default async function KatalogPage({
                       </span>
                     )}
                     {product.classification && (
-                      <span className="rounded bg-swing-gold/25 px-2 py-0.5 text-[10px] font-bold tracking-wide text-swing-gold">
+                      <span className="rounded bg-swing-gold/25 px-2 py-0.5 text-[10px] font-bold tracking-wide text-swing-gold" title={dict.katalog.tooltips.classification}>
                         {product.classification}
                       </span>
                     )}
                     {enClass && (
-                      <span className="rounded bg-white/15 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white/80">
+                      <span className="rounded bg-white/15 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white/80" title={dict.katalog.tooltips.enClass}>
                         {enClass}
                       </span>
                     )}
                     {enClassCustom && (
-                      <span className="rounded bg-white/25 px-2 py-0.5 text-[10px] font-bold tracking-wide text-swing-gold">
+                      <span className="rounded bg-white/25 px-2 py-0.5 text-[10px] font-bold tracking-wide text-swing-gold" title={dict.katalog.tooltips.enClass}>
                         {enClassCustom}
                       </span>
                     )}

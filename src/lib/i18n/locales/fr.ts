@@ -277,6 +277,10 @@ const fr: Dictionary = {
       designs: "Designs",
       design: "Design",
     },
+    tooltips: {
+      enClass: "Certification EN selon la norme européenne — définit le niveau pilote requis (A = débutant à D = expert)",
+      classification: "Classification de poids — définit la plage de poids recommandée du pilote",
+    },
     noProductsSearch: "Aucun produit trouvé pour \"{query}\"",
     noProductsFilter: "Aucun produit trouvé pour ces filtres",
     viewingAs: "Vue catalogue en tant que",
@@ -842,6 +846,10 @@ const fr: Dictionary = {
       message: "Une erreur inattendue s'est produite. Veuillez réessayer.",
       retry: "Réessayer",
       backHome: "Retour à l'accueil",
+      recoveryTitle: "Ce que vous pouvez essayer :",
+      recoveryHint1: "Rechargez la page ou cliquez sur \"Réessayer\"",
+      recoveryHint2: "Vérifiez votre connexion Internet",
+      recoveryHint3: "Si le problème persiste, contactez vertrieb@swing.de",
     },
   },
 

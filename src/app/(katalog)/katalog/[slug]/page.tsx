@@ -174,17 +174,17 @@ export default async function ProduktDetailPage({
                 </span>
               )}
               {enClass && (
-                <span className="rounded bg-swing-gold px-3 py-1 text-xs font-bold tracking-wide text-swing-navy">
+                <span className="rounded bg-swing-gold px-3 py-1 text-xs font-bold tracking-wide text-swing-navy" title={dict.katalog.tooltips.enClass}>
                   {enClass}
                 </span>
               )}
               {enClassCustom && (
-                <span className="rounded border border-swing-gold/40 bg-swing-gold/15 px-3 py-1 text-xs font-bold tracking-wide text-swing-gold">
+                <span className="rounded border border-swing-gold/40 bg-swing-gold/15 px-3 py-1 text-xs font-bold tracking-wide text-swing-gold" title={dict.katalog.tooltips.enClass}>
                   {enClassCustom}
                 </span>
               )}
               {product.classification && (
-                <span className="glass-dark rounded px-3 py-1 text-xs font-bold tracking-wide text-white/90">
+                <span className="glass-dark rounded px-3 py-1 text-xs font-bold tracking-wide text-white/90" title={dict.katalog.tooltips.classification}>
                   {product.classification}
                 </span>
               )}
