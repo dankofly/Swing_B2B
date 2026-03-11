@@ -6,7 +6,7 @@ const de: Dictionary = {
       katalog: "Katalog",
       dashboard: "Dashboard",
       kunden: "Kunden",
-      lager: "Lagerbestand",
+      lager: "Lager",
       anfragen: "Anfragen",
       produkte: "Produkte",
       profil: "Profil",
