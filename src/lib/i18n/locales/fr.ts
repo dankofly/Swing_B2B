@@ -828,6 +828,23 @@ const fr: Dictionary = {
     defaultCostNote: "Chaque appel consomme des tokens API pouvant entraîner des coûts.",
   },
 
+  errors: {
+    notFound: {
+      title: "Page introuvable",
+      heading: "404",
+      message: "La page demandée est introuvable.",
+      backHome: "Retour à l'accueil",
+      backToCatalog: "Vers le catalogue",
+    },
+    generic: {
+      title: "Erreur",
+      heading: "Une erreur est survenue",
+      message: "Une erreur inattendue s'est produite. Veuillez réessayer.",
+      retry: "Réessayer",
+      backHome: "Retour à l'accueil",
+    },
+  },
+
   meta: {
     title: "SWING B2B Portail revendeurs",
     description: "Catalogue B2B pour SWING parapentes – prix revendeurs, demandes de commande et niveaux de stock.",

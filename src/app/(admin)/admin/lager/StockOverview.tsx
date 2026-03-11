@@ -171,7 +171,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
               placeholder="Suche..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-8 w-44 rounded border border-swing-gray/40 pl-8 pr-3 text-xs text-swing-navy outline-none transition-colors focus:border-swing-gold"
+              className="h-8 w-full rounded border border-swing-gray/40 pl-8 pr-3 text-xs text-swing-navy outline-none transition-colors focus:border-swing-gold sm:w-44"
             />
           </div>
 

@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { updateInquiryStatus, updateInquiryTracking } from "@/lib/actions/inquiries";
-import { ChevronDown, Clock, ExternalLink, FileText, Settings, Truck } from "lucide-react";
+import { ChevronRight, ExternalLink, FileText, Settings, Truck } from "lucide-react";
 import Link from "next/link";
 import { useDict, useLocale } from "@/lib/i18n/context";
 import { getDateLocale } from "@/lib/i18n/shared";
+import { useToast } from "@/components/ui/Toast";
 
 export default function InquiryList({ inquiries }: { inquiries: any[] }) {
   const dict = useDict();
@@ -13,12 +14,13 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
   const dl = getDateLocale(locale);
   const ti = dict.admin.inquiries;
   const ts = dict.common.status;
+  const { toast } = useToast();
 
   const statusOptions = [
-    { value: "new", label: ts.new, color: "bg-blue-100 text-blue-700" },
-    { value: "in_progress", label: ts.in_progress, color: "bg-yellow-100 text-yellow-700" },
-    { value: "shipped", label: ts.shipped, color: "bg-purple-100 text-purple-700" },
-    { value: "completed", label: ts.completed, color: "bg-green-100 text-green-700" },
+    { value: "new", label: ts.new, bg: "bg-blue-50", color: "text-blue-700" },
+    { value: "in_progress", label: ts.in_progress, bg: "bg-amber-50", color: "text-amber-700" },
+    { value: "shipped", label: ts.shipped, bg: "bg-purple-50", color: "text-purple-700" },
+    { value: "completed", label: ts.completed, bg: "bg-emerald-50", color: "text-emerald-700" },
   ] as const;
 
   function eur(value: number) {
@@ -37,7 +39,7 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
         status as "new" | "in_progress" | "shipped" | "completed"
       );
     } catch (e) {
-      alert(ti.statusError);
+      toast(ti.statusError, "error");
     } finally {
       setUpdating(null);
     }
@@ -54,7 +56,7 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
     try {
       await updateInquiryTracking(inquiryId, carrier.trim(), trackingNumber.trim());
     } catch (e) {
-      alert(ti.trackingError);
+      toast(ti.trackingError, "error");
     } finally {
       setUpdating(null);
     }
@@ -63,127 +65,231 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
   if (inquiries.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <FileText size={48} className="mb-4 text-swing-gray-dark/20" />
-        <p className="text-lg font-semibold text-swing-navy">{ti.noInquiries}</p>
-        <p className="text-sm text-swing-gray-dark/60">{ti.noInquiriesHint}</p>
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50">
+          <FileText size={22} className="text-swing-navy/12" />
+        </div>
+        <p className="text-sm font-medium text-swing-navy/40">{ti.noInquiries}</p>
+        <p className="mt-1 text-xs text-swing-gray-dark/25">{ti.noInquiriesHint}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {inquiries.map((inquiry) => {
         const status = statusOptions.find((s) => s.value === inquiry.status) ?? statusOptions[0];
-        const totalItems = (inquiry.items ?? []).reduce((sum: number, i: any) => sum + i.quantity, 0);
+        const itemCount = (inquiry.items ?? []).length;
         const totalPrice = (inquiry.items ?? []).reduce((sum: number, i: any) => sum + Number(i.unit_price) * i.quantity, 0);
         const isExpanded = expandedId === inquiry.id;
+        const companyName = (inquiry.company as any)?.name ?? "—";
 
         return (
-          <div key={inquiry.id} className="glass-card overflow-hidden rounded">
-            <div
-              className="flex min-h-11 cursor-pointer flex-col gap-2 px-4 py-3 transition-colors hover:bg-swing-gray-light/30 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-4"
+          <div
+            key={inquiry.id}
+            className={`overflow-hidden rounded-lg border transition-all duration-200 ${
+              isExpanded
+                ? "border-swing-gold/30 shadow-md shadow-swing-gold/5"
+                : "border-gray-100 hover:border-gray-200"
+            }`}
+          >
+            {/* Collapsed row */}
+            <button
+              type="button"
               onClick={() => setExpandedId(isExpanded ? null : inquiry.id)}
+              className="flex w-full cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 bg-white px-4 py-3 text-left transition-colors duration-150 hover:bg-gray-50/40 sm:flex-nowrap sm:gap-4 sm:px-5 sm:py-4"
             >
-              <div className="flex items-center gap-3">
-                <ChevronDown size={16} className={`shrink-0 text-swing-gray-dark/40 transition-transform duration-200 ${isExpanded ? "rotate-0" : "-rotate-90"}`} />
-                <div className="min-w-0">
-                  <span className="block truncate text-sm font-bold text-swing-navy">{(inquiry.company as any)?.name ?? "—"}</span>
-                  <span className="block truncate text-xs text-swing-gray-dark/40 sm:hidden">{(inquiry.user as any)?.full_name || (inquiry.user as any)?.email}</span>
+              {/* Company + Date */}
+              <span className="shrink-0 text-sm font-bold text-swing-navy sm:w-52 sm:truncate">
+                {companyName}
+              </span>
+              <span className="shrink-0 text-xs tabular-nums text-swing-navy/40">
+                {new Date(inquiry.created_at).toLocaleDateString(dl, {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+
+              {/* Spacer */}
+              <span className="hidden flex-1 sm:block" />
+              {/* Mobile spacer */}
+              <span className="flex-1 sm:hidden" />
+
+              {/* Count */}
+              <span className="shrink-0 text-xs tabular-nums text-swing-navy/40">
+                {itemCount} Pos.
+              </span>
+
+              {/* Price */}
+              <span className="shrink-0 text-right text-sm font-extrabold tabular-nums text-swing-navy sm:w-28">
+                {eur(totalPrice)}
+              </span>
+
+              {/* Status badge */}
+              <span
+                className={`shrink-0 rounded py-0.5 text-center text-[10px] font-bold w-24 ${status.bg} ${status.color}`}
+              >
+                {status.label}
+              </span>
+
+              {/* Customer link */}
+              {inquiry.company_id && (
+                <Link
+                  href={`/admin/kunden/${inquiry.company_id}?inquiry=${inquiry.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="hidden shrink-0 rounded-lg p-1.5 text-swing-navy/20 transition-colors hover:bg-swing-navy/5 hover:text-swing-navy sm:block"
+                  title={ti.openAtCustomer}
+                >
+                  <Settings size={14} />
+                </Link>
+              )}
+
+              {/* Chevron */}
+              <ChevronRight
+                size={14}
+                className={`shrink-0 text-swing-navy/15 transition-transform duration-200 ${
+                  isExpanded ? "rotate-90" : ""
+                }`}
+              />
+            </button>
+
+            {/* Expanded detail */}
+            {isExpanded && (
+              <div className="border-t border-gray-100 bg-gray-50/40">
+                {/* Status control + link */}
+                <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                  <select
+                    value={inquiry.status}
+                    onChange={(e) => { e.stopPropagation(); handleStatusChange(inquiry.id, e.target.value); }}
+                    disabled={updating === inquiry.id}
+                    className={`cursor-pointer rounded px-2.5 py-2 text-xs font-semibold ${status.bg} ${status.color} border-none focus:outline-none focus:ring-2 focus:ring-swing-gold sm:py-1.5`}
+                  >
+                    {statusOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  {inquiry.company_id && (
+                    <Link
+                      href={`/admin/kunden/${inquiry.company_id}`}
+                      className="flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-swing-navy transition-colors hover:bg-swing-navy/5 sm:py-1.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink size={12} />
+                      <span className="hidden sm:inline">{ti.allOrdersCustomer}</span>
+                      <span className="sm:hidden">{ti.toCustomer}</span>
+                    </Link>
+                  )}
                 </div>
-                <span className="hidden text-xs text-swing-gray-dark/40 sm:inline">{(inquiry.user as any)?.full_name || (inquiry.user as any)?.email}</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 pl-7 sm:gap-3 sm:pl-0">
-                <div className="flex items-center gap-1 text-xs text-swing-gray-dark/50">
-                  <Clock size={12} />
-                  {new Date(inquiry.created_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+
+                {/* Items table */}
+                <div className="px-3 pb-4 sm:px-5 sm:pb-5">
+                  <div className="overflow-hidden rounded-lg border border-gray-100 bg-white">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 bg-gray-50/60 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
+                          <th className="px-4 py-2.5 text-left">{ti.product}</th>
+                          <th className="px-4 py-2.5 text-left">{ti.size}</th>
+                          <th className="hidden px-4 py-2.5 text-left sm:table-cell">{ti.sku}</th>
+                          <th className="hidden px-4 py-2.5 text-left sm:table-cell">{ti.color}</th>
+                          <th className="px-4 py-2.5 text-right">{ti.quantity}</th>
+                          <th className="hidden px-4 py-2.5 text-right sm:table-cell">{ti.priceNet}</th>
+                          <th className="px-4 py-2.5 text-right">{ti.sum}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(inquiry.items ?? []).map((item: any, i: number) => (
+                          <tr
+                            key={item.id}
+                            className={i < (inquiry.items ?? []).length - 1 ? "border-b border-gray-50" : ""}
+                          >
+                            <td className="px-4 py-3 font-semibold text-swing-navy">{(item.product_size as any)?.product?.name ?? "—"}</td>
+                            <td className="px-4 py-3 text-swing-navy/40">{(item.product_size as any)?.size_label ?? "—"}</td>
+                            <td className="hidden px-4 py-3 text-swing-navy/40 sm:table-cell">{(item.product_size as any)?.sku ?? "—"}</td>
+                            <td className="hidden px-4 py-3 text-swing-navy/40 sm:table-cell">{(item.product_color as any)?.color_name ?? "—"}</td>
+                            <td className="px-4 py-3 text-right tabular-nums text-swing-navy">{item.quantity}</td>
+                            <td className="hidden px-4 py-3 text-right tabular-nums text-swing-navy/40 sm:table-cell">{eur(Number(item.unit_price))}</td>
+                            <td className="px-4 py-3 text-right font-semibold tabular-nums text-swing-navy">{eur(Number(item.unit_price) * item.quantity)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {/* Total bar with gold accent */}
+                    <div className="relative flex items-center justify-between border-t border-gray-100 px-4 py-3">
+                      <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-swing-gold/40" />
+                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
+                        {ti.sum}
+                      </span>
+                      <span className="text-base font-extrabold tabular-nums text-swing-navy">
+                        {eur(totalPrice)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  {inquiry.notes && (
+                    <div className="mt-3 rounded-lg border border-gray-100 bg-white px-4 py-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
+                        {ti.note}
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-swing-navy/50">
+                        {inquiry.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Tracking input — shipped status */}
+                  {inquiry.status === "shipped" && (
+                    <div className="mt-3 flex flex-wrap items-end gap-3 rounded-lg border border-purple-100 bg-purple-50/40 px-4 py-4">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100">
+                        <Truck size={16} className="text-purple-600" />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-purple-400">{ti.carrier}</label>
+                        <input
+                          type="text"
+                          placeholder={ti.carrierPlaceholder}
+                          value={getTracking(inquiry.id).carrier}
+                          onChange={(e) => setTrackingData((prev) => ({ ...prev, [inquiry.id]: { ...getTracking(inquiry.id), carrier: e.target.value } }))}
+                          className="rounded border border-purple-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-swing-gold"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-purple-400">{ti.trackingNumber}</label>
+                        <input
+                          type="text"
+                          placeholder={ti.trackingPlaceholder}
+                          value={getTracking(inquiry.id).trackingNumber}
+                          onChange={(e) => setTrackingData((prev) => ({ ...prev, [inquiry.id]: { ...getTracking(inquiry.id), trackingNumber: e.target.value } }))}
+                          className="rounded border border-purple-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-swing-gold"
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleTrackingSave(inquiry.id)}
+                        disabled={updating === inquiry.id || !getTracking(inquiry.id).trackingNumber.trim()}
+                        className="rounded bg-swing-gold px-4 py-1.5 text-sm font-semibold text-swing-navy hover:bg-swing-gold-dark disabled:opacity-50"
+                      >
+                        {updating === inquiry.id ? ti.saving : ti.markShipped}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Tracking display — completed status */}
+                  {inquiry.status === "completed" && inquiry.tracking_number && (
+                    <div className="mt-3 flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50/40 px-4 py-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100">
+                        <Truck size={16} className="text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-400">Tracking</p>
+                        <p className="mt-0.5 font-mono text-xs text-emerald-700">
+                          {inquiry.shipping_carrier} &middot; {inquiry.tracking_number}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <span className="text-xs font-medium text-swing-gray-dark/50">{totalItems} {ti.items}</span>
-                {totalPrice > 0 && <span className="text-xs font-bold text-swing-navy">{eur(totalPrice)}</span>}
-                <span className={`inline-flex items-center justify-center rounded py-0.5 text-[10px] font-semibold w-24 ${status.color}`}>{status.label}</span>
-                {inquiry.company_id && (
-                  <Link href={`/admin/kunden/${inquiry.company_id}?inquiry=${inquiry.id}`} onClick={(e) => e.stopPropagation()} className="hidden rounded-lg p-1.5 text-swing-gray-dark/30 transition-colors hover:bg-swing-navy/5 hover:text-swing-navy sm:block" title={ti.openAtCustomer}>
-                    <Settings size={14} />
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            {isExpanded && <>
-            <div className="border-t border-swing-gray/30 px-4 py-3 sm:px-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <select value={inquiry.status} onChange={(e) => { e.stopPropagation(); handleStatusChange(inquiry.id, e.target.value); }} disabled={updating === inquiry.id} className={`rounded px-2.5 py-2 text-xs font-semibold ${status.color} cursor-pointer border-none focus:outline-none focus:ring-2 focus:ring-swing-gold sm:py-1`}>
-                  {statusOptions.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
-                </select>
-                {inquiry.company_id && (
-                  <Link href={`/admin/kunden/${inquiry.company_id}`} className="flex items-center justify-center gap-1.5 rounded bg-swing-navy/5 px-3 py-2 text-xs font-semibold text-swing-navy transition-colors hover:bg-swing-navy/10 sm:py-1.5" onClick={(e) => e.stopPropagation()}>
-                    <ExternalLink size={12} />
-                    <span className="hidden sm:inline">{ti.allOrdersCustomer}</span>
-                    <span className="sm:hidden">{ti.toCustomer}</span>
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="border-b border-swing-gray/30 bg-swing-gray-light/50 text-[11px] uppercase tracking-widest text-swing-gray-dark/40">
-                  <tr>
-                    <th className="px-6 py-2 text-left">{ti.product}</th>
-                    <th className="px-6 py-2 text-left">{ti.size}</th>
-                    <th className="px-6 py-2 text-left">{ti.sku}</th>
-                    <th className="px-6 py-2 text-left">{ti.color}</th>
-                    <th className="px-6 py-2 text-right">{ti.quantity}</th>
-                    <th className="px-6 py-2 text-right">{ti.priceNet}</th>
-                    <th className="px-6 py-2 text-right">{ti.sum}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-swing-gray/20">
-                  {(inquiry.items ?? []).map((item: any) => (
-                    <tr key={item.id} className="transition-colors duration-150 hover:bg-swing-gray-light/30">
-                      <td className="px-6 py-3 font-semibold text-swing-navy">{(item.product_size as any)?.product?.name ?? "—"}</td>
-                      <td className="px-6 py-3">{(item.product_size as any)?.size_label ?? "—"}</td>
-                      <td className="px-6 py-3 text-swing-gray-dark/50">{(item.product_size as any)?.sku ?? "—"}</td>
-                      <td className="px-6 py-3">{(item.product_color as any)?.color_name ?? "—"}</td>
-                      <td className="px-6 py-3 text-right">{item.quantity}</td>
-                      <td className="px-6 py-3 text-right text-swing-gray-dark/60">{eur(Number(item.unit_price))}</td>
-                      <td className="px-6 py-3 text-right font-semibold">{eur(Number(item.unit_price) * item.quantity)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {inquiry.notes && (
-              <div className="border-t border-swing-gray/30 px-6 py-3 text-sm text-swing-gray-dark/50">
-                <span className="font-medium">{ti.note}</span> {inquiry.notes}
               </div>
             )}
-
-            {inquiry.status === "shipped" && (
-              <div className="flex flex-wrap items-end gap-3 border-t border-swing-gray/30 bg-purple-50/50 px-6 py-4">
-                <Truck size={18} className="mb-1 text-purple-600" />
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-semibold uppercase tracking-widest text-swing-gray-dark/40">{ti.carrier}</label>
-                  <input type="text" placeholder={ti.carrierPlaceholder} value={getTracking(inquiry.id).carrier} onChange={(e) => setTrackingData((prev) => ({ ...prev, [inquiry.id]: { ...getTracking(inquiry.id), carrier: e.target.value } }))} className="rounded border border-swing-gray/50 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-swing-gold" />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-semibold uppercase tracking-widest text-swing-gray-dark/40">{ti.trackingNumber}</label>
-                  <input type="text" placeholder={ti.trackingPlaceholder} value={getTracking(inquiry.id).trackingNumber} onChange={(e) => setTrackingData((prev) => ({ ...prev, [inquiry.id]: { ...getTracking(inquiry.id), trackingNumber: e.target.value } }))} className="rounded border border-swing-gray/50 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-swing-gold" />
-                </div>
-                <button onClick={() => handleTrackingSave(inquiry.id)} disabled={updating === inquiry.id || !getTracking(inquiry.id).trackingNumber.trim()} className="rounded bg-swing-gold px-4 py-1.5 text-sm font-semibold text-swing-navy hover:bg-swing-gold-dark disabled:opacity-50">
-                  {updating === inquiry.id ? ti.saving : ti.markShipped}
-                </button>
-              </div>
-            )}
-
-            {inquiry.status === "completed" && inquiry.tracking_number && (
-              <div className="flex items-center gap-2 border-t border-swing-gray/30 bg-green-50/50 px-6 py-3 text-sm text-green-700">
-                <Truck size={14} />
-                <span className="font-medium">{inquiry.shipping_carrier}:</span>
-                <span>{inquiry.tracking_number}</span>
-              </div>
-            )}
-            </>}
           </div>
         );
       })}

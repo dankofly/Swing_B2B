@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Lock, Loader2 } from "lucide-react";
 import { useDict } from "@/lib/i18n/context";
 
 export default function LoginPage() {
@@ -127,6 +127,7 @@ export default function LoginPage() {
               disabled={loading}
               className="btn-gold group flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-swing-gold py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              {loading && <Loader2 size={16} className="animate-spin" />}
               {loading ? dict.auth.login.submitting : dict.auth.login.submit}
               {!loading && <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />}
             </button>

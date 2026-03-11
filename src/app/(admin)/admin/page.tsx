@@ -9,6 +9,7 @@ import {
   Warehouse,
   MessageSquare,
   FileDown,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { getDictionary, getLocale, getDateLocale } from "@/lib/i18n";
@@ -249,38 +250,40 @@ export default async function AdminDashboard() {
             <p className="mt-1 text-xs text-swing-gray-dark/25">{td.noInquiriesHint}</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-50 border-t border-gray-100">
+          <div className="space-y-1 border-t border-gray-100 p-2">
             {recentInquiries.map((inquiry: any) => {
               const status = statusConfig[inquiry.status] ?? statusConfig.new;
               const items = inquiry.inquiry_items ?? [];
               const itemCount = items.length;
               const totalValue = items.reduce((sum: number, it: any) => sum + ((it.quantity ?? 0) * (parseFloat(it.unit_price) || 0)), 0);
               const companyName = (inquiry as any).company?.name ?? "—";
-              const dateStr = new Date(inquiry.created_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "numeric" });
 
               return (
                 <Link
                   key={inquiry.id}
                   href={inquiry.company_id ? `/admin/kunden/${inquiry.company_id}?inquiry=${inquiry.id}` : "/admin/anfragen"}
-                  className="flex min-h-11 w-full cursor-pointer flex-col gap-1.5 px-4 py-3 transition-colors duration-150 hover:bg-swing-gold/4 sm:flex-row sm:items-center sm:gap-4"
+                  className="flex w-full cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-white px-3 py-3 transition-colors duration-150 hover:bg-gray-50/40 sm:flex-nowrap sm:gap-4 sm:px-4"
                 >
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <span className="min-w-0 shrink text-sm text-swing-navy">
-                      {companyName} — {dateStr}
-                    </span>
-                  </div>
+                  <span className="shrink-0 text-sm font-bold text-swing-navy sm:w-44 sm:truncate">
+                    {companyName}
+                  </span>
+                  <span className="shrink-0 text-xs tabular-nums text-swing-navy/40">
+                    {new Date(inquiry.created_at).toLocaleDateString(dl, { day: "2-digit", month: "long", year: "numeric" })}
+                  </span>
 
-                  <div className="flex flex-wrap items-center gap-2 sm:flex-1 sm:justify-end sm:gap-3">
-                    <span className="text-xs text-swing-navy/40">
-                      {itemCount} Pos.
-                    </span>
-                    <span className="text-sm font-semibold text-swing-navy">
-                      {totalValue.toLocaleString(dl, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                    </span>
-                    <span className={`inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-semibold ${status.bg} ${status.color}`}>
-                      {status.label}
-                    </span>
-                  </div>
+                  <span className="hidden flex-1 sm:block" />
+                  <span className="flex-1 sm:hidden" />
+
+                  <span className="shrink-0 text-xs tabular-nums text-swing-navy/40">
+                    {itemCount} Pos.
+                  </span>
+                  <span className="shrink-0 text-right text-sm font-extrabold tabular-nums text-swing-navy sm:w-28">
+                    {totalValue.toLocaleString(dl, { style: "currency", currency: "EUR" })}
+                  </span>
+                  <span className={`shrink-0 rounded py-0.5 text-center text-[10px] font-bold w-24 ${status.bg} ${status.color}`}>
+                    {status.label}
+                  </span>
+                  <ChevronRight size={14} className="shrink-0 text-swing-navy/15" />
                 </Link>
               );
             })}
@@ -311,58 +314,52 @@ export default async function AdminDashboard() {
             <p className="mt-1 text-xs text-swing-gray-dark/25">{td.noPriceListsHint}</p>
           </div>
         ) : (
-          <>
-            <div className="hidden items-center gap-3 border-t border-gray-100 bg-gray-50/60 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] text-swing-navy/40 sm:grid sm:grid-cols-[1fr_7rem_9rem_2rem]">
-              <span>{td.dealers}</span>
-              <span className="text-center">{td.status}</span>
-              <span className="text-right">{td.date}</span>
-              <span />
-            </div>
+          <div className="space-y-1 border-t border-gray-100 p-2">
+            {recentPriceLists.map((upload: any) => {
+              const statusLabel = upload.status === "completed"
+                ? `${upload.matched_count}/${upload.total_count}`
+                : upload.status === "failed"
+                ? "Fehler"
+                : upload.status === "review"
+                ? "Review"
+                : "...";
+              const statusColor = upload.status === "completed"
+                ? "bg-emerald-100 text-emerald-700"
+                : upload.status === "failed"
+                ? "bg-red-100 text-red-700"
+                : "bg-amber-100 text-amber-700";
+              return (
+                <div
+                  key={upload.id}
+                  className="flex w-full cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-white px-3 py-3 transition-colors duration-150 hover:bg-gray-50/40 sm:flex-nowrap sm:gap-4 sm:px-4"
+                >
+                  <span className="shrink-0 text-sm font-bold text-swing-navy sm:w-44 sm:truncate">
+                    {(upload as any).company?.name ?? "—"}
+                  </span>
+                  <span className="shrink-0 text-xs tabular-nums text-swing-navy/40">
+                    {new Date(upload.created_at).toLocaleDateString(dl, { day: "2-digit", month: "long", year: "numeric" })}
+                  </span>
 
-            <div className="divide-y divide-gray-50 border-t border-gray-100 sm:border-t-0">
-              {recentPriceLists.map((upload: any) => {
-                const statusLabel = upload.status === "completed"
-                  ? `${upload.matched_count}/${upload.total_count}`
-                  : upload.status === "failed"
-                  ? "Fehler"
-                  : upload.status === "review"
-                  ? "Review"
-                  : "...";
-                const statusColor = upload.status === "completed"
-                  ? "bg-emerald-100 text-emerald-700"
-                  : upload.status === "failed"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-amber-100 text-amber-700";
-                return (
-                  <div
-                    key={upload.id}
-                    className="px-5 py-4 transition-colors duration-150 hover:bg-swing-gold/4 sm:grid sm:grid-cols-[1fr_7rem_9rem_2rem] sm:items-center sm:gap-3 sm:px-6 sm:py-3.5"
+                  <span className="hidden flex-1 sm:block" />
+                  <span className="flex-1 sm:hidden" />
+
+                  <span className={`shrink-0 rounded py-0.5 text-center text-[10px] font-bold w-24 ${statusColor}`}>
+                    {statusLabel}
+                  </span>
+                  <a
+                    href={upload.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 rounded-lg p-1.5 text-red-500/60 transition-colors hover:bg-red-50 hover:text-red-600"
+                    title="PDF"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="flex items-center justify-between sm:contents">
-                      <span className="truncate text-sm font-semibold text-swing-navy">
-                        {(upload as any).company?.name ?? "—"}
-                      </span>
-                      <span className={`inline-flex w-20 items-center justify-center rounded px-2 py-0.5 text-[10px] font-bold ${statusColor}`}>
-                        {statusLabel}
-                      </span>
-                    </div>
-                    <span className="mt-1 block text-xs tabular-nums text-swing-gray-dark/35 sm:mt-0 sm:text-right">
-                      {new Date(upload.created_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                    <a
-                      href={upload.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hidden rounded-lg p-1.5 text-red-500/60 transition-colors hover:bg-red-50 hover:text-red-600 sm:block"
-                      title="PDF"
-                    >
-                      <FileDown size={14} />
-                    </a>
-                  </div>
-                );
-              })}
-            </div>
-          </>
+                    <FileDown size={14} />
+                  </a>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

@@ -828,6 +828,23 @@ const en: Dictionary = {
     defaultCostNote: "Each call consumes API tokens that may incur costs.",
   },
 
+  errors: {
+    notFound: {
+      title: "Page Not Found",
+      heading: "404",
+      message: "The requested page could not be found.",
+      backHome: "Back to Home",
+      backToCatalog: "Go to Catalog",
+    },
+    generic: {
+      title: "Error",
+      heading: "Something went wrong",
+      message: "An unexpected error occurred. Please try again.",
+      retry: "Try Again",
+      backHome: "Back to Home",
+    },
+  },
+
   meta: {
     title: "SWING B2B Dealer Portal",
     description: "B2B catalog for SWING paragliders – dealer prices, order inquiries & stock levels.",

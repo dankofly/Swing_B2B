@@ -23,6 +23,7 @@ import { GripVertical, Pencil, Package, ChevronUp, ChevronDown, Search, X } from
 import Link from "next/link";
 import { updateProductSortOrder } from "@/lib/actions/products";
 import { DeleteProductButton, ToggleActiveButton } from "./ProductActions";
+import { useToast } from "@/components/ui/Toast";
 
 type ProductRow = {
   id: string;
@@ -159,6 +160,7 @@ export default function SortableProductList({ products: initialProducts }: { pro
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const dndId = useId();
+  const { toast } = useToast();
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return products;
@@ -187,7 +189,7 @@ export default function SortableProductList({ products: initialProducts }: { pro
       await updateProductSortOrder(newOrder.map((p) => p.id));
     } catch {
       setProducts(initialProducts);
-      alert("Fehler beim Speichern der Reihenfolge");
+      toast("Fehler beim Speichern der Reihenfolge", "error");
     } finally {
       setSaving(false);
     }
@@ -207,7 +209,7 @@ export default function SortableProductList({ products: initialProducts }: { pro
       await updateProductSortOrder(newOrder.map((p) => p.id));
     } catch {
       setProducts(initialProducts);
-      alert("Fehler beim Speichern der Reihenfolge");
+      toast("Fehler beim Speichern der Reihenfolge", "error");
     } finally {
       setSaving(false);
     }

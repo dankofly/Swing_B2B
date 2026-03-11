@@ -212,6 +212,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, skipped: !sent });
   } catch (err) {
     console.error("[notify-registration] Error:", err);
-    return NextResponse.json({ success: false }, { status: 500 });
+    return NextResponse.json({ success: false, error: "E-Mail-Versand fehlgeschlagen" }, { status: 500 });
   }
 }

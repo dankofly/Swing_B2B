@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { ArrowLeft, Mail } from "lucide-react";
+import { ArrowLeft, Loader2, Mail } from "lucide-react";
 import { useDict } from "@/lib/i18n/context";
 
 export default function ForgotPasswordPage() {
@@ -118,6 +118,7 @@ export default function ForgotPasswordPage() {
                   disabled={loading}
                   className="btn-gold group flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-swing-gold py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-50"
                 >
+                  {loading && <Loader2 size={16} className="animate-spin" />}
                   {loading ? dict.auth.forgotPassword.submitting : dict.auth.forgotPassword.submit}
                 </button>
               </form>

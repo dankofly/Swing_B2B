@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
 
   if (error) {
-    return NextResponse.json({ products: [] }, { status: 500 });
+    console.error("[products-search] DB error:", error.message);
+    return NextResponse.json({ products: [], error: "Datenbankfehler" }, { status: 500 });
   }
 
   return NextResponse.json({ products: data });

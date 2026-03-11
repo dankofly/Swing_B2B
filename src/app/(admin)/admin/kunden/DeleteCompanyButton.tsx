@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { deleteCompany } from "@/lib/actions/customers";
 import { useDict } from "@/lib/i18n/context";
+import { useToast } from "@/components/ui/Toast";
 
 interface DeleteCompanyButtonProps {
   companyId: string;
@@ -22,6 +23,7 @@ export default function DeleteCompanyButton({
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   async function handleDelete() {
     setDeleting(true);
@@ -30,7 +32,7 @@ export default function DeleteCompanyButton({
       router.push("/admin/kunden");
       router.refresh();
     } else {
-      alert(t.errorPrefix + " " + (result.error || ""));
+      toast(t.errorPrefix + " " + (result.error || ""), "error");
       setDeleting(false);
       setShowConfirm(false);
     }

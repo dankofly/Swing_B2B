@@ -8,7 +8,7 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-swing-gray-light">
       <Header isAdmin />
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 fade-in-up">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 fade-in-up">{children}</main>
     </div>
   );
 }

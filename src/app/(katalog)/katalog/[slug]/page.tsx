@@ -291,7 +291,7 @@ export default async function ProduktDetailPage({
       {similarProducts.length > 0 && (
         <div>
           <h2 className="swing-h2 mb-4">{dict.katalog.detail.similarProducts}</h2>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {similarProducts.map((p: any) => (
               <RelatedProductCard
                 key={p.id}
@@ -311,7 +311,7 @@ export default async function ProduktDetailPage({
       {accessoryProducts.length > 0 && (
         <div>
           <h2 className="swing-h2 mb-4">{dict.katalog.detail.accessories}</h2>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {accessoryProducts.map((p: any) => (
               <RelatedProductCard
                 key={p.id}

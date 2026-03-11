@@ -5,6 +5,7 @@ import { getLocale, getDictionary } from "@/lib/i18n";
 import { I18nProvider } from "@/lib/i18n/context";
 import LandingFooter from "@/components/ui/LandingFooter";
 import PwaRegister from "@/components/PwaRegister";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -57,10 +58,12 @@ export default async function RootLayout({
       <body className={`${montserrat.variable} font-sans antialiased`}>
         <PwaRegister />
         <I18nProvider locale={locale} dict={dict}>
-          <div className="flex min-h-screen flex-col">
-            <div className="flex-1">{children}</div>
-            <LandingFooter />
-          </div>
+          <ToastProvider>
+            <div className="flex min-h-screen flex-col">
+              <div className="flex-1">{children}</div>
+              <LandingFooter />
+            </div>
+          </ToastProvider>
         </I18nProvider>
       </body>
     </html>

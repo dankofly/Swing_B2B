@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { ArrowRight, CheckCircle, UserPlus } from "lucide-react";
+import { ArrowRight, CheckCircle, Loader2, UserPlus } from "lucide-react";
 import { useDict } from "@/lib/i18n/context";
 
 export default function RegisterPage() {
@@ -411,6 +411,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="group flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-swing-gold py-3.5 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              {loading && <Loader2 size={16} className="animate-spin" />}
               {loading ? dict.auth.register.submitting : dict.auth.register.submit}
               {!loading && <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />}
             </button>

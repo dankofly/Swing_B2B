@@ -828,6 +828,23 @@ const de: Dictionary = {
     defaultCostNote: "Pro Aufruf werden API-Tokens verbraucht, die Kosten verursachen können.",
   },
 
+  errors: {
+    notFound: {
+      title: "Seite nicht gefunden",
+      heading: "404",
+      message: "Die angeforderte Seite konnte nicht gefunden werden.",
+      backHome: "Zur Startseite",
+      backToCatalog: "Zum Katalog",
+    },
+    generic: {
+      title: "Fehler",
+      heading: "Etwas ist schiefgelaufen",
+      message: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      retry: "Erneut versuchen",
+      backHome: "Zur Startseite",
+    },
+  },
+
   meta: {
     title: "SWING B2B Händlerportal",
     description: "B2B-Katalog für SWING Flugsportgeräte – Händlerpreise, Bestellanfragen & Lagerstände.",

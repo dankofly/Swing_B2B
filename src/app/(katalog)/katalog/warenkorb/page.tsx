@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Trash2, ShoppingCart, Send, ArrowLeft, FileText } from "lucide-react";
+import { Trash2, ShoppingCart, Send, ArrowLeft, FileText, Loader2 } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { submitInquiry } from "@/lib/actions/inquiries";
 import { useDict, useLocale } from "@/lib/i18n/context";
@@ -257,7 +257,7 @@ export default function WarenkorbPage() {
         </div>
 
         {/* Summary sidebar */}
-        <div className="h-fit card border-t-[3px] border-t-swing-gold p-5 sm:p-6 lg:sticky lg:top-20">
+        <div className="h-fit card border-t-[3px] border-t-swing-gold p-5 sm:p-6 md:sticky md:top-20">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-swing-gold/10">
               <FileText size={18} className="text-swing-gold-dark" />
@@ -313,7 +313,7 @@ export default function WarenkorbPage() {
             disabled={submitting}
             className="btn-gold group flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-swing-gold px-6 py-3 text-sm font-bold tracking-wide text-swing-navy shadow-sm transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-none"
           >
-            <Send size={16} />
+            {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             {submitting ? tc.submitting : tc.submit}
           </button>
 

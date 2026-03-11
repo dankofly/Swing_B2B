@@ -804,6 +804,23 @@ export interface Dictionary {
     defaultCostNote: string;
   };
 
+  errors: {
+    notFound: {
+      title: string;
+      heading: string;
+      message: string;
+      backHome: string;
+      backToCatalog: string;
+    };
+    generic: {
+      title: string;
+      heading: string;
+      message: string;
+      retry: string;
+      backHome: string;
+    };
+  };
+
   meta: {
     title: string;
     description: string;
