@@ -4,7 +4,7 @@ const fr: Dictionary = {
   common: {
     nav: {
       katalog: "Catalogue",
-      dashboard: "Tableau de bord",
+      dashboard: "Dashboard",
       kunden: "Clients",
       lager: "Stock",
       anfragen: "Demandes",
