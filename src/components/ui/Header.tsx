@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ShoppingCart, LogOut, User, ExternalLink, Settings, ChevronRight } from "lucide-react";
+import { ShoppingCart, LogOut, User, ExternalLink, Settings, ChevronRight, Megaphone } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useDict } from "@/lib/i18n/context";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -55,6 +55,7 @@ export default function Header({
     { href: "/admin/kunden", label: dict.common.nav.kunden },
     { href: "/admin/lager", label: dict.common.nav.lager },
     { href: "/admin/anfragen", label: dict.common.nav.anfragen },
+    { href: "/admin/news", label: "News", icon: Megaphone },
     { href: "/katalog", label: dict.common.nav.katalog, icon: ExternalLink },
   ];
 

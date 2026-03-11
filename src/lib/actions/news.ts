@@ -1,0 +1,103 @@
+"use server";
+
+import { createAdminClient, guardReadOnly } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+
+export async function getActiveNews() {
+  const supabase = createAdminClient();
+
+  const { data } = await supabase
+    .from("news_ticker")
+    .select("id, message")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  return data ?? [];
+}
+
+export async function getAllNews() {
+  const supabase = createAdminClient();
+
+  const { data } = await supabase
+    .from("news_ticker")
+    .select("id, message, is_active, sort_order, created_at")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  return data ?? [];
+}
+
+export async function createNews(message: string) {
+  await guardReadOnly();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("news_ticker").insert({ message });
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/news");
+  revalidatePath("/katalog");
+  return { success: true };
+}
+
+export async function updateNews(id: string, message: string) {
+  await guardReadOnly();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("news_ticker")
+    .update({ message, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/news");
+  revalidatePath("/katalog");
+  return { success: true };
+}
+
+export async function toggleNewsActive(id: string, isActive: boolean) {
+  await guardReadOnly();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("news_ticker")
+    .update({ is_active: isActive })
+    .eq("id", id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/news");
+  revalidatePath("/katalog");
+  return { success: true };
+}
+
+export async function deleteNews(id: string) {
+  await guardReadOnly();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("news_ticker").delete().eq("id", id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/news");
+  revalidatePath("/katalog");
+  return { success: true };
+}
+
+export async function reorderNews(ids: string[]) {
+  await guardReadOnly();
+  const supabase = createAdminClient();
+
+  for (let i = 0; i < ids.length; i++) {
+    await supabase
+      .from("news_ticker")
+      .update({ sort_order: i })
+      .eq("id", ids[i]);
+  }
+
+  revalidatePath("/admin/news");
+  revalidatePath("/katalog");
+  return { success: true };
+}

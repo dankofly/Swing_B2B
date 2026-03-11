@@ -565,6 +565,12 @@ body::before {
   50%      { background-position: 0% 100%; }
 }
 
+/* ===== News ticker ===== */
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 /* ===== Reduced motion ===== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
