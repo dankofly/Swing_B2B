@@ -41,36 +41,39 @@ export async function confirmPrices(
     .delete()
     .eq("company_id", companyId);
 
-  let savedCount = 0;
   const productIds = new Set<string>();
 
+  // Batch update UVP on product level (deduplicate by product_id)
+  const uvpUpdates = new Map<string, number>();
   for (const item of valid) {
-    // Save UVP on the product level (if available)
     if (item.uvp_incl_vat && item.uvp_incl_vat > 0 && item.product_id) {
-      await supabase
-        .from("products")
-        .update({ uvp_brutto: item.uvp_incl_vat })
-        .eq("id", item.product_id);
+      uvpUpdates.set(item.product_id, item.uvp_incl_vat);
     }
+    if (item.product_id) productIds.add(item.product_id);
+  }
 
-    // Save dealer price per size
-    const { error } = await supabase.from("customer_prices").insert({
-      company_id: companyId,
-      product_size_id: item.product_size_id,
-      unit_price: item.ek_netto,
-      uvp_incl_vat: item.uvp_incl_vat,
-    });
+  await Promise.all(
+    Array.from(uvpUpdates.entries()).map(([productId, uvp]) =>
+      supabase.from("products").update({ uvp_brutto: uvp }).eq("id", productId)
+    )
+  );
 
-    if (error) {
-      console.error(`Price insert error for ${item.sku}:`, error);
-    } else {
-      savedCount++;
-      if (item.product_id) productIds.add(item.product_id);
-    }
+  // Batch insert all prices at once
+  const rows = valid.map((item) => ({
+    company_id: companyId,
+    product_size_id: item.product_size_id,
+    unit_price: item.ek_netto,
+    uvp_incl_vat: item.uvp_incl_vat,
+  }));
+
+  const { error } = await supabase.from("customer_prices").insert(rows);
+  if (error) {
+    console.error("Batch price insert error:", error);
+    throw new Error(`Preise konnten nicht gespeichert werden: ${error.message}`);
   }
 
   revalidatePath(`/admin/kunden/${companyId}`);
-  return { savedCount, productCount: productIds.size };
+  return { savedCount: valid.length, productCount: productIds.size };
 }
 
 export async function getCompanyPrices(companyId: string) {

@@ -255,7 +255,7 @@ export async function getCompanyInquiries(companyId: string) {
 
   const { data: inquiries } = await supabase
     .from("inquiries")
-    .select("*")
+    .select("id, status, notes, tracking_number, created_at, updated_at")
     .eq("company_id", companyId)
     .order("created_at", { ascending: false });
 

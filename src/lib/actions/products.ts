@@ -143,9 +143,10 @@ export async function createProduct(formData: FormData) {
       sort_order: number;
     }>;
     if (relations.length > 0) {
-      await supabase
+      const { error: relError } = await supabase
         .from("product_relations")
         .insert(relations.map((r) => ({ ...r, product_id: product.id })));
+      if (relError) throw new Error(relError.message);
     }
   }
 
@@ -281,16 +282,18 @@ export async function updateProduct(productId: string, formData: FormData) {
   // Replace relations
   const relationsJson = formData.get("relations") as string;
   if (relationsJson) {
-    await supabase.from("product_relations").delete().eq("product_id", productId);
+    const { error: delRelErr } = await supabase.from("product_relations").delete().eq("product_id", productId);
+    if (delRelErr) throw new Error(delRelErr.message);
     const relations = JSON.parse(relationsJson) as Array<{
       related_product_id: string;
       relation_type: string;
       sort_order: number;
     }>;
     if (relations.length > 0) {
-      await supabase
+      const { error: relError } = await supabase
         .from("product_relations")
         .insert(relations.map((r) => ({ ...r, product_id: productId })));
+      if (relError) throw new Error(relError.message);
     }
   }
 

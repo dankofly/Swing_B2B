@@ -117,15 +117,18 @@ export async function deleteCompany(id: string) {
 
   if (inquiries && inquiries.length > 0) {
     const inquiryIds = inquiries.map((i) => i.id);
-    await supabase.from("inquiry_items").delete().in("inquiry_id", inquiryIds);
-    await supabase.from("inquiries").delete().eq("company_id", id);
+    const { error: itemsErr } = await supabase.from("inquiry_items").delete().in("inquiry_id", inquiryIds);
+    if (itemsErr) return { success: false, error: itemsErr.message };
+    const { error: inqErr } = await supabase.from("inquiries").delete().eq("company_id", id);
+    if (inqErr) return { success: false, error: inqErr.message };
   }
 
   // Detach profiles from this company (don't delete users, just unlink)
-  await supabase
+  const { error: profileErr } = await supabase
     .from("profiles")
     .update({ company_id: null })
     .eq("company_id", id);
+  if (profileErr) return { success: false, error: profileErr.message };
 
   // Now delete the company (cascades: company_notes, customer_prices, price_uploads)
   const { error } = await supabase.from("companies").delete().eq("id", id);

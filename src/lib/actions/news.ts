@@ -104,12 +104,11 @@ export async function reorderNews(ids: string[]) {
   await guardAdmin();
   const supabase = createAdminClient();
 
-  for (let i = 0; i < ids.length; i++) {
-    await supabase
-      .from("news_ticker")
-      .update({ sort_order: i })
-      .eq("id", ids[i]);
-  }
+  await Promise.all(
+    ids.map((id, i) =>
+      supabase.from("news_ticker").update({ sort_order: i }).eq("id", id)
+    )
+  );
 
   revalidatePath("/admin/news");
   revalidatePath("/katalog");
