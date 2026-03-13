@@ -184,7 +184,7 @@ const fr: Dictionary = {
       linksText: "Notre site web contient des liens vers des sites web tiers externes sur le contenu desquels nous n'avons aucune influence. Par conséquent, nous ne pouvons accepter aucune responsabilité pour ce contenu tiers. Le fournisseur ou l'opérateur respectif est toujours responsable du contenu des pages liées.",
       copyright: "Droit d'auteur",
       copyrightText: "Le contenu et les œuvres créés par les opérateurs du site sur ces pages sont soumis au droit d'auteur allemand. La reproduction, l'édition, la distribution et toute forme d'utilisation au-delà des limites du droit d'auteur nécessitent le consentement écrit de l'auteur respectif.",
-      madeWith: "A App by",
+      madeWith: "Powered by",
     },
     datenschutz: {
       title: "Politique de confidentialité",

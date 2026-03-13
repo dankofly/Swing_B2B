@@ -184,7 +184,7 @@ const en: Dictionary = {
       linksText: "Our website contains links to external third-party websites over whose content we have no influence. Therefore, we cannot accept any liability for this third-party content. The respective provider or operator is always responsible for the content of the linked pages.",
       copyright: "Copyright",
       copyrightText: "The content and works created by the site operators on these pages are subject to German copyright law. Reproduction, editing, distribution, and any kind of use beyond the limits of copyright law require the written consent of the respective author.",
-      madeWith: "A App by",
+      madeWith: "Powered by",
     },
     datenschutz: {
       title: "Privacy Policy",

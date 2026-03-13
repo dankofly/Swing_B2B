@@ -71,7 +71,7 @@ export default function LandingFooter() {
           rel="noopener noreferrer"
           className="text-xs text-white/30 transition-colors hover:text-white/50"
         >
-          App by Hypeakz.io
+          Powered by Hypeakz.io
         </a>
       </div>
     </div>
