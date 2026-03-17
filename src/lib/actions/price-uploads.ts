@@ -62,12 +62,32 @@ export async function getCompanyPriceUploads(companyId: string) {
 }
 
 export async function deletePriceUpload(id: string, companyId: string) {
-  await guardAdmin();
+  try {
+    await guardAdmin();
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Keine Berechtigung" };
+  }
+
   const supabase = createAdminClient();
+
+  // Get the file URL before deleting the record
+  const { data: upload } = await supabase
+    .from("price_uploads")
+    .select("file_url")
+    .eq("id", id)
+    .single();
 
   const { error } = await supabase.from("price_uploads").delete().eq("id", id);
 
   if (error) return { success: false, error: error.message };
+
+  // Delete the file from storage
+  if (upload?.file_url) {
+    const path = upload.file_url.split("/price-lists/").pop();
+    if (path) {
+      await supabase.storage.from("price-lists").remove([decodeURIComponent(path)]);
+    }
+  }
 
   revalidatePath(`/admin/kunden/${companyId}`);
   return { success: true };

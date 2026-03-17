@@ -418,9 +418,16 @@ export default function PriceListSection({
   }
 
   async function handleDelete(id: string) {
-    const result = await deletePriceUpload(id, companyId);
-    if (result.success) {
-      setUploads((prev) => prev.filter((u) => u.id !== id));
+    try {
+      const result = await deletePriceUpload(id, companyId);
+      if (result.success) {
+        setUploads((prev) => prev.filter((u) => u.id !== id));
+        setError(null);
+      } else {
+        setError(result.error || "Löschen fehlgeschlagen");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Löschen fehlgeschlagen");
     }
   }
 
