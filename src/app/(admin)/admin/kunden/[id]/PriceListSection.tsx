@@ -72,7 +72,47 @@ function normalize(str: string | null | undefined): string {
     .replace(/['']/g, "'");
 }
 
+/** Normalize size: handle comma/dot decimals + common "one size" variants */
+function normalizeSize(str: string | null | undefined): string {
+  if (!str) return "einheitsgröße";
+  const s = normalize(str);
+  // Map common "one size" variants
+  if (
+    s === "" ||
+    s === "one size" ||
+    s === "onesize" ||
+    s === "uni" ||
+    s === "universal" ||
+    s === "os" ||
+    s === "one" ||
+    s === "-"
+  ) {
+    return "einheitsgröße";
+  }
+  // Normalize decimal separators: "11,5" → "11.5"
+  return s.replace(/,/g, ".");
+}
+
 // ── Match extracted items against portal products ──
+/** Simple edit distance for short strings (model names) */
+function editDistance(a: string, b: string): number {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const matrix: number[][] = [];
+  for (let i = 0; i <= a.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+  }
+  return matrix[a.length][b.length];
+}
+
 function matchExtractedToPortal(
   extracted: ExtractedItem[],
   portalProducts: PortalProduct[]
@@ -81,61 +121,70 @@ function matchExtractedToPortal(
   const matchedSizeIds = new Set<string>();
   let unmatchedCount = 0;
 
+  function addMatch(pp: PortalProduct, item: ExtractedItem) {
+    matched.push({
+      product_size_id: pp.product_size_id,
+      product_id: pp.product_id,
+      portal_model: pp.model,
+      portal_size: pp.size,
+      sku: pp.sku,
+      uvp_incl_vat: item.uvp_gross,
+      ek_netto: item.dealer_net,
+      pdf_product_raw: item.product,
+      pdf_size_raw: item.size ?? "",
+    });
+    matchedSizeIds.add(pp.product_size_id);
+  }
+
   for (const item of extracted) {
     const normProduct = normalize(item.product);
-    const normSize = normalize(item.size);
+    const normSize = normalizeSize(item.size);
 
-    // 1. Exact normalized match
+    // 1. Exact normalized match (with size normalization)
     const exactMatch = portalProducts.find(
       (pp) =>
         !matchedSizeIds.has(pp.product_size_id) &&
         normalize(pp.model) === normProduct &&
-        normalize(pp.size) === normSize
+        normalizeSize(pp.size) === normSize
     );
 
     if (exactMatch) {
-      matched.push({
-        product_size_id: exactMatch.product_size_id,
-        product_id: exactMatch.product_id,
-        portal_model: exactMatch.model,
-        portal_size: exactMatch.size,
-        sku: exactMatch.sku,
-        uvp_incl_vat: item.uvp_gross,
-        ek_netto: item.dealer_net,
-        pdf_product_raw: item.product,
-        pdf_size_raw: item.size,
-      });
-      matchedSizeIds.add(exactMatch.product_size_id);
+      addMatch(exactMatch, item);
       continue;
     }
 
-    // 2. Fuzzy: one model name contains the other, sizes must match exactly
-    const fuzzyMatch = portalProducts.find((pp) => {
+    // 2. Fuzzy model name (contains), exact size
+    const containsMatch = portalProducts.find((pp) => {
       if (matchedSizeIds.has(pp.product_size_id)) return false;
       const normModel = normalize(pp.model);
-      const normPPSize = normalize(pp.size);
       return (
         (normModel.includes(normProduct) || normProduct.includes(normModel)) &&
-        normPPSize === normSize
+        normalizeSize(pp.size) === normSize
       );
     });
 
-    if (fuzzyMatch) {
-      matched.push({
-        product_size_id: fuzzyMatch.product_size_id,
-        product_id: fuzzyMatch.product_id,
-        portal_model: fuzzyMatch.model,
-        portal_size: fuzzyMatch.size,
-        sku: fuzzyMatch.sku,
-        uvp_incl_vat: item.uvp_gross,
-        ek_netto: item.dealer_net,
-        pdf_product_raw: item.product,
-        pdf_size_raw: item.size,
-      });
-      matchedSizeIds.add(fuzzyMatch.product_size_id);
+    if (containsMatch) {
+      addMatch(containsMatch, item);
       continue;
     }
 
+    // 3. Levenshtein distance ≤ 2 on model name (catches typos like "Spirfire" vs "Spitfire")
+    const typoMatch = portalProducts.find((pp) => {
+      if (matchedSizeIds.has(pp.product_size_id)) return false;
+      const normModel = normalize(pp.model);
+      return (
+        editDistance(normModel, normProduct) <= 2 &&
+        normalizeSize(pp.size) === normSize
+      );
+    });
+
+    if (typoMatch) {
+      console.log(`[Matching] Typo match: "${item.product}" → "${typoMatch.model}" (distance: ${editDistance(normalize(typoMatch.model), normProduct)})`);
+      addMatch(typoMatch, item);
+      continue;
+    }
+
+    console.log(`[Matching] No match: "${item.product}" size "${item.size}" (normalized: "${normProduct}" / "${normSize}")`);
     unmatchedCount++;
   }
 
