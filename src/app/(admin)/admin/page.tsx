@@ -351,7 +351,6 @@ export default async function AdminDashboard() {
                     rel="noopener noreferrer"
                     className="shrink-0 rounded-lg p-1.5 text-red-500/60 transition-colors hover:bg-red-50 hover:text-red-600"
                     title="PDF"
-                    onClick={(e) => e.stopPropagation()}
                   >
                     <FileDown size={14} />
                   </a>
