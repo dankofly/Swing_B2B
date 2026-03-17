@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import AiInfoTooltip from "@/components/ui/AiInfoTooltip";
 import { uploadPriceList, deleteAllCategoryUploads } from "@/lib/actions/price-uploads";
 import { confirmPrices, type MatchedPriceItem } from "@/lib/actions/prices";
@@ -179,6 +180,7 @@ export default function PriceListSection({
   uploads: PriceUpload[];
   categories: CategoryConfig[];
 }) {
+  const router = useRouter();
   const dict = useDict();
   const locale = useLocale();
   const dl = getDateLocale(locale);
@@ -436,6 +438,7 @@ export default function PriceListSection({
       const info = await confirmPrices(companyId, items);
       setSavedInfo(info);
       setParseResult(null);
+      router.push(`/admin/kunden/${companyId}/preise`);
     } catch (err) {
       setError(err instanceof Error ? err.message : tp.saveError);
     } finally {
