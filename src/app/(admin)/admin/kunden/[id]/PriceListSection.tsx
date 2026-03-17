@@ -7,15 +7,10 @@ import { uploadPriceList, deleteAllCategoryUploads } from "@/lib/actions/price-u
 import { confirmPrices, type MatchedPriceItem } from "@/lib/actions/prices";
 import {
   Upload,
-  FileText,
   Trash2,
   Loader2,
   Check,
-  X,
   Eye,
-  ChevronDown,
-  ChevronRight,
-  AlertTriangle,
 } from "lucide-react";
 import { useDict, useLocale } from "@/lib/i18n/context";
 import { getDateLocale } from "@/lib/i18n/shared";
@@ -66,23 +61,6 @@ interface MatchedItem {
   pdf_size_raw: string;
 }
 
-interface UnmatchedItem {
-  product: string;
-  size: string;
-  uvp_gross: number | null;
-  dealer_net: number | null;
-}
-
-interface ParseResult {
-  matched: MatchedItem[];
-  unmatched: UnmatchedItem[];
-  summary: {
-    total_extracted: number;
-    matched: number;
-    unmatched: number;
-  };
-}
-
 // ── Normalize strings for matching ──
 function normalize(str: string): string {
   return str
@@ -97,10 +75,10 @@ function normalize(str: string): string {
 function matchExtractedToPortal(
   extracted: ExtractedItem[],
   portalProducts: PortalProduct[]
-): ParseResult {
+): { matched: MatchedItem[]; unmatchedCount: number } {
   const matched: MatchedItem[] = [];
-  const unmatched: UnmatchedItem[] = [];
   const matchedSizeIds = new Set<string>();
+  let unmatchedCount = 0;
 
   for (const item of extracted) {
     const normProduct = normalize(item.product);
@@ -157,18 +135,10 @@ function matchExtractedToPortal(
       continue;
     }
 
-    unmatched.push(item);
+    unmatchedCount++;
   }
 
-  return {
-    matched,
-    unmatched,
-    summary: {
-      total_extracted: extracted.length,
-      matched: matched.length,
-      unmatched: unmatched.length,
-    },
-  };
+  return { matched, unmatchedCount };
 }
 
 export default function PriceListSection({
@@ -190,51 +160,7 @@ export default function PriceListSection({
   const [uploadingCategory, setUploadingCategory] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Parsing state
   const [parsing, setParsing] = useState(false);
-  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-  const [parseCategory, setParseCategory] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [savedInfo, setSavedInfo] = useState<{
-    savedCount: number;
-    productCount: number;
-  } | null>(null);
-
-  // Editable prices: keyed by product_size_id
-  const [editedPrices, setEditedPrices] = useState<
-    Record<string, { uvp: number | null; ek: number | null }>
-  >({});
-
-  // Collapsed sections
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    matched: true,
-    unmatched: false,
-  });
-
-  function toggleSection(key: string) {
-    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
-  }
-
-  function getPrice(item: MatchedItem) {
-    const edited = editedPrices[item.product_size_id];
-    return {
-      uvp: edited?.uvp ?? item.uvp_incl_vat,
-      ek: edited?.ek ?? item.ek_netto,
-    };
-  }
-
-  function updatePrice(sizeId: string, field: "uvp" | "ek", value: string) {
-    const num = parseFloat(value);
-    setEditedPrices((prev) => ({
-      ...prev,
-      [sizeId]: {
-        uvp: prev[sizeId]?.uvp ?? null,
-        ek: prev[sizeId]?.ek ?? null,
-        [field]: isNaN(num) ? null : num,
-      },
-    }));
-  }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>, category: string) {
     const file = e.target.files?.[0];
@@ -242,9 +168,6 @@ export default function PriceListSection({
 
     setUploadingCategory(category);
     setError(null);
-    setParseResult(null);
-    setSavedInfo(null);
-    setParseCategory(null);
 
     // Upload file to storage
     const formData = new FormData();
@@ -258,13 +181,11 @@ export default function PriceListSection({
       return;
     }
 
-    // If PDF, extract text and parse with Gemini
+    // If PDF, extract → parse → match → save → redirect
     const ext = file.name.split(".").pop()?.toLowerCase();
-    let didParse = false;
 
     if (ext === "pdf") {
       setParsing(true);
-      setParseCategory(category);
 
       try {
         // Extract PDF text in the browser
@@ -360,13 +281,11 @@ export default function PriceListSection({
         let extracted: ExtractedItem[];
         try {
           const parsed = JSON.parse(responseText);
-          // Handle both bare array and { products: [...] } wrapper
           extracted = Array.isArray(parsed) ? parsed : (parsed.products ?? parsed);
           if (!Array.isArray(extracted)) {
             throw new Error("Unexpected response format");
           }
         } catch {
-          // Fallback: try to extract array from response
           const arrStart = responseText.indexOf("[");
           const arrEnd = responseText.lastIndexOf("]");
           if (arrStart !== -1 && arrEnd > arrStart) {
@@ -390,17 +309,37 @@ export default function PriceListSection({
 
         console.log(`[PriceListSection] Extracted ${extracted.length} items from PDF`);
 
-        // Step 2: Match against portal products (in JavaScript, no Gemini)
+        // Match against portal products (JavaScript, no Gemini)
         const portalProducts: PortalProduct[] = prepData.portal_products;
-        const matchResult = matchExtractedToPortal(extracted, portalProducts);
+        const { matched, unmatchedCount } = matchExtractedToPortal(extracted, portalProducts);
 
-        console.log(`[PriceListSection] Matched: ${matchResult.summary.matched}, Unmatched: ${matchResult.summary.unmatched}`);
+        console.log(`[PriceListSection] Matched: ${matched.length}, Unmatched: ${unmatchedCount}`);
 
-        setParseResult(matchResult);
-        setEditedPrices({});
-        didParse = true;
-      } catch {
-        setError(tp.networkError);
+        // Auto-save matched prices and redirect to price overview
+        if (matched.length > 0) {
+          const items: MatchedPriceItem[] = matched.map((item) => ({
+            product_size_id: item.product_size_id,
+            product_id: item.product_id,
+            portal_model: item.portal_model,
+            portal_size: item.portal_size,
+            sku: item.sku,
+            uvp_incl_vat: item.uvp_incl_vat,
+            ek_netto: item.ek_netto,
+            pdf_model_raw: item.pdf_product_raw,
+          }));
+
+          const info = await confirmPrices(companyId, items);
+          console.log(`[PriceListSection] Saved ${info.savedCount} prices for ${info.productCount} products`);
+          setParsing(false);
+          setUploadingCategory(null);
+          e.target.value = "";
+          router.push(`/admin/kunden/${companyId}/preise`);
+          return;
+        } else {
+          setError(`Keine Zuordnungen gefunden. ${unmatchedCount} Produkte aus der PDF konnten nicht zugeordnet werden.`);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : tp.networkError);
       } finally {
         setParsing(false);
       }
@@ -409,47 +348,9 @@ export default function PriceListSection({
     setUploadingCategory(null);
     e.target.value = "";
 
-    if (!didParse) {
+    if (ext !== "pdf") {
       window.location.reload();
     }
-  }
-
-  async function handleConfirm() {
-    if (!parseResult) return;
-
-    setSaving(true);
-    setError(null);
-
-    try {
-      const items: MatchedPriceItem[] = parseResult.matched.map((item) => {
-        const prices = getPrice(item);
-        return {
-          product_size_id: item.product_size_id,
-          product_id: item.product_id,
-          portal_model: item.portal_model,
-          portal_size: item.portal_size,
-          sku: item.sku,
-          uvp_incl_vat: prices.uvp,
-          ek_netto: prices.ek,
-          pdf_model_raw: item.pdf_product_raw,
-        };
-      });
-
-      const info = await confirmPrices(companyId, items);
-      setSavedInfo(info);
-      setParseResult(null);
-      router.push(`/admin/kunden/${companyId}/preise`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tp.saveError);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function handleCancelParse() {
-    setParseResult(null);
-    setParseCategory(null);
-    setEditedPrices({});
   }
 
   async function handleDelete(id: string, category: string) {
@@ -470,201 +371,8 @@ export default function PriceListSection({
     }
   }
 
-  // Group matched items by model for display
-  function groupByModel(items: MatchedItem[]) {
-    const groups = new Map<string, MatchedItem[]>();
-    for (const item of items) {
-      const key = item.portal_model;
-      const arr = groups.get(key) ?? [];
-      arr.push(item);
-      groups.set(key, arr);
-    }
-    return groups;
-  }
-
   // ──────────────────────────────────────────────
-  // REVIEW / PREVIEW VIEW
-  // ──────────────────────────────────────────────
-  if (parseResult && !savedInfo) {
-    const grouped = groupByModel(parseResult.matched);
-
-    return (
-      <div>
-        <h3 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-swing-navy/50">
-          <FileText size={14} />
-          {tp.pricePreview}
-          {parseCategory && (
-            <span className="rounded bg-swing-navy/10 px-1.5 py-0.5 text-[10px] font-semibold text-swing-navy/60">
-              {categories.find((c) => c.key === parseCategory)?.label}
-            </span>
-          )}
-        </h3>
-
-        {error && (
-          <div className="mb-3 flex items-start gap-2 rounded border border-red-200 bg-red-50 p-3">
-            <AlertTriangle size={14} className="mt-0.5 shrink-0 text-red-500" />
-            <p className="text-xs text-red-700">{error}</p>
-          </div>
-        )}
-
-        {/* Summary badges */}
-        <div className="mb-4 flex flex-wrap gap-2 text-xs">
-          <span className="flex items-center gap-1 rounded bg-green-100 px-2 py-1 font-medium text-green-800">
-            <Check size={12} />
-            {parseResult.summary.matched} {tp.matched}
-          </span>
-          {parseResult.summary.unmatched > 0 && (
-            <span className="flex items-center gap-1 rounded bg-red-100 px-2 py-1 font-medium text-red-700">
-              <X size={12} />
-              {parseResult.summary.unmatched} {tp.notFound}
-            </span>
-          )}
-          <span className="rounded bg-gray-100 px-2 py-1 font-medium text-gray-600">
-            {parseResult.summary.total_extracted} aus PDF extrahiert
-          </span>
-        </div>
-
-        {/* ── MATCHED SECTION ── */}
-        <SectionHeader
-          title={`Zugeordnete Preise (${parseResult.summary.matched})`}
-          expanded={expandedSections.matched}
-          onToggle={() => toggleSection("matched")}
-          variant="green"
-        />
-        {expandedSections.matched && (
-          <div className="mb-4 max-h-125 overflow-auto rounded border border-gray-200">
-            <table className="w-full text-left text-xs">
-              <thead className="sticky top-0 border-b bg-gray-50 text-[10px] uppercase tracking-wider text-swing-gray-dark/50">
-                <tr>
-                  <th className="px-3 py-2">Modell</th>
-                  <th className="px-2 py-2">Größe</th>
-                  <th className="px-2 py-2 text-right">{tp.uvpGross}</th>
-                  <th className="px-2 py-2 text-right">{tp.dealerNet}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {Array.from(grouped.entries()).map(([model, items]) => (
-                  items.map((item, idx) => (
-                    <tr key={item.product_size_id} className="hover:bg-gray-50/50">
-                      {idx === 0 && (
-                        <td
-                          className="px-3 py-1.5 font-medium text-swing-navy"
-                          rowSpan={items.length}
-                        >
-                          <div>{model}</div>
-                          {item.pdf_product_raw !== model && (
-                            <div className="text-[10px] text-swing-gray-dark/40">
-                              PDF: {item.pdf_product_raw}
-                            </div>
-                          )}
-                        </td>
-                      )}
-                      <td className="px-2 py-1.5 font-medium">
-                        {item.portal_size}
-                        {item.sku && (
-                          <span className="ml-1 text-[10px] text-swing-gray-dark/30">
-                            {item.sku}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-2 py-1.5 text-right">
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={getPrice(item).uvp ?? ""}
-                          onChange={(e) =>
-                            updatePrice(item.product_size_id, "uvp", e.target.value)
-                          }
-                          className="w-24 rounded border border-gray-200 px-1.5 py-0.5 text-right text-[11px] text-swing-gray-dark/60 focus:border-swing-gold focus:outline-none"
-                        />
-                      </td>
-                      <td className="px-2 py-1.5 text-right">
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={getPrice(item).ek ?? ""}
-                          onChange={(e) =>
-                            updatePrice(item.product_size_id, "ek", e.target.value)
-                          }
-                          className="w-24 rounded border border-gray-200 px-1.5 py-0.5 text-right text-[11px] font-semibold text-swing-navy focus:border-swing-gold focus:outline-none"
-                        />
-                      </td>
-                    </tr>
-                  ))
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* ── UNMATCHED SECTION ── */}
-        {parseResult.unmatched.length > 0 && (
-          <>
-            <SectionHeader
-              title={`Nicht zugeordnet (${parseResult.unmatched.length})`}
-              expanded={expandedSections.unmatched}
-              onToggle={() => toggleSection("unmatched")}
-              variant="red"
-            />
-            {expandedSections.unmatched && (
-              <div className="mb-4 space-y-1">
-                {parseResult.unmatched.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-2 rounded bg-red-50/50 px-2.5 py-1.5 text-xs"
-                  >
-                    <X size={12} className="mt-0.5 shrink-0 text-red-400" />
-                    <div className="flex-1">
-                      <span className="font-medium text-swing-navy">
-                        {item.product}
-                      </span>
-                      <span className="ml-1 text-swing-gray-dark/40">
-                        {item.size}
-                      </span>
-                    </div>
-                    <div className="flex gap-3 text-[10px] text-swing-gray-dark/40">
-                      {item.uvp_gross != null && <span>UVP: {item.uvp_gross.toFixed(2)}</span>}
-                      {item.dealer_net != null && <span>EK: {item.dealer_net.toFixed(2)}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Actions */}
-        <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3">
-          <button
-            onClick={handleCancelParse}
-            className="cursor-pointer rounded border border-gray-300 px-3 py-1.5 text-xs text-swing-gray-dark hover:bg-gray-50"
-          >
-            {dict.common.buttons.cancel}
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={saving || parseResult.summary.matched === 0}
-            className="flex cursor-pointer items-center gap-1.5 rounded bg-swing-gold px-4 py-1.5 text-xs font-semibold text-swing-navy hover:bg-swing-gold-dark disabled:opacity-50"
-          >
-            {saving ? (
-              <>
-                <Loader2 size={12} className="animate-spin" />
-                {dict.common.buttons.loading}
-              </>
-            ) : (
-              <>
-                <Check size={12} />
-                {tp.applyCount.replace("{count}", String(parseResult.summary.matched))}
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ──────────────────────────────────────────────
-  // DEFAULT VIEW (upload buttons + file list)
+  // UPLOAD VIEW
   // ──────────────────────────────────────────────
   return (
     <div>
@@ -677,23 +385,6 @@ export default function PriceListSection({
       </div>
       {error && (
         <p className="mb-3 text-xs font-medium text-red-600">{error}</p>
-      )}
-
-      {/* Success message after saving prices */}
-      {savedInfo && (
-        <div className="mb-3 flex items-start gap-2 rounded border border-green-200 bg-green-50 p-3">
-          <Check size={14} className="mt-0.5 shrink-0 text-green-600" />
-          <div>
-            <p className="text-xs font-semibold text-green-800">
-              {tp.pricesSaved}
-            </p>
-            <p className="text-[11px] text-green-700">
-              {tp.pricesSavedCount
-                .replace("{saved}", String(savedInfo.savedCount))
-                .replace("{products}", String(savedInfo.productCount))}
-            </p>
-          </div>
-        </div>
       )}
 
       {/* Parsing indicator */}
@@ -801,35 +492,5 @@ export default function PriceListSection({
         })}
       </div>
     </div>
-  );
-}
-
-// ── Collapsible section header ──
-function SectionHeader({
-  title,
-  expanded,
-  onToggle,
-  variant,
-}: {
-  title: string;
-  expanded: boolean;
-  onToggle: () => void;
-  variant: "green" | "yellow" | "red" | "gray";
-}) {
-  const colors = {
-    green: "border-green-200 bg-green-50/50 text-green-800",
-    yellow: "border-yellow-200 bg-yellow-50/50 text-yellow-800",
-    red: "border-red-200 bg-red-50/50 text-red-700",
-    gray: "border-gray-200 bg-gray-50 text-gray-600",
-  };
-
-  return (
-    <button
-      onClick={onToggle}
-      className={`mb-1 flex w-full cursor-pointer items-center gap-1.5 rounded border px-2.5 py-1.5 text-left text-[11px] font-semibold ${colors[variant]}`}
-    >
-      {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-      {title}
-    </button>
   );
 }
