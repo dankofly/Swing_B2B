@@ -62,7 +62,8 @@ interface MatchedItem {
 }
 
 // ── Normalize strings for matching ──
-function normalize(str: string): string {
+function normalize(str: string | null | undefined): string {
+  if (!str) return "";
   return str
     .toLowerCase()
     .trim()
