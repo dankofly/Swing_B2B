@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import AiInfoTooltip from "@/components/ui/AiInfoTooltip";
-import { uploadPriceList, deletePriceUpload } from "@/lib/actions/price-uploads";
+import { uploadPriceList, deleteAllCategoryUploads } from "@/lib/actions/price-uploads";
 import { confirmPrices, type MatchedPriceItem } from "@/lib/actions/prices";
 import {
   Upload,
@@ -419,25 +419,16 @@ export default function PriceListSection({
   }
 
   async function handleDelete(id: string, category: string) {
-    if (!confirm("Preisliste wirklich löschen?")) return;
+    if (!confirm("Preisliste und alle zugehörigen Kundenpreise wirklich löschen?")) return;
     setDeletingId(id);
     setError(null);
     try {
-      // Delete ALL uploads for this category (duplicates exist from multiple uploads)
-      const idsToDelete = uploads
-        .filter((u) => u.category === category)
-        .map((u) => u.id);
-
-      for (const uid of idsToDelete) {
-        const result = await deletePriceUpload(uid, companyId);
-        if (!result.success) {
-          setError(result.error || "Löschen fehlgeschlagen");
-          setDeletingId(null);
-          return;
-        }
+      const result = await deleteAllCategoryUploads(companyId, category);
+      if (result.success) {
+        setUploads((prev) => prev.filter((u) => u.category !== category));
+      } else {
+        setError(result.error || "Löschen fehlgeschlagen");
       }
-
-      setUploads((prev) => prev.filter((u) => u.category !== category));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Löschen fehlgeschlagen");
     } finally {

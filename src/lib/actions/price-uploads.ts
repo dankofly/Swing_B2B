@@ -104,3 +104,63 @@ export async function deletePriceUpload(id: string, companyId: string) {
   revalidatePath(`/admin/kunden/${companyId}`);
   return { success: true };
 }
+
+/**
+ * Delete ALL price uploads for a company+category and also remove
+ * the associated customer_prices so the dealer sees no stale prices.
+ */
+export async function deleteAllCategoryUploads(companyId: string, category: string) {
+  try {
+    await guardAdmin();
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Keine Berechtigung" };
+  }
+
+  const supabase = createAdminClient();
+
+  // 1. Get all uploads for this company+category
+  const { data: uploads } = await supabase
+    .from("price_uploads")
+    .select("id, file_url")
+    .eq("company_id", companyId)
+    .eq("category", category);
+
+  if (!uploads || uploads.length === 0) {
+    return { success: false, error: "Keine Einträge gefunden" };
+  }
+
+  // 2. Delete all DB records
+  const { error } = await supabase
+    .from("price_uploads")
+    .delete()
+    .eq("company_id", companyId)
+    .eq("category", category);
+
+  if (error) return { success: false, error: error.message };
+
+  // 3. Delete all files from storage (best-effort)
+  const storagePaths: string[] = [];
+  for (const u of uploads) {
+    if (u.file_url) {
+      const path = u.file_url.split("/price-lists/").pop();
+      if (path) storagePaths.push(decodeURIComponent(path));
+    }
+  }
+  if (storagePaths.length > 0) {
+    try {
+      await supabase.storage.from("price-lists").remove(storagePaths);
+    } catch {
+      // Storage cleanup is best-effort
+    }
+  }
+
+  // 4. Delete all customer_prices for this company
+  await supabase
+    .from("customer_prices")
+    .delete()
+    .eq("company_id", companyId);
+
+  revalidatePath(`/admin/kunden/${companyId}`);
+  revalidatePath(`/admin/kunden/${companyId}/preise`);
+  return { success: true, deletedCount: uploads.length };
+}
