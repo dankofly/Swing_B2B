@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://swing-b2b-portal.netlify.app";
-const FROM_EMAIL = process.env.EMAIL_FROM || "SWING B2B Portal <noreply@swing.de>";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://swingparagliders.pro";
+const FROM_EMAIL = process.env.EMAIL_FROM || "SWING B2B Portal <sales@swingparagliders.pro>";
 
 // Lazy-init Resend client
 let resendClient: Resend | null = null;
@@ -138,6 +138,38 @@ function infoCard(heading: string, rows: string): string {
       </td>
     </tr>
   </table>`;
+}
+
+// ─── 0. Customer Invitation ──────────────────────────────────────────────────
+
+export function buildInvitationEmail(
+  companyName: string,
+  contactName: string,
+  passwordSetupUrl: string,
+): string {
+  const body = `
+    <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">
+      Hallo${contactName ? ` ${contactName}` : ""},
+    </p>
+    <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">
+      Sie wurden als H&auml;ndler f&uuml;r <strong>&bdquo;${companyName}&ldquo;</strong> zum SWING B2B H&auml;ndlerportal eingeladen.
+      &Uuml;ber das Portal k&ouml;nnen Sie unseren aktuellen Katalog einsehen, Ihre individuellen Preise abrufen und Bestellanfragen direkt an uns senden.
+    </p>
+    ${infoCard("Ihr Zugang", `
+      ${infoRow("Firma", `<strong>${companyName}</strong>`)}
+      ${infoRow("Status", '<span style="color:#16a34a; font-weight:700;">Freigeschaltet</span>')}
+    `)}
+    <p style="color:#414142; font-size:13px; line-height:1.7; margin:16px 0 0;">
+      Klicken Sie auf den Button unten, um Ihr Passwort festzulegen und sich anzumelden.
+      Der Link ist <strong>24 Stunden</strong> g&uuml;ltig.
+    </p>`;
+
+  return emailWrapper(
+    "Einladung zum SWING B2B Portal",
+    `Sie wurden zum SWING B2B H&auml;ndlerportal eingeladen.`,
+    body,
+    { label: "Passwort festlegen &rarr;", href: passwordSetupUrl }
+  );
 }
 
 // ─── 1. Account Approval ────────────────────────────────────────────────────

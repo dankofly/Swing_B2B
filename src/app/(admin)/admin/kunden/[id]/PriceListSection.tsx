@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useDict, useLocale } from "@/lib/i18n/context";
 import { getDateLocale } from "@/lib/i18n/shared";
+import { extractPdfText } from "@/lib/pdf-extract";
 
 interface PriceUpload {
   id: string;
@@ -188,7 +189,7 @@ export default function PriceListSection({
       return;
     }
 
-    // Step 2: If PDF, trigger Gemini parsing
+    // Step 2: If PDF, extract text client-side then send to Gemini
     const ext = file.name.split(".").pop()?.toLowerCase();
     let didParse = false;
 
@@ -197,24 +198,172 @@ export default function PriceListSection({
       setParseCategory(category);
 
       try {
-        const parseFormData = new FormData();
-        parseFormData.append("file", file);
-        parseFormData.append("company_id", companyId);
+        // Extract PDF text in the browser (no server needed for this step)
+        let pdfText: string;
+        try {
+          pdfText = await extractPdfText(file);
+        } catch (extractErr) {
+          setError(`PDF konnte nicht gelesen werden: ${extractErr instanceof Error ? extractErr.message : "Unbekannter Fehler"}`);
+          setParsing(false);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
+        }
 
-        const res = await fetch("/api/parse-pricelist", {
+        if (!pdfText || pdfText.trim().length < 50) {
+          setError("Das PDF enthält keinen extrahierbaren Text. Möglicherweise ist es ein gescanntes Dokument.");
+          setParsing(false);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
+        }
+
+        // Step 1: Get prompt + API key from server (fast, no timeout risk)
+        const prepRes = await fetch("/api/parse-pricelist", {
           method: "POST",
-          body: parseFormData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ company_id: companyId, pdf_text: pdfText }),
         });
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          setError(data.error || tp.parseError);
-        } else {
-          setParseResult(data);
-          setEditedPrices({});
-          didParse = true;
+        let prepData;
+        try {
+          prepData = await prepRes.json();
+        } catch {
+          setError(`Server-Fehler (${prepRes.status}): Antwort konnte nicht gelesen werden`);
+          setParsing(false);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
         }
+
+        if (!prepRes.ok) {
+          setError(`Fehler ${prepRes.status}: ${prepData.error}`);
+          setParsing(false);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
+        }
+
+        // Step 2: Call Gemini directly from browser (no server timeout)
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${prepData.gemini_key}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prepData.prompt }] }],
+              generationConfig: {
+                responseMimeType: "application/json",
+                maxOutputTokens: 65536,
+              },
+            }),
+          }
+        );
+
+        if (!geminiRes.ok) {
+          const errText = await geminiRes.text();
+          setError(`Gemini-Fehler (${geminiRes.status}): ${errText.slice(0, 200)}`);
+          console.error("[PriceListSection] Gemini error:", errText);
+          setParsing(false);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
+        }
+
+        const geminiData = await geminiRes.json();
+        const responseText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+        if (!responseText) {
+          const reason = geminiData.candidates?.[0]?.finishReason
+            || geminiData.promptFeedback?.blockReason
+            || JSON.stringify(geminiData).slice(0, 300);
+          setError("Gemini hat keine Antwort geliefert: " + reason);
+          setParsing(false);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
+        }
+
+        // Parse Gemini JSON response
+        console.log("[PriceListSection] Gemini raw response (first 500):", responseText.slice(0, 500));
+        let parsed;
+        try {
+          parsed = JSON.parse(responseText);
+        } catch (parseErr1) {
+          console.error("[PriceListSection] JSON.parse failed:", parseErr1);
+          // Fallback: strip markdown fences
+          let cleaned = responseText
+            .replace(/^[\s\S]*?```json?\s*/i, "")
+            .replace(/```[\s\S]*$/i, "")
+            .trim();
+          try {
+            parsed = JSON.parse(cleaned);
+          } catch {
+            // Fallback 2: extract by braces
+            const first = responseText.indexOf("{");
+            const last = responseText.lastIndexOf("}");
+            if (first !== -1 && last > first) {
+              cleaned = responseText.slice(first, last + 1);
+              try {
+                parsed = JSON.parse(cleaned);
+              } catch {
+                setError("Parse-Fehler (3). Antwort: " + responseText.slice(0, 300));
+                setParsing(false);
+                setUploadingCategory(null);
+                e.target.value = "";
+                return;
+              }
+            } else {
+              setError("Kein JSON gefunden. Antwort: " + responseText.slice(0, 300));
+              setParsing(false);
+              setUploadingCategory(null);
+              e.target.value = "";
+              return;
+            }
+          }
+        }
+
+        // Handle case where Gemini returns the data in a different structure
+        if (!parsed.matched && Array.isArray(parsed)) {
+          parsed = { matched: parsed, review_needed: [], no_match: [], missing_in_price_list: [] };
+        }
+
+        // Enrich matched items with product_id and SKU
+        const sizeMap = new Map(
+          (prepData.sizes as Array<{ id: string; sku: string; product_id: string }>).map(
+            (s) => [s.id, s]
+          )
+        );
+
+        const matched = (parsed.matched ?? []).map((item: Record<string, string>) => {
+          const size = sizeMap.get(item.portal_product_id);
+          return {
+            ...item,
+            product_size_id: item.portal_product_id,
+            product_id: size?.product_id ?? null,
+            sku: size?.sku ?? null,
+            uvp_incl_vat: item.uvp_incl_vat_eur ? parseFloat(item.uvp_incl_vat_eur.replace(/\s/g, "").replace(",", ".")) || null : null,
+            ek_netto: item.dealer_net_eur ? parseFloat(item.dealer_net_eur.replace(/\s/g, "").replace(",", ".")) || null : null,
+          };
+        });
+
+        const data = {
+          matched,
+          review_needed: parsed.review_needed ?? [],
+          no_match: parsed.no_match ?? [],
+          missing_in_price_list: parsed.missing_in_price_list ?? [],
+          summary: {
+            total_pdf: (parsed.matched?.length ?? 0) + (parsed.review_needed?.length ?? 0) + (parsed.no_match?.length ?? 0),
+            matched: parsed.matched?.length ?? 0,
+            review_needed: parsed.review_needed?.length ?? 0,
+            no_match: parsed.no_match?.length ?? 0,
+            missing_in_price_list: parsed.missing_in_price_list?.length ?? 0,
+          },
+        };
+
+        setParseResult(data);
+        setEditedPrices({});
+        didParse = true;
       } catch {
         setError(tp.networkError);
       } finally {
@@ -599,18 +748,20 @@ export default function PriceListSection({
               </p>
 
               {latestUpload ? (
-                <div className="flex items-center gap-1.5">
+                <div className="overflow-hidden rounded border border-green-200 bg-green-50">
                   <a
                     href={latestUpload.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex flex-1 items-center gap-2 rounded bg-swing-navy/5 px-3 py-2 text-xs text-swing-navy transition-colors hover:bg-swing-navy/10"
+                    className="flex items-start gap-2 px-3 py-2 text-xs text-green-800 transition-colors hover:bg-green-100"
                   >
-                    <Eye size={13} className="shrink-0 text-swing-navy/40" />
-                    <span className="flex-1 truncate">
+                    <Eye size={13} className="mt-0.5 shrink-0 text-green-500" />
+                    <span className="min-w-0 break-words">
                       {latestUpload.file_name || "Preisliste.pdf"}
                     </span>
-                    <span className="shrink-0 text-[10px] text-swing-navy/30">
+                  </a>
+                  <div className="flex items-center justify-between border-t border-green-200 px-3 py-1.5">
+                    <span className="text-[10px] text-green-600/60">
                       {new Date(latestUpload.created_at).toLocaleDateString(dl, {
                         day: "2-digit",
                         month: "2-digit",
@@ -619,31 +770,31 @@ export default function PriceListSection({
                         minute: "2-digit",
                       })}
                     </span>
-                  </a>
-
-                  <label
-                    className={`flex shrink-0 cursor-pointer items-center gap-1 rounded bg-swing-gold/15 px-2 py-2 text-[10px] font-semibold text-swing-navy transition-colors hover:bg-swing-gold/30 ${isUploading ? "opacity-50" : ""}`}
-                  >
-                    {isUploading ? (
-                      <Loader2 size={11} className="animate-spin" />
-                    ) : (
-                      <Upload size={11} />
-                    )}
-                    <input
-                      type="file"
-                      accept=".pdf,.csv"
-                      onChange={(e) => handleUpload(e, cat.key)}
-                      disabled={isUploading || parsing}
-                      className="hidden"
-                    />
-                  </label>
-
-                  <button
-                    onClick={() => handleDelete(latestUpload.id)}
-                    className="shrink-0 cursor-pointer rounded p-2 text-swing-navy/20 transition-colors hover:bg-red-50 hover:text-red-500"
-                  >
-                    <Trash2 size={12} />
-                  </button>
+                    <div className="flex items-center gap-1">
+                      <label
+                        className={`flex cursor-pointer items-center gap-1 rounded px-1.5 py-1 text-[10px] font-semibold text-green-700 transition-colors hover:bg-green-200 ${isUploading ? "opacity-50" : ""}`}
+                      >
+                        {isUploading ? (
+                          <Loader2 size={11} className="animate-spin" />
+                        ) : (
+                          <Upload size={11} />
+                        )}
+                        <input
+                          type="file"
+                          accept=".pdf,.csv"
+                          onChange={(e) => handleUpload(e, cat.key)}
+                          disabled={isUploading || parsing}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        onClick={() => handleDelete(latestUpload.id)}
+                        className="shrink-0 cursor-pointer rounded p-1 text-green-600/30 transition-colors hover:bg-red-50 hover:text-red-500"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <label

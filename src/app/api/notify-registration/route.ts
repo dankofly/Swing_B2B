@@ -175,7 +175,7 @@ function buildHtml(data: RegistrationData): string {
               <p style="margin:0 0 16px; color:rgba(65,65,66,0.5); font-size:12px;">
                 Bitte prüfen Sie die Anfrage und schalten Sie den Händler im Admin-Bereich frei.
               </p>
-              <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://swing-b2b-portal.netlify.app"}/admin/kunden"
+              <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://swingparagliders.pro"}/admin/kunden"
                  style="display:inline-block; background-color:#FCB923; color:#173045; padding:12px 32px; font-size:13px; font-weight:700; text-decoration:none; border-radius:2px; letter-spacing:0.5px;">
                 Zur Kundenverwaltung →
               </a>

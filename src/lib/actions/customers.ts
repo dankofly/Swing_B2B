@@ -2,7 +2,7 @@
 
 import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { sendEmail, buildApprovalEmail } from "@/lib/email";
+import { sendEmail, buildApprovalEmail, buildInvitationEmail } from "@/lib/email";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isValidUUID(id: string): boolean { return UUID_RE.test(id); }
@@ -107,6 +107,97 @@ export async function toggleCompanyApproval(id: string, approved: boolean) {
 
   revalidatePath("/admin/kunden");
   revalidatePath(`/admin/kunden/${id}`);
+  return { success: true };
+}
+
+export async function inviteCustomer(
+  companyId: string,
+  email: string,
+  fullName: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!isValidUUID(companyId)) return { success: false, error: "Ungültige Company-ID" };
+  if (!email || !email.includes("@")) return { success: false, error: "Ungültige E-Mail" };
+
+  await guardAdmin();
+  const supabase = createAdminClient();
+
+  // Check company exists
+  const { data: company } = await supabase
+    .from("companies")
+    .select("id, name, is_approved")
+    .eq("id", companyId)
+    .single();
+
+  if (!company) return { success: false, error: "Firma nicht gefunden" };
+
+  // Check if user with this email already exists
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("id, email")
+    .eq("email", email)
+    .single();
+
+  if (existingProfile) return { success: false, error: "Ein Benutzer mit dieser E-Mail existiert bereits" };
+
+  // Create Supabase auth user (email pre-confirmed, no password yet)
+  const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+    email,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  });
+
+  if (createError || !newUser?.user) {
+    console.error("[inviteCustomer] createUser error:", createError);
+    return { success: false, error: createError?.message || "Benutzer konnte nicht erstellt werden" };
+  }
+
+  // Link profile to company with buyer role
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .upsert({
+      id: newUser.user.id,
+      email,
+      full_name: fullName || null,
+      company_id: companyId,
+      role: "buyer",
+    });
+
+  if (profileError) {
+    console.error("[inviteCustomer] profile upsert error:", profileError);
+  }
+
+  // Auto-approve company if not yet approved
+  if (!company.is_approved) {
+    await supabase
+      .from("companies")
+      .update({ is_approved: true })
+      .eq("id", companyId);
+  }
+
+  // Generate recovery link (user sets password on first visit)
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://swingparagliders.pro";
+  const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+    type: "recovery",
+    email,
+    options: {
+      redirectTo: `${siteUrl}/reset-password`,
+    },
+  });
+
+  if (linkError || !linkData?.properties?.action_link) {
+    console.error("[inviteCustomer] generateLink error:", linkError);
+    return { success: false, error: "Einladungslink konnte nicht erstellt werden" };
+  }
+
+  // Send branded invitation email via Resend
+  const html = buildInvitationEmail(company.name, fullName, linkData.properties.action_link);
+  const sent = await sendEmail(email, `Einladung zum SWING B2B Portal`, html);
+
+  if (!sent) {
+    return { success: false, error: "E-Mail konnte nicht gesendet werden" };
+  }
+
+  revalidatePath(`/admin/kunden/${companyId}`);
   return { success: true };
 }
 

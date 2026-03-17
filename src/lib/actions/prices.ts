@@ -80,6 +80,64 @@ export async function confirmPrices(
   return { savedCount: valid.length, productCount: productIds.size };
 }
 
+/** Save/update individual prices from the price overview editor. */
+export async function saveCustomerPrices(
+  companyId: string,
+  prices: Array<{ product_size_id: string; ek_netto: number | null; uvp_incl_vat: number | null }>
+) {
+  if (!isValidUUID(companyId)) throw new Error("Ungültige Firmen-ID");
+  await guardAdmin();
+  const supabase = createAdminClient();
+
+  // Get existing prices for this company
+  const { data: existing } = await supabase
+    .from("customer_prices")
+    .select("id, product_size_id")
+    .eq("company_id", companyId);
+
+  const existingMap = new Map(
+    (existing ?? []).map((e) => [e.product_size_id, e.id])
+  );
+
+  const toInsert: Array<{ company_id: string; product_size_id: string; unit_price: number; uvp_incl_vat: number | null }> = [];
+  const toUpdate: Array<{ id: string; unit_price: number; uvp_incl_vat: number | null }> = [];
+  const toDelete: string[] = [];
+
+  for (const p of prices) {
+    if (!isValidUUID(p.product_size_id)) continue;
+    const existingId = existingMap.get(p.product_size_id);
+
+    if (p.ek_netto != null && p.ek_netto > 0) {
+      if (existingId) {
+        toUpdate.push({ id: existingId, unit_price: p.ek_netto, uvp_incl_vat: p.uvp_incl_vat });
+      } else {
+        toInsert.push({ company_id: companyId, product_size_id: p.product_size_id, unit_price: p.ek_netto, uvp_incl_vat: p.uvp_incl_vat });
+      }
+    } else if (existingId) {
+      // Price cleared — remove existing
+      toDelete.push(existingId);
+    }
+  }
+
+  const ops: Promise<unknown>[] = [];
+
+  if (toInsert.length > 0) {
+    ops.push(supabase.from("customer_prices").insert(toInsert));
+  }
+  for (const u of toUpdate) {
+    ops.push(supabase.from("customer_prices").update({ unit_price: u.unit_price, uvp_incl_vat: u.uvp_incl_vat }).eq("id", u.id));
+  }
+  if (toDelete.length > 0) {
+    ops.push(supabase.from("customer_prices").delete().in("id", toDelete));
+  }
+
+  await Promise.all(ops);
+
+  revalidatePath(`/admin/kunden/${companyId}`);
+  revalidatePath(`/admin/kunden/${companyId}/preise`);
+  return { saved: toInsert.length + toUpdate.length, deleted: toDelete.length };
+}
+
 export async function getCompanyPrices(companyId: string) {
   const supabase = createAdminClient();
 

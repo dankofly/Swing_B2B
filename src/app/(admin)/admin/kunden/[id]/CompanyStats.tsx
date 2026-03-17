@@ -128,7 +128,7 @@ function TrendBadge({ value }: { value: number }) {
   );
 }
 
-export default function CompanyStats() {
+export default function CompanyStats({ lastSignInAt }: { lastSignInAt?: string | null }) {
   const dict = useDict();
   const locale = useLocale();
   const dl = getDateLocale(locale);
@@ -172,6 +172,7 @@ export default function CompanyStats() {
       accent: "#3b82f6",
       bg: "bg-blue-500/10",
       iconColor: "text-blue-500",
+      lastLogin: lastSignInAt,
     },
     {
       label: ts.inquiries,
@@ -182,6 +183,7 @@ export default function CompanyStats() {
       accent: "#f59e0b",
       bg: "bg-amber-500/10",
       iconColor: "text-amber-500",
+      lastLogin: undefined,
     },
     {
       label: ts.revenue,
@@ -192,6 +194,7 @@ export default function CompanyStats() {
       accent: "#10b981",
       bg: "bg-emerald-500/10",
       iconColor: "text-emerald-500",
+      lastLogin: undefined,
     },
   ];
 
@@ -226,14 +229,22 @@ export default function CompanyStats() {
             className="group relative rounded-lg px-3 py-2.5 transition-colors duration-200 hover:bg-swing-navy/[0.02]"
             style={{ animationDelay: `${i * 60}ms` }}
           >
-            {/* Top row: icon + label + trend */}
+            {/* Top row: icon + label + last login + trend */}
             <div className="mb-1 flex items-center gap-2">
               <div className={`flex h-6 w-6 items-center justify-center rounded-md ${s.bg} transition-transform duration-200 group-hover:scale-110`}>
                 <s.icon size={12} className={s.iconColor} strokeWidth={2.5} />
               </div>
-              <span className="flex-1 text-[10px] font-bold uppercase tracking-[0.1em] text-swing-navy/25">
+              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-swing-navy/25">
                 {s.label}
               </span>
+              {s.lastLogin !== undefined && (
+                <span className="text-[10px] text-swing-navy/25">
+                  {s.lastLogin
+                    ? new Date(s.lastLogin).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })
+                    : "–"}
+                </span>
+              )}
+              <span className="flex-1" />
               <TrendBadge value={s.trend} />
             </div>
 

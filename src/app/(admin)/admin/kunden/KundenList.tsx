@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, CheckCircle, XCircle, Search, Plus } from "lucide-react";
+import { Users, CheckCircle, XCircle, Search, Plus, LogIn } from "lucide-react";
 import DeleteCompanyButton from "./DeleteCompanyButton";
 import { useDict, useLocale } from "@/lib/i18n/context";
 import { getDateLocale } from "@/lib/i18n/shared";
@@ -22,6 +22,7 @@ interface Company {
     email: string;
     full_name: string | null;
     role: string;
+    last_sign_in_at: string | null;
   }>;
 }
 
@@ -132,6 +133,11 @@ export default function KundenList({ companies }: { companies: Company[] }) {
                           <span className="text-swing-gray-dark/30">
                             ({p.role})
                           </span>
+                          {p.last_sign_in_at && (
+                            <span className="ml-1 text-[10px] text-swing-gray-dark/30" title="Letzter Login">
+                              · {new Date(p.last_sign_in_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          )}
                         </span>
                       ))}
                     </div>
@@ -139,10 +145,25 @@ export default function KundenList({ companies }: { companies: Company[] }) {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="hidden text-xs text-swing-gray-dark/40 sm:inline">
-                    {tc.since}{" "}
-                    {new Date(company.created_at).toLocaleDateString(dl)}
-                  </span>
+                  <div className="hidden flex-col items-end gap-0.5 sm:flex">
+                    <span className="text-xs text-swing-gray-dark/40">
+                      {tc.since}{" "}
+                      {new Date(company.created_at).toLocaleDateString(dl)}
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] text-swing-gray-dark/30">
+                      <LogIn size={9} />
+                      {(() => {
+                        const lastLogin = company.profiles
+                          .map((p) => p.last_sign_in_at)
+                          .filter(Boolean)
+                          .sort()
+                          .reverse()[0];
+                        return lastLogin
+                          ? new Date(lastLogin).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })
+                          : "Noch nie";
+                      })()}
+                    </span>
+                  </div>
                   <button
                     onClick={() =>
                       toggleApproval(company.id, company.is_approved)

@@ -68,9 +68,8 @@ Erzeuge für jeden Datensatz ein Feld:
 - match_key = model_normalized + "||" + size_normalized
 
 Ausgabeformat:
-Gib ausschließlich JSON zurück.
+Gib ausschließlich valides JSON zurück.
 Keine Erklärungen.
-Keine Markdown-Codeblöcke.
 
 JSON-Schema:
 {
@@ -112,18 +111,19 @@ export interface PortalProductForMatching {
 
 /** Build the extraction + portal matching prompt. */
 export function buildExtractionAndMatchingPrompt(
-  portalProducts: PortalProductForMatching[]
+  portalProducts: PortalProductForMatching[],
+  pdfText?: string
 ): string {
   const portalJson = JSON.stringify({ portal_products: portalProducts }, null, 2);
 
   return `Du arbeitest als präziser Preislisten-Extraktor und Produkt-Matcher für ein bestehendes B2B-Portal.
 
 Du erhältst zwei Eingaben:
-1. Eine PDF-Händlerpreisliste
+1. Den extrahierten Text einer Händlerpreisliste (aus einem PDF)
 2. Eine strukturierte Liste der bereits im B2B-Portal vorhandenen Produkte
 
 Ziel:
-Extrahiere aus der PDF pro Produkt und Größe genau zwei Preisfelder:
+Extrahiere aus dem Preislisten-Text pro Produkt und Größe genau zwei Preisfelder:
 - UVP inkl. MwSt.
 - Händler EK netto
 
@@ -142,9 +142,9 @@ Wichtige Rahmenbedingungen:
 
 Deine Aufgabe besteht aus 4 Schritten:
 
-SCHRITT 1: PRODUKTDATEN AUS DER PDF EXTRAHIEREN
+SCHRITT 1: PRODUKTDATEN AUS DEM PREISLISTEN-TEXT EXTRAHIEREN
 
-Lies die PDF vollständig und extrahiere alle kaufbaren Produktdatensätze aus allen enthaltenen Produktgruppen.
+Lies den extrahierten Preislisten-Text vollständig und extrahiere alle kaufbaren Produktdatensätze aus allen enthaltenen Produktgruppen.
 
 Pro Datensatz sind genau diese Informationen relevant:
 - category
@@ -242,7 +242,6 @@ Ausgabeformat:
 Gib ausschließlich valides JSON zurück.
 Keine Erklärungen.
 Kein Fließtext.
-Keine Markdown-Codeblöcke.
 
 Verwende exakt dieses JSON-Schema:
 
@@ -329,5 +328,9 @@ Fülle nur bestehende Produkte.
 
 Hier sind die aktuellen Portalprodukte:
 
-${portalJson}`;
+${portalJson}
+
+${pdfText ? `Hier ist der extrahierte Text der Händlerpreisliste:
+
+${pdfText}` : ""}`;
 }

@@ -13,6 +13,7 @@ import {
   ShoppingCart,
   BarChart3,
   Eye,
+  ListChecks,
 } from "lucide-react";
 import ApprovalToggle from "./ApprovalToggle";
 import DeleteCompanyButton from "../DeleteCompanyButton";
@@ -23,6 +24,7 @@ import { getCompanyPriceUploads } from "@/lib/actions/price-uploads";
 import { getCompanyInquiries } from "@/lib/actions/inquiries";
 import { getCompanyNotes } from "@/lib/actions/company-notes";
 import CompanyStats from "./CompanyStats";
+import InviteCustomerButton from "./InviteCustomerButton";
 import LocalClock from "./LocalClock";
 import { getDictionary, getLocale, getDateLocale } from "@/lib/i18n";
 
@@ -42,7 +44,7 @@ export default async function KundenDetailPage({
 
   const [
     { data: companyRaw },
-    { data: profiles },
+    { data: profilesRaw },
     priceUploads,
     inquiries,
     companyNotes,
@@ -54,7 +56,15 @@ export default async function KundenDetailPage({
     getCompanyNotes(id),
   ]);
 
-  const company = companyRaw ? { ...companyRaw, profiles: profiles ?? [] } : null;
+  // Fetch last_sign_in_at for each profile from Supabase Auth
+  const profilesWithLogin = await Promise.all(
+    (profilesRaw ?? []).map(async (p) => {
+      const { data: { user } } = await supabase.auth.admin.getUserById(p.id);
+      return { ...p, last_sign_in_at: user?.last_sign_in_at ?? null };
+    })
+  );
+
+  const company = companyRaw ? { ...companyRaw, profiles: profilesWithLogin } : null;
 
   if (!company) notFound();
 
@@ -245,24 +255,41 @@ export default async function KundenDetailPage({
             </div>
 
             {/* Benutzer */}
-            {company.profiles && company.profiles.length > 0 && (
-              <div className="px-5 py-2.5">
-                <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">
-                  <Users size={11} />
-                  {td.users}
-                </p>
-                <div className="space-y-1.5">
+            <div className="px-5 py-2.5">
+              <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">
+                <Users size={11} />
+                {td.users}
+              </p>
+              {company.profiles && company.profiles.length > 0 && (
+                <div className="mb-2 space-y-1.5">
                   {company.profiles.map(
-                    (p: { id: string; email: string; full_name: string | null; role: string }) => (
-                      <div key={p.id} className="flex items-center justify-between">
-                        <span className="text-xs text-swing-navy">{p.full_name || p.email}</span>
-                        <span className="rounded bg-swing-navy/10 px-2 py-0.5 text-[10px] font-bold text-swing-navy">{p.role}</span>
+                    (p: { id: string; email: string; full_name: string | null; role: string; last_sign_in_at: string | null }) => (
+                      <div key={p.id} className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <span className="text-xs text-swing-navy">{p.full_name || p.email}</span>
+                          {p.last_sign_in_at && (
+                            <p className="text-[10px] text-swing-navy/30">
+                              Login: {new Date(p.last_sign_in_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          )}
+                          {!p.last_sign_in_at && (
+                            <p className="text-[10px] italic text-swing-navy/20">Noch nie eingeloggt</p>
+                          )}
+                        </div>
+                        <span className="shrink-0 rounded bg-swing-navy/10 px-2 py-0.5 text-[10px] font-bold text-swing-navy">{p.role}</span>
                       </div>
                     )
                   )}
                 </div>
-              </div>
-            )}
+              )}
+              {!company.profiles.some((p: { last_sign_in_at: string | null }) => p.last_sign_in_at) && (
+                <InviteCustomerButton
+                  companyId={company.id}
+                  companyEmail={company.contact_email || ""}
+                  contactName={company.contact_person || ""}
+                />
+              )}
+            </div>
 
           </div>
         </div>
@@ -276,7 +303,13 @@ export default async function KundenDetailPage({
             <h3 className="text-sm font-bold text-swing-navy">{td.statistics}</h3>
           </div>
           <div className="p-5">
-            <CompanyStats />
+            <CompanyStats lastSignInAt={
+              profilesWithLogin
+                .map((p) => p.last_sign_in_at)
+                .filter(Boolean)
+                .sort()
+                .reverse()[0] ?? null
+            } />
           </div>
         </div>
 
@@ -287,6 +320,13 @@ export default async function KundenDetailPage({
               <FileText size={14} strokeWidth={1.75} />
             </div>
             <h3 className="text-sm font-bold text-swing-navy">{td.priceLists}</h3>
+            <Link
+              href={`/admin/kunden/${id}/preise`}
+              className="ml-auto flex items-center gap-1.5 rounded bg-swing-navy/10 px-3 py-1.5 text-[11px] font-bold text-swing-navy transition-colors hover:bg-swing-navy/20"
+            >
+              <ListChecks size={12} />
+              Preisübersicht
+            </Link>
           </div>
           <div className="flex-1 p-5">
             <PriceListSection

@@ -11,13 +11,22 @@ export default async function AdminKundenPage() {
     .select("id, name, contact_email, phone, address, is_approved, created_at, company_type, contact_person, vat_id")
     .order("created_at", { ascending: false });
 
-  const { data: allProfiles } = await supabase
-    .from("profiles")
-    .select("id, email, full_name, role, company_id");
+  const [{ data: allProfiles }, { data: { users: authUsers } }] = await Promise.all([
+    supabase.from("profiles").select("id, email, full_name, role, company_id"),
+    supabase.auth.admin.listUsers({ perPage: 1000 }),
+  ]);
+
+  // Build a map of user_id → last_sign_in_at
+  const lastSignInMap = new Map(
+    (authUsers ?? []).map((u) => [u.id, u.last_sign_in_at ?? null])
+  );
 
   const companies = (companiesRaw ?? []).map((c) => ({
     ...c,
-    profiles: (allProfiles ?? []).filter((p) => p.company_id === c.id),
+    profiles: (allProfiles ?? []).filter((p) => p.company_id === c.id).map((p) => ({
+      ...p,
+      last_sign_in_at: lastSignInMap.get(p.id) ?? null,
+    })),
   }));
 
   const pending = companies.filter((c) => !c.is_approved);
