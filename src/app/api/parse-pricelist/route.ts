@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createAuthClient } from "@/lib/supabase/server";
-import {
-  buildExtractionAndMatchingPrompt,
-  type PortalProductForMatching,
-} from "@/lib/gemini-prompts";
+import { buildExtractionPrompt } from "@/lib/gemini-prompts";
 
 /**
- * Step 1 API: Prepares the Gemini prompt with portal products + PDF text.
- * Returns the prompt so the client can call Gemini directly (avoids serverless timeout).
+ * Prepares the Gemini extraction prompt and returns portal products for
+ * client-side matching. The client calls Gemini directly (avoids serverless timeout).
  */
 export async function POST(request: NextRequest) {
   try {
@@ -42,7 +39,7 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Fetch products + sizes
+    // Fetch products + sizes for client-side matching
     const [{ data: allProducts }, { data: allSizes }] = await Promise.all([
       supabase.from("products").select("id, name, slug").eq("is_active", true).order("name"),
       supabase.from("product_sizes").select("id, sku, size_label, product_id").order("sort_order"),
@@ -50,26 +47,22 @@ export async function POST(request: NextRequest) {
 
     const productMap = new Map((allProducts ?? []).map((p) => [p.id, p]));
 
-    const portalProducts: PortalProductForMatching[] = (allSizes ?? [])
-      .filter((s) => productMap.has(s.product_id))
-      .map((s) => ({
-        portal_product_id: s.id,
-        portal_model: productMap.get(s.product_id)!.name,
-        portal_size: s.size_label,
-      }));
+    // Build extraction-only prompt (no portal products embedded)
+    const prompt = buildExtractionPrompt(pdfText);
 
-    // Build prompt
-    const prompt = buildExtractionAndMatchingPrompt(portalProducts, pdfText);
-
-    // Return prompt + API key + size data for client-side Gemini call
+    // Return prompt + API key + portal products for client-side matching
     return NextResponse.json({
       prompt,
       gemini_key: process.env.GEMINI_API_KEY,
-      sizes: (allSizes ?? []).map((s) => ({
-        id: s.id,
-        sku: s.sku,
-        product_id: s.product_id,
-      })),
+      portal_products: (allSizes ?? [])
+        .filter((s) => productMap.has(s.product_id))
+        .map((s) => ({
+          product_size_id: s.id,
+          product_id: s.product_id,
+          model: productMap.get(s.product_id)!.name,
+          size: s.size_label,
+          sku: s.sku,
+        })),
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);

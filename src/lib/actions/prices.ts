@@ -16,7 +16,7 @@ export interface MatchedPriceItem {
   uvp_incl_vat: number | null;
   ek_netto: number | null;
   pdf_model_raw: string;
-  pdf_category: string;
+  pdf_category?: string;
 }
 
 /**

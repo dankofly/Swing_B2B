@@ -11,10 +11,10 @@ import {
   Loader2,
   Check,
   X,
-  AlertTriangle,
   Eye,
   ChevronDown,
   ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
 import { useDict, useLocale } from "@/lib/i18n/context";
 import { getDateLocale } from "@/lib/i18n/shared";
@@ -35,141 +35,139 @@ interface CategoryConfig {
   label: string;
 }
 
-/** Shape returned by /api/parse-pricelist for matched items */
-interface ApiMatchedItem {
-  portal_product_id: string;
+// ── Step 1: Gemini extraction output ──
+interface ExtractedItem {
+  product: string;
+  size: string;
+  uvp_gross: number | null;
+  dealer_net: number | null;
+}
+
+// ── Portal product from API (for client-side matching) ──
+interface PortalProduct {
+  product_size_id: string;
+  product_id: string;
+  model: string;
+  size: string;
+  sku: string | null;
+}
+
+// ── Step 2: Matched item after JS matching ──
+interface MatchedItem {
+  product_size_id: string;
+  product_id: string;
   portal_model: string;
   portal_size: string;
-  pdf_category: string;
-  pdf_model_raw: string;
-  pdf_model_normalized: string;
-  pdf_size_raw: string;
-  pdf_size_normalized: string;
-  uvp_incl_vat_eur: string;
-  dealer_net_eur: string;
-  confidence: string;
-  match_basis: string;
-  product_size_id: string;
-  product_id: string | null;
   sku: string | null;
   uvp_incl_vat: number | null;
   ek_netto: number | null;
+  pdf_product_raw: string;
+  pdf_size_raw: string;
 }
 
-interface ApiPdfProduct {
-  category: string;
-  model_raw: string;
-  model_normalized: string;
-  size_raw: string;
-  size_normalized: string;
-  uvp_incl_vat_eur: string;
-  dealer_net_eur: string;
-}
-
-interface ApiReviewItem {
-  pdf_product: ApiPdfProduct;
-  portal_candidates: Array<{
-    portal_product_id: string;
-    portal_model: string;
-    portal_size: string;
-  }>;
-  reason: string;
-}
-
-interface ApiNoMatchItem {
-  pdf_product: ApiPdfProduct;
-  reason: string;
-}
-
-interface ApiMissingItem {
-  portal_product_id: string;
-  portal_model: string;
-  portal_size: string;
-  reason: string;
+interface UnmatchedItem {
+  product: string;
+  size: string;
+  uvp_gross: number | null;
+  dealer_net: number | null;
 }
 
 interface ParseResult {
-  matched: ApiMatchedItem[];
-  review_needed: ApiReviewItem[];
-  no_match: ApiNoMatchItem[];
-  missing_in_price_list: ApiMissingItem[];
+  matched: MatchedItem[];
+  unmatched: UnmatchedItem[];
   summary: {
-    total_pdf: number;
+    total_extracted: number;
     matched: number;
-    review_needed: number;
-    no_match: number;
-    missing_in_price_list: number;
+    unmatched: number;
   };
 }
 
-/**
- * Attempt to repair truncated JSON from Gemini (output cut off at token limit).
- * Extracts the "matched" array even if the rest is incomplete.
- */
-function repairTruncatedJson(raw: string): Record<string, unknown> | null {
-  try {
-    // Find the start of the matched array
-    const matchedStart = raw.indexOf('"matched"');
-    if (matchedStart === -1) return null;
+// ── Normalize strings for matching ──
+function normalize(str: string): string {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[-\u2013\u2014]/g, "-")
+    .replace(/['']/g, "'");
+}
 
-    const arrStart = raw.indexOf("[", matchedStart);
-    if (arrStart === -1) return null;
+// ── Match extracted items against portal products ──
+function matchExtractedToPortal(
+  extracted: ExtractedItem[],
+  portalProducts: PortalProduct[]
+): ParseResult {
+  const matched: MatchedItem[] = [];
+  const unmatched: UnmatchedItem[] = [];
+  const matchedSizeIds = new Set<string>();
 
-    // Try progressively shorter substrings to find valid matched items
-    let lastGoodEnd = -1;
-    let depth = 0;
-    let inString = false;
-    let escape = false;
+  for (const item of extracted) {
+    const normProduct = normalize(item.product);
+    const normSize = normalize(item.size);
 
-    for (let i = arrStart; i < raw.length; i++) {
-      const ch = raw[i];
-      if (escape) { escape = false; continue; }
-      if (ch === "\\") { escape = true; continue; }
-      if (ch === '"') { inString = !inString; continue; }
-      if (inString) continue;
+    // 1. Exact normalized match
+    const exactMatch = portalProducts.find(
+      (pp) =>
+        !matchedSizeIds.has(pp.product_size_id) &&
+        normalize(pp.model) === normProduct &&
+        normalize(pp.size) === normSize
+    );
 
-      if (ch === "[" || ch === "{") depth++;
-      else if (ch === "]" || ch === "}") {
-        depth--;
-        if (depth === 0) {
-          // Found the complete matched array
-          const arrStr = raw.slice(arrStart, i + 1);
-          try {
-            const matched = JSON.parse(arrStr);
-            return {
-              matched,
-              review_needed: [],
-              no_match: [],
-              missing_in_price_list: [],
-            };
-          } catch { break; }
-        }
-      }
-      // Track last complete object in the array (depth === 1 means we just closed an object in the array)
-      if (depth === 1 && ch === "}") {
-        lastGoodEnd = i;
-      }
+    if (exactMatch) {
+      matched.push({
+        product_size_id: exactMatch.product_size_id,
+        product_id: exactMatch.product_id,
+        portal_model: exactMatch.model,
+        portal_size: exactMatch.size,
+        sku: exactMatch.sku,
+        uvp_incl_vat: item.uvp_gross,
+        ek_netto: item.dealer_net,
+        pdf_product_raw: item.product,
+        pdf_size_raw: item.size,
+      });
+      matchedSizeIds.add(exactMatch.product_size_id);
+      continue;
     }
 
-    // Array was truncated — close it at last complete object
-    if (lastGoodEnd > arrStart) {
-      const partialArr = raw.slice(arrStart, lastGoodEnd + 1) + "]";
-      try {
-        const matched = JSON.parse(partialArr);
-        console.log(`[repairTruncatedJson] Recovered ${matched.length} matched items from truncated response`);
-        return {
-          matched,
-          review_needed: [],
-          no_match: [],
-          missing_in_price_list: [],
-        };
-      } catch { /* fall through */ }
+    // 2. Fuzzy: one model name contains the other, sizes must match exactly
+    const fuzzyMatch = portalProducts.find((pp) => {
+      if (matchedSizeIds.has(pp.product_size_id)) return false;
+      const normModel = normalize(pp.model);
+      const normPPSize = normalize(pp.size);
+      return (
+        (normModel.includes(normProduct) || normProduct.includes(normModel)) &&
+        normPPSize === normSize
+      );
+    });
+
+    if (fuzzyMatch) {
+      matched.push({
+        product_size_id: fuzzyMatch.product_size_id,
+        product_id: fuzzyMatch.product_id,
+        portal_model: fuzzyMatch.model,
+        portal_size: fuzzyMatch.size,
+        sku: fuzzyMatch.sku,
+        uvp_incl_vat: item.uvp_gross,
+        ek_netto: item.dealer_net,
+        pdf_product_raw: item.product,
+        pdf_size_raw: item.size,
+      });
+      matchedSizeIds.add(fuzzyMatch.product_size_id);
+      continue;
     }
 
-    return null;
-  } catch {
-    return null;
+    unmatched.push(item);
   }
+
+  return {
+    matched,
+    unmatched,
+    summary: {
+      total_extracted: extracted.length,
+      matched: matched.length,
+      unmatched: unmatched.length,
+    },
+  };
 }
 
 export default function PriceListSection({
@@ -209,16 +207,14 @@ export default function PriceListSection({
   // Collapsed sections
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     matched: true,
-    review: false,
-    noMatch: false,
-    missing: false,
+    unmatched: false,
   });
 
   function toggleSection(key: string) {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  function getPrice(item: ApiMatchedItem) {
+  function getPrice(item: MatchedItem) {
     const edited = editedPrices[item.product_size_id];
     return {
       uvp: edited?.uvp ?? item.uvp_incl_vat,
@@ -248,7 +244,7 @@ export default function PriceListSection({
     setSavedInfo(null);
     setParseCategory(null);
 
-    // Step 1: Upload file to storage
+    // Upload file to storage
     const formData = new FormData();
     formData.append("file", file);
 
@@ -260,7 +256,7 @@ export default function PriceListSection({
       return;
     }
 
-    // Step 2: If PDF, extract text client-side then send to Gemini
+    // If PDF, extract text and parse with Gemini
     const ext = file.name.split(".").pop()?.toLowerCase();
     let didParse = false;
 
@@ -269,7 +265,7 @@ export default function PriceListSection({
       setParseCategory(category);
 
       try {
-        // Extract PDF text in the browser (no server needed for this step)
+        // Extract PDF text in the browser
         let pdfText: string;
         try {
           pdfText = await extractPdfText(file);
@@ -289,7 +285,7 @@ export default function PriceListSection({
           return;
         }
 
-        // Step 1: Get prompt + API key from server (fast, no timeout risk)
+        // Get extraction prompt + portal products from server
         const prepRes = await fetch("/api/parse-pricelist", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -315,7 +311,7 @@ export default function PriceListSection({
           return;
         }
 
-        // Step 2: Call Gemini directly from browser (no server timeout)
+        // Call Gemini directly from browser (extraction only, small output)
         const geminiRes = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${prepData.gemini_key}`,
           {
@@ -325,7 +321,7 @@ export default function PriceListSection({
               contents: [{ parts: [{ text: prepData.prompt }] }],
               generationConfig: {
                 responseMimeType: "application/json",
-                maxOutputTokens: 65536,
+                maxOutputTokens: 16384,
               },
             }),
           }
@@ -355,91 +351,50 @@ export default function PriceListSection({
           return;
         }
 
-        // Parse Gemini JSON response
-        console.log("[PriceListSection] Gemini raw response (first 500):", responseText.slice(0, 500));
-        console.log("[PriceListSection] Response length:", responseText.length, "finishReason:", geminiData.candidates?.[0]?.finishReason);
-        let parsed;
+        // Parse Gemini JSON response (simple flat array)
+        console.log("[PriceListSection] Gemini extraction response (first 500):", responseText.slice(0, 500));
+        console.log("[PriceListSection] Response length:", responseText.length);
+
+        let extracted: ExtractedItem[];
         try {
-          parsed = JSON.parse(responseText);
+          const parsed = JSON.parse(responseText);
+          // Handle both bare array and { products: [...] } wrapper
+          extracted = Array.isArray(parsed) ? parsed : (parsed.products ?? parsed);
+          if (!Array.isArray(extracted)) {
+            throw new Error("Unexpected response format");
+          }
         } catch {
-          // Try stripping markdown fences
-          let cleaned = responseText
-            .replace(/^[\s\S]*?```json?\s*/i, "")
-            .replace(/```[\s\S]*$/i, "")
-            .trim();
-          try {
-            parsed = JSON.parse(cleaned);
-          } catch {
-            // Extract from first { to last }
-            const first = responseText.indexOf("{");
-            const last = responseText.lastIndexOf("}");
-            if (first !== -1 && last > first) {
-              cleaned = responseText.slice(first, last + 1);
-              try {
-                parsed = JSON.parse(cleaned);
-              } catch {
-                // Truncated JSON — try to repair
-                parsed = repairTruncatedJson(responseText);
-                if (!parsed) {
-                  setError("Die KI-Antwort wurde abgeschnitten. Bitte erneut versuchen.");
-                  setParsing(false);
-                  setUploadingCategory(null);
-                  e.target.value = "";
-                  return;
-                }
-              }
-            } else {
-              parsed = repairTruncatedJson(responseText);
-              if (!parsed) {
-                setError("Kein JSON gefunden. Bitte erneut versuchen.");
-                setParsing(false);
-                setUploadingCategory(null);
-                e.target.value = "";
-                return;
-              }
+          // Fallback: try to extract array from response
+          const arrStart = responseText.indexOf("[");
+          const arrEnd = responseText.lastIndexOf("]");
+          if (arrStart !== -1 && arrEnd > arrStart) {
+            try {
+              extracted = JSON.parse(responseText.slice(arrStart, arrEnd + 1));
+            } catch {
+              setError("KI-Antwort konnte nicht gelesen werden. Bitte erneut versuchen.");
+              setParsing(false);
+              setUploadingCategory(null);
+              e.target.value = "";
+              return;
             }
+          } else {
+            setError("Kein gültiges JSON in der KI-Antwort.");
+            setParsing(false);
+            setUploadingCategory(null);
+            e.target.value = "";
+            return;
           }
         }
 
-        // Handle case where Gemini returns the data in a different structure
-        if (!parsed.matched && Array.isArray(parsed)) {
-          parsed = { matched: parsed, review_needed: [], no_match: [], missing_in_price_list: [] };
-        }
+        console.log(`[PriceListSection] Extracted ${extracted.length} items from PDF`);
 
-        // Enrich matched items with product_id and SKU
-        const sizeMap = new Map(
-          (prepData.sizes as Array<{ id: string; sku: string; product_id: string }>).map(
-            (s) => [s.id, s]
-          )
-        );
+        // Step 2: Match against portal products (in JavaScript, no Gemini)
+        const portalProducts: PortalProduct[] = prepData.portal_products;
+        const matchResult = matchExtractedToPortal(extracted, portalProducts);
 
-        const matched = (parsed.matched ?? []).map((item: Record<string, string>) => {
-          const size = sizeMap.get(item.portal_product_id);
-          return {
-            ...item,
-            product_size_id: item.portal_product_id,
-            product_id: size?.product_id ?? null,
-            sku: size?.sku ?? null,
-            uvp_incl_vat: item.uvp_incl_vat_eur ? parseFloat(item.uvp_incl_vat_eur.replace(/\s/g, "").replace(",", ".")) || null : null,
-            ek_netto: item.dealer_net_eur ? parseFloat(item.dealer_net_eur.replace(/\s/g, "").replace(",", ".")) || null : null,
-          };
-        });
+        console.log(`[PriceListSection] Matched: ${matchResult.summary.matched}, Unmatched: ${matchResult.summary.unmatched}`);
 
-        const data = {
-          matched,
-          review_needed: parsed.review_needed ?? [],
-          no_match: parsed.no_match ?? [],
-          missing_in_price_list: parsed.missing_in_price_list ?? [],
-          summary: {
-            total_pdf: (parsed.matched?.length ?? 0) + (parsed.review_needed?.length ?? 0) + (parsed.no_match?.length ?? 0),
-            matched: parsed.matched?.length ?? 0,
-            review_needed: parsed.review_needed?.length ?? 0,
-            no_match: parsed.no_match?.length ?? 0,
-            missing_in_price_list: parsed.missing_in_price_list?.length ?? 0,
-          },
-        };
-
-        setParseResult(data);
+        setParseResult(matchResult);
         setEditedPrices({});
         didParse = true;
       } catch {
@@ -474,8 +429,7 @@ export default function PriceListSection({
           sku: item.sku,
           uvp_incl_vat: prices.uvp,
           ek_netto: prices.ek,
-          pdf_model_raw: item.pdf_model_raw,
-          pdf_category: item.pdf_category,
+          pdf_model_raw: item.pdf_product_raw,
         };
       });
 
@@ -514,8 +468,8 @@ export default function PriceListSection({
   }
 
   // Group matched items by model for display
-  function groupByModel(items: ApiMatchedItem[]) {
-    const groups = new Map<string, ApiMatchedItem[]>();
+  function groupByModel(items: MatchedItem[]) {
+    const groups = new Map<string, MatchedItem[]>();
     for (const item of items) {
       const key = item.portal_model;
       const arr = groups.get(key) ?? [];
@@ -556,23 +510,15 @@ export default function PriceListSection({
             <Check size={12} />
             {parseResult.summary.matched} {tp.matched}
           </span>
-          {parseResult.summary.review_needed > 0 && (
-            <span className="flex items-center gap-1 rounded bg-yellow-100 px-2 py-1 font-medium text-yellow-800">
-              <AlertTriangle size={12} />
-              {parseResult.summary.review_needed} prüfen
-            </span>
-          )}
-          {parseResult.summary.no_match > 0 && (
+          {parseResult.summary.unmatched > 0 && (
             <span className="flex items-center gap-1 rounded bg-red-100 px-2 py-1 font-medium text-red-700">
               <X size={12} />
-              {parseResult.summary.no_match} {tp.notFound}
+              {parseResult.summary.unmatched} {tp.notFound}
             </span>
           )}
-          {parseResult.summary.missing_in_price_list > 0 && (
-            <span className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1 font-medium text-gray-600">
-              {parseResult.summary.missing_in_price_list} fehlen in PDF
-            </span>
-          )}
+          <span className="rounded bg-gray-100 px-2 py-1 font-medium text-gray-600">
+            {parseResult.summary.total_extracted} aus PDF extrahiert
+          </span>
         </div>
 
         {/* ── MATCHED SECTION ── */}
@@ -603,14 +549,11 @@ export default function PriceListSection({
                           rowSpan={items.length}
                         >
                           <div>{model}</div>
-                          {item.pdf_model_raw !== model && (
+                          {item.pdf_product_raw !== model && (
                             <div className="text-[10px] text-swing-gray-dark/40">
-                              PDF: {item.pdf_model_raw}
+                              PDF: {item.pdf_product_raw}
                             </div>
                           )}
-                          <div className="text-[10px] text-swing-gray-dark/30">
-                            {item.pdf_category}
-                          </div>
                         </td>
                       )}
                       <td className="px-2 py-1.5 font-medium">
@@ -651,99 +594,35 @@ export default function PriceListSection({
           </div>
         )}
 
-        {/* ── REVIEW NEEDED SECTION ── */}
-        {parseResult.review_needed.length > 0 && (
+        {/* ── UNMATCHED SECTION ── */}
+        {parseResult.unmatched.length > 0 && (
           <>
             <SectionHeader
-              title={`Prüfung nötig (${parseResult.review_needed.length})`}
-              expanded={expandedSections.review}
-              onToggle={() => toggleSection("review")}
-              variant="yellow"
-            />
-            {expandedSections.review && (
-              <div className="mb-4 space-y-2">
-                {parseResult.review_needed.map((item, i) => (
-                  <div
-                    key={i}
-                    className="rounded border border-yellow-200 bg-yellow-50/50 p-2.5 text-xs"
-                  >
-                    <div className="font-medium text-swing-navy">
-                      {item.pdf_product.model_raw} – {item.pdf_product.size_raw}
-                    </div>
-                    <div className="text-[10px] text-yellow-800">{item.reason}</div>
-                    {item.portal_candidates.length > 0 && (
-                      <div className="mt-1 text-[10px] text-swing-gray-dark/50">
-                        Mögliche Zuordnungen:{" "}
-                        {item.portal_candidates
-                          .map((c) => `${c.portal_model} ${c.portal_size}`)
-                          .join(", ")}
-                      </div>
-                    )}
-                    <div className="mt-1 flex gap-3 text-[10px] text-swing-gray-dark/40">
-                      <span>UVP: {item.pdf_product.uvp_incl_vat_eur}</span>
-                      <span>EK: {item.pdf_product.dealer_net_eur}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ── NO MATCH SECTION ── */}
-        {parseResult.no_match.length > 0 && (
-          <>
-            <SectionHeader
-              title={`Nicht zugeordnet (${parseResult.no_match.length})`}
-              expanded={expandedSections.noMatch}
-              onToggle={() => toggleSection("noMatch")}
+              title={`Nicht zugeordnet (${parseResult.unmatched.length})`}
+              expanded={expandedSections.unmatched}
+              onToggle={() => toggleSection("unmatched")}
               variant="red"
             />
-            {expandedSections.noMatch && (
+            {expandedSections.unmatched && (
               <div className="mb-4 space-y-1">
-                {parseResult.no_match.map((item, i) => (
+                {parseResult.unmatched.map((item, i) => (
                   <div
                     key={i}
                     className="flex items-start gap-2 rounded bg-red-50/50 px-2.5 py-1.5 text-xs"
                   >
                     <X size={12} className="mt-0.5 shrink-0 text-red-400" />
-                    <div>
+                    <div className="flex-1">
                       <span className="font-medium text-swing-navy">
-                        {item.pdf_product.model_raw}
+                        {item.product}
                       </span>
                       <span className="ml-1 text-swing-gray-dark/40">
-                        {item.pdf_product.size_raw}
-                      </span>
-                      <span className="ml-2 text-[10px] text-red-600">
-                        {item.reason}
+                        {item.size}
                       </span>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ── MISSING IN PRICE LIST ── */}
-        {parseResult.missing_in_price_list.length > 0 && (
-          <>
-            <SectionHeader
-              title={`Fehlen in Preisliste (${parseResult.missing_in_price_list.length})`}
-              expanded={expandedSections.missing}
-              onToggle={() => toggleSection("missing")}
-              variant="gray"
-            />
-            {expandedSections.missing && (
-              <div className="mb-4 space-y-1">
-                {parseResult.missing_in_price_list.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 rounded bg-gray-50 px-2.5 py-1.5 text-xs text-swing-gray-dark/50"
-                  >
-                    <span className="font-medium">
-                      {item.portal_model} – {item.portal_size}
-                    </span>
+                    <div className="flex gap-3 text-[10px] text-swing-gray-dark/40">
+                      {item.uvp_gross != null && <span>UVP: {item.uvp_gross.toFixed(2)}</span>}
+                      {item.dealer_net != null && <span>EK: {item.dealer_net.toFixed(2)}</span>}
+                    </div>
                   </div>
                 ))}
               </div>
