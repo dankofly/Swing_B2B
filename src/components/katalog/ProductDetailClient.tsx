@@ -239,6 +239,7 @@ export default function ProductDetailClient({
                         </td>
                         <td className="px-5 py-3.5 text-right">
                           <input type="number" min={0} value={qty} onChange={(e) => setQuantities((prev) => ({ ...prev, [size.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                            aria-label={`${t.quantity} ${size.size_label}`}
                             className={`w-16 rounded-lg border bg-white px-2 py-1.5 text-center text-sm tabular-nums transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20 ${qty > 0 ? "border-swing-gold/40 font-bold text-swing-navy" : "border-gray-200 text-swing-navy/40"}`} />
                         </td>
                       </tr>
@@ -285,6 +286,7 @@ export default function ProductDetailClient({
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-swing-navy/30">{t.quantity}</span>
                         <input type="number" min={0} value={qty} onChange={(e) => setQuantities((prev) => ({ ...prev, [size.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                          aria-label={`${t.quantity} ${size.size_label}`}
                           className={`w-16 rounded-lg border bg-white px-2 py-2 text-center text-sm tabular-nums transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20 ${qty > 0 ? "border-swing-gold/40 font-bold text-swing-navy" : "border-gray-200 text-swing-navy/40"}`} />
                       </div>
                     </div>

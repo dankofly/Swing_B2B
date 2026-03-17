@@ -9,7 +9,6 @@ import RelatedProductCard from "@/components/katalog/RelatedProductCard";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { localized } from "@/lib/i18n/localized";
 
-export const dynamic = "force-dynamic";
 
 export default async function ProduktDetailPage({
   params,
@@ -20,7 +19,13 @@ export default async function ProduktDetailPage({
 }) {
   const { slug } = await params;
   const { als } = await searchParams;
-  const supabase = await createClient();
+
+  // Parallelize all independent initial fetches
+  const [supabase, dict, locale] = await Promise.all([
+    createClient(),
+    getDictionary(),
+    getLocale(),
+  ]);
 
   const { data: product } = await supabase
     .from("products")
@@ -36,8 +41,6 @@ export default async function ProduktDetailPage({
 
   if (!product) notFound();
 
-  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
-
   const sizes = ((product.sizes || []) as ProductSize[]).sort(
     (a, b) => a.sort_order - b.sort_order
   );
@@ -45,22 +48,60 @@ export default async function ProduktDetailPage({
     (a, b) => a.sort_order - b.sort_order
   );
 
-  // Fetch logged-in user's company prices for this product's sizes
-  const { data: { user } } = await supabase.auth.getUser();
+  // Parallelize user auth, stock, and relations (all independent)
+  const [
+    { data: { user } },
+    { data: stockEntries },
+    { data: relationsRaw },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase
+      .from("color_size_stock")
+      .select("color_name, size_label, stock_quantity")
+      .eq("product_id", product.id),
+    supabase
+      .from("product_relations")
+      .select("related_product_id, relation_type, sort_order")
+      .eq("product_id", product.id)
+      .order("sort_order"),
+  ]);
+
+  // Build stock map
+  const stockMap: Record<string, number> = {};
+  for (const entry of stockEntries ?? []) {
+    stockMap[`${entry.color_name}::${entry.size_label}`] = entry.stock_quantity;
+  }
+
+  // Fetch related products (depends on relationsRaw)
+  const relatedIds = (relationsRaw || []).map((r) => r.related_product_id);
+  let similarProducts: any[] = [];
+  let accessoryProducts: any[] = [];
+
+  // Fetch user profile + related products in parallel
   let priceMap: Record<string, number> = {};
   let discountMap: Record<string, number> = {};
   let isAdmin = false;
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("company_id, role")
-      .eq("id", user.id)
-      .single();
 
-    isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
+  const profilePromise = user
+    ? supabase.from("profiles").select("company_id, role").eq("id", user.id).single()
+    : Promise.resolve({ data: null });
 
-    // Use "als" company_id if admin is viewing as customer, otherwise own company
-    const effectiveCompanyId = als && isAdmin ? als : profile?.company_id;
+  const relatedPromise = relatedIds.length > 0
+    ? supabase
+        .from("products")
+        .select("id, name, name_en, name_fr, slug, description, description_en, description_fr, category:categories(name, name_en, name_fr), en_class, en_class_custom, classification, use_case, use_case_en, use_case_fr, is_action")
+        .in("id", relatedIds)
+        .eq("is_active", true)
+    : Promise.resolve({ data: [] as any[] });
+
+  const [{ data: profile }, { data: relatedRaw }] = await Promise.all([
+    profilePromise,
+    relatedPromise,
+  ]);
+
+  if (profile) {
+    isAdmin = profile.role === "admin" || profile.role === "superadmin";
+    const effectiveCompanyId = als && isAdmin ? als : profile.company_id;
 
     if (effectiveCompanyId) {
       const sizeIds = sizes.map((s) => s.id);
@@ -79,36 +120,8 @@ export default async function ProduktDetailPage({
 
   const viewingAsCompanyId = als && isAdmin ? als : undefined;
 
-  // Fetch per-color-size stock overrides
-  const { data: stockEntries } = await supabase
-    .from("color_size_stock")
-    .select("color_name, size_label, stock_quantity")
-    .eq("product_id", product.id);
-
-  const stockMap: Record<string, number> = {};
-  for (const entry of stockEntries ?? []) {
-    stockMap[`${entry.color_name}::${entry.size_label}`] = entry.stock_quantity;
-  }
-
-  // Fetch related products
-  const { data: relationsRaw } = await supabase
-    .from("product_relations")
-    .select("related_product_id, relation_type, sort_order")
-    .eq("product_id", product.id)
-    .order("sort_order");
-
-  const relatedIds = (relationsRaw || []).map((r) => r.related_product_id);
-  let similarProducts: any[] = [];
-  let accessoryProducts: any[] = [];
-
-  if (relatedIds.length > 0) {
-    const { data: relatedRaw } = await supabase
-      .from("products")
-      .select("id, name, name_en, name_fr, slug, description, description_en, description_fr, category:categories(name, name_en, name_fr), en_class, en_class_custom, classification, use_case, use_case_en, use_case_fr, is_action")
-      .in("id", relatedIds)
-      .eq("is_active", true);
-
-    const relatedMap = new Map((relatedRaw || []).map((p) => [p.id, p]));
+  if (relatedIds.length > 0 && relatedRaw) {
+    const relatedMap = new Map(relatedRaw.map((p: any) => [p.id, p]));
     const similarIds = (relationsRaw || []).filter((r) => r.relation_type === "similar").map((r) => r.related_product_id);
     const accessoryIds = (relationsRaw || []).filter((r) => r.relation_type === "accessory").map((r) => r.related_product_id);
     similarProducts = similarIds.map((id) => relatedMap.get(id)).filter(Boolean);

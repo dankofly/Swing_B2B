@@ -4,7 +4,6 @@ import { FileText } from "lucide-react";
 import InquiryBoard from "@/components/katalog/InquiryBoard";
 import { getDictionary } from "@/lib/i18n";
 
-export const dynamic = "force-dynamic";
 
 export default async function MeineAnfragenPage({
   searchParams,

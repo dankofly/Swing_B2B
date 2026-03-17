@@ -3,6 +3,9 @@
 import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(id: string): boolean { return UUID_RE.test(id); }
+
 /** A single matched price row ready to be saved (one per product_size). */
 export interface MatchedPriceItem {
   product_size_id: string;
@@ -24,6 +27,7 @@ export async function confirmPrices(
   companyId: string,
   items: MatchedPriceItem[]
 ) {
+  if (!isValidUUID(companyId)) throw new Error("Ungültige Firmen-ID");
   await guardAdmin();
   const supabase = createAdminClient();
 

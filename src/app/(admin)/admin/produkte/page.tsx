@@ -3,7 +3,6 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { Plus, Package } from "lucide-react";
 import SortableProductList from "./SortableProductList";
 
-export const dynamic = "force-dynamic";
 
 export default async function ProduktePage() {
   const supabase = createAdminClient();

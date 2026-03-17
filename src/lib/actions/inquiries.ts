@@ -4,6 +4,9 @@ import { createClient, createAdminClient, guardAdmin } from "@/lib/supabase/serv
 import { revalidatePath } from "next/cache";
 import { sendEmail, buildInquiryStatusEmail, buildTrackingEmail } from "@/lib/email";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(id: string): boolean { return UUID_RE.test(id); }
+
 export interface InquiryItem {
   sizeId: string;
   colorId: string;
@@ -12,6 +15,12 @@ export interface InquiryItem {
 }
 
 export async function submitInquiry(items: InquiryItem[], notes: string) {
+  if (!items || items.length === 0) throw new Error("Keine Positionen");
+  if (items.length > 200) throw new Error("Zu viele Positionen (max. 200)");
+  for (const item of items) {
+    if (!isValidUUID(item.sizeId) || !isValidUUID(item.colorId)) throw new Error("Ungültige Positions-ID");
+    if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 9999) throw new Error("Ungültige Menge");
+  }
   const supabase = await createClient();
   const {
     data: { user },
@@ -160,6 +169,7 @@ export async function updateInquiryStatus(
   inquiryId: string,
   status: "new" | "in_progress" | "shipped" | "completed"
 ) {
+  if (!isValidUUID(inquiryId)) throw new Error("Ungültige Anfrage-ID");
   await guardAdmin();
   const supabase = createAdminClient();
 
@@ -195,6 +205,7 @@ export async function updateInquiryStatus(
 }
 
 export async function updateInquiryNotes(inquiryId: string, notes: string) {
+  if (!isValidUUID(inquiryId)) throw new Error("Ungültige Anfrage-ID");
   await guardAdmin();
   const supabase = createAdminClient();
 
@@ -212,6 +223,8 @@ export async function updateInquiryTracking(
   carrier: string,
   trackingNumber: string
 ) {
+  if (!isValidUUID(inquiryId)) throw new Error("Ungültige Anfrage-ID");
+  if (!carrier.trim() || !trackingNumber.trim()) throw new Error("Carrier und Trackingnummer erforderlich");
   await guardAdmin();
   const supabase = createAdminClient();
 

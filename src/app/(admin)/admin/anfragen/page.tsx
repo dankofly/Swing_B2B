@@ -2,7 +2,6 @@ import { getAllInquiries } from "@/lib/actions/inquiries";
 import InquiryList from "./InquiryList";
 import { ShoppingCart } from "lucide-react";
 
-export const dynamic = "force-dynamic";
 
 export default async function AdminAnfragenPage() {
   const inquiries = await getAllInquiries();

@@ -21,6 +21,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Pencil, Package, ChevronUp, ChevronDown, Search, X } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { updateProductSortOrder } from "@/lib/actions/products";
 import { DeleteProductButton, DuplicateProductButton, ToggleActiveButton } from "./ProductActions";
 import { useToast } from "@/components/ui/Toast";
@@ -73,7 +74,7 @@ function SortableRow({ product }: { product: ProductRow }) {
       <td className="px-4 py-4">
         <div className="flex items-center gap-3">
           {product.images?.[0] ? (
-            <img src={product.images[0]} alt={product.name} className="h-10 w-10 rounded-lg object-cover" />
+            <Image src={product.images[0]} alt={product.name} width={40} height={40} className="h-10 w-10 rounded-lg object-cover" sizes="40px" />
           ) : (
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 text-xs text-swing-navy/40">—</div>
           )}

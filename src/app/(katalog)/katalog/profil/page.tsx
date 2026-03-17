@@ -4,7 +4,6 @@ import { User } from "lucide-react";
 import ProfileForm from "./ProfileForm";
 import { getDictionary } from "@/lib/i18n";
 
-export const dynamic = "force-dynamic";
 
 export default async function ProfilPage({
   searchParams,

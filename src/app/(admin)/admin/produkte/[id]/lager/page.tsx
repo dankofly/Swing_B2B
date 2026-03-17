@@ -6,7 +6,6 @@ import type { ProductSize, ProductColor } from "@/lib/types";
 import StockMatrixClient from "@/components/admin/StockMatrixClient";
 import { getDictionary } from "@/lib/i18n";
 
-export const dynamic = "force-dynamic";
 
 export default async function LagerPage({
   params,

@@ -67,7 +67,7 @@ export function DuplicateProductButton({
     <button
       onClick={handleDuplicate}
       disabled={loading}
-      className={`btn-press rounded-lg p-2 text-swing-navy/40 transition-colors hover:bg-blue-50 hover:text-blue-600 ${loading ? "opacity-50" : ""}`}
+      className={`btn-press flex h-11 w-11 items-center justify-center rounded-lg text-swing-navy/40 transition-colors hover:bg-blue-50 hover:text-blue-600 sm:h-auto sm:w-auto sm:p-2 ${loading ? "opacity-50" : ""}`}
       title="Produkt duplizieren"
     >
       <Copy size={16} />
@@ -97,7 +97,7 @@ export function DeleteProductButton({
   return (
     <button
       onClick={handleDelete}
-      className="btn-press rounded p-1 text-swing-gray-dark/40 transition-colors hover:bg-red-50 hover:text-red-600"
+      className="btn-press flex h-11 w-11 items-center justify-center rounded-lg text-swing-gray-dark/40 transition-colors hover:bg-red-50 hover:text-red-600 sm:h-auto sm:w-auto sm:p-2"
       title={t.deleteTitle}
     >
       <Trash2 size={16} />

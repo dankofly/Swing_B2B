@@ -4,6 +4,9 @@ import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendEmail, buildApprovalEmail } from "@/lib/email";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(id: string): boolean { return UUID_RE.test(id); }
+
 function extractCompanyFields(formData: FormData) {
   return {
     name: formData.get("name") as string,
@@ -41,6 +44,7 @@ export async function createCompany(formData: FormData) {
 }
 
 export async function updateCompany(id: string, formData: FormData) {
+  if (!isValidUUID(id)) return { success: false, error: "Ungültige ID" };
   await guardAdmin();
   const supabase = createAdminClient();
   const fields = extractCompanyFields(formData);
@@ -73,6 +77,7 @@ export async function updateCompanyNotes(id: string, notes: string) {
 }
 
 export async function toggleCompanyApproval(id: string, approved: boolean) {
+  if (!isValidUUID(id)) return { success: false, error: "Ungültige ID" };
   await guardAdmin();
   const supabase = createAdminClient();
 
@@ -106,6 +111,7 @@ export async function toggleCompanyApproval(id: string, approved: boolean) {
 }
 
 export async function deleteCompany(id: string) {
+  if (!isValidUUID(id)) return { success: false, error: "Ungültige ID" };
   await guardAdmin();
   const supabase = createAdminClient();
 

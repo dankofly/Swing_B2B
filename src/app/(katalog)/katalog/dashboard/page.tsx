@@ -25,7 +25,6 @@ import { getDictionary, getLocale, getDateLocale } from "@/lib/i18n";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCompanyInquiriesForDashboard } from "@/lib/actions/inquiries";
 
-export const dynamic = "force-dynamic";
 
 const STATUS_COLORS: Record<string, { bg: string; bar: string }> = {
   new: { bg: "bg-blue-100", bar: "bg-blue-500" },

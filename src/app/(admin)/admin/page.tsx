@@ -14,7 +14,6 @@ import {
 import Link from "next/link";
 import { getDictionary, getLocale, getDateLocale } from "@/lib/i18n";
 
-export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
   const supabase = createAdminClient();

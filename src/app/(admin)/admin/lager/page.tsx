@@ -2,7 +2,6 @@ import { createAdminClient } from "@/lib/supabase/server";
 import LagerImportClient from "./LagerImportClient";
 import StockOverview from "./StockOverview";
 
-export const dynamic = "force-dynamic";
 
 export default async function AdminLagerPage() {
   const supabase = createAdminClient();

@@ -7,7 +7,6 @@ import { localized } from "@/lib/i18n/localized";
 import AdminEditButton from "@/components/katalog/AdminEditButton";
 import CollapsibleFilters from "@/components/katalog/CollapsibleFilters";
 
-export const dynamic = "force-dynamic";
 
 const CLASSIFICATIONS = ["N-LITE", "D-LITE", "U-LITE"];
 const EN_CLASSES = [

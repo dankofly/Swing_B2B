@@ -3,6 +3,21 @@
 import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUUID(id: string): boolean {
+  return UUID_RE.test(id);
+}
+
+function safeJsonParse<T>(json: string | null, fallback: T): T {
+  if (!json) return fallback;
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 function generateSlug(name: string): string {
   return name
     .toLowerCase()
@@ -22,7 +37,8 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
   }
   const supabase = createAdminClient();
 
-  const name = formData.get("name") as string;
+  const name = (formData.get("name") as string || "").slice(0, 200);
+  if (!name.trim()) return { error: "Produktname ist erforderlich" };
   const description = formData.get("description") as string;
   const category_id = formData.get("category_id") as string;
   const is_active = formData.get("is_active") === "on";
@@ -38,8 +54,7 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
   const classification = formData.get("classification") as string;
   const use_case = formData.get("use_case") as string;
   const website_url = formData.get("website_url") as string;
-  const imagesJson = formData.get("images") as string;
-  const images = imagesJson ? JSON.parse(imagesJson) : [];
+  const images = safeJsonParse<string[]>(formData.get("images") as string, []);
 
   // i18n translation fields
   const name_en = formData.get("name_en") as string;
@@ -52,6 +67,8 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
   const action_text_fr = formData.get("action_text_fr") as string;
   const website_url_en = formData.get("website_url_en") as string;
   const website_url_fr = formData.get("website_url_fr") as string;
+
+  if (category_id && !isValidUUID(category_id)) return { error: "Ungültige Kategorie-ID" };
 
   const { data: product, error } = await supabase
     .from("products")
@@ -94,12 +111,12 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
   // Save sizes
   const sizesJson = formData.get("sizes") as string;
   if (sizesJson) {
-    const sizes = JSON.parse(sizesJson) as Array<{
+    const sizes = safeJsonParse<Array<{
       size_label: string;
       sku: string;
       delivery_weeks: number;
       sort_order: number;
-    }>;
+    }>>(sizesJson, []);
     if (sizes.length > 0) {
       const { error: sizesError } = await supabase
         .from("product_sizes")
@@ -123,12 +140,12 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
   // Save colors
   const colorsJson = formData.get("colors") as string;
   if (colorsJson) {
-    const colors = JSON.parse(colorsJson) as Array<{
+    const colors = safeJsonParse<Array<{
       color_name: string;
       color_image_url: string | null;
       is_limited: boolean;
       sort_order: number;
-    }>;
+    }>>(colorsJson, []);
     if (colors.length > 0) {
       const { error: colorsError } = await supabase
         .from("product_colors")
@@ -140,11 +157,11 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
   // Save relations
   const relationsJson = formData.get("relations") as string;
   if (relationsJson) {
-    const relations = JSON.parse(relationsJson) as Array<{
+    const relations = safeJsonParse<Array<{
       related_product_id: string;
       relation_type: string;
       sort_order: number;
-    }>;
+    }>>(relationsJson, []);
     if (relations.length > 0) {
       const { error: relError } = await supabase
         .from("product_relations")
@@ -159,6 +176,7 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
 }
 
 export async function updateProduct(productId: string, formData: FormData): Promise<{ error?: string }> {
+  if (!isValidUUID(productId)) return { error: "Ungültige Produkt-ID" };
   try {
     await guardAdmin();
   } catch (e) {
@@ -166,9 +184,11 @@ export async function updateProduct(productId: string, formData: FormData): Prom
   }
   const supabase = createAdminClient();
 
-  const name = formData.get("name") as string;
+  const name = (formData.get("name") as string || "").slice(0, 200);
+  if (!name.trim()) return { error: "Produktname ist erforderlich" };
   const description = formData.get("description") as string;
   const category_id = formData.get("category_id") as string;
+  if (category_id && !isValidUUID(category_id)) return { error: "Ungültige Kategorie-ID" };
   const is_active = formData.get("is_active") === "on";
   const is_coming_soon = formData.get("is_coming_soon") === "on";
   const is_preorder = formData.get("is_preorder") === "on";
@@ -182,8 +202,7 @@ export async function updateProduct(productId: string, formData: FormData): Prom
   const classification = formData.get("classification") as string;
   const use_case = formData.get("use_case") as string;
   const website_url = formData.get("website_url") as string;
-  const imagesJson = formData.get("images") as string;
-  const images = imagesJson ? JSON.parse(imagesJson) : [];
+  const images = safeJsonParse<string[]>(formData.get("images") as string, []);
 
   // i18n translation fields
   const name_en = formData.get("name_en") as string;
@@ -241,12 +260,12 @@ export async function updateProduct(productId: string, formData: FormData): Prom
     if (deleteSizesError) {
       return { error: `Größen konnten nicht gelöscht werden: ${deleteSizesError.message}` };
     }
-    const sizes = JSON.parse(sizesJson) as Array<{
+    const sizes = safeJsonParse<Array<{
       size_label: string;
       sku: string;
       delivery_weeks: number;
       sort_order: number;
-    }>;
+    }>>(sizesJson, []);
     if (sizes.length > 0) {
       const { error: sizesError } = await supabase
         .from("product_sizes")
@@ -272,12 +291,12 @@ export async function updateProduct(productId: string, formData: FormData): Prom
     if (deleteColorsError) {
       return { error: `Farben konnten nicht gelöscht werden: ${deleteColorsError.message}` };
     }
-    const colors = JSON.parse(colorsJson) as Array<{
+    const colors = safeJsonParse<Array<{
       color_name: string;
       color_image_url: string | null;
       is_limited: boolean;
       sort_order: number;
-    }>;
+    }>>(colorsJson, []);
     if (colors.length > 0) {
       const { error: colorsError } = await supabase
         .from("product_colors")
@@ -291,11 +310,11 @@ export async function updateProduct(productId: string, formData: FormData): Prom
   if (relationsJson) {
     const { error: delRelErr } = await supabase.from("product_relations").delete().eq("product_id", productId);
     if (delRelErr) console.error("Relations delete error:", delRelErr);
-    const relations = JSON.parse(relationsJson) as Array<{
+    const relations = safeJsonParse<Array<{
       related_product_id: string;
       relation_type: string;
       sort_order: number;
-    }>;
+    }>>(relationsJson, []);
     if (relations.length > 0) {
       const { error: relError } = await supabase
         .from("product_relations")
@@ -310,6 +329,7 @@ export async function updateProduct(productId: string, formData: FormData): Prom
 }
 
 export async function duplicateProduct(productId: string): Promise<{ error?: string; newId?: string }> {
+  if (!isValidUUID(productId)) return { error: "Ungültige Produkt-ID" };
   try {
     await guardAdmin();
   } catch (e) {
@@ -384,6 +404,7 @@ export async function duplicateProduct(productId: string): Promise<{ error?: str
 }
 
 export async function deleteProduct(productId: string) {
+  if (!isValidUUID(productId)) throw new Error("Ungültige Produkt-ID");
   await guardAdmin();
   const supabase = createAdminClient();
 
@@ -413,6 +434,7 @@ export async function updateProductSortOrder(orderedIds: string[]) {
 }
 
 export async function toggleProductActive(productId: string, isActive: boolean) {
+  if (!isValidUUID(productId)) throw new Error("Ungültige Produkt-ID");
   await guardAdmin();
   const supabase = createAdminClient();
 
