@@ -1,41 +1,39 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://swing-b2b-portal.netlify.app";
+const FROM_EMAIL = process.env.EMAIL_FROM || "SWING B2B Portal <noreply@swing.de>";
 
-// Reuse transporter across requests (connection pooling)
-let cachedTransporter: nodemailer.Transporter | null = null;
+// Lazy-init Resend client
+let resendClient: Resend | null = null;
 
-export function getTransporter(): nodemailer.Transporter | null {
-  if (!cachedTransporter && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    cachedTransporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
-      port: Number(process.env.SMTP_PORT || "587"),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      pool: true,
-      maxConnections: 3,
-    });
+function getResend(): Resend | null {
+  if (!resendClient && process.env.RESEND_API_KEY) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
   }
-  return cachedTransporter;
+  return resendClient;
 }
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
-  const transporter = getTransporter();
-  if (!transporter) {
-    console.log(`[email] SMTP not configured, skipping: "${subject}" → ${to}`);
+  const resend = getResend();
+  if (!resend) {
+    console.log(`[email] Resend not configured (RESEND_API_KEY missing), skipping: "${subject}" → ${to}`);
     return false;
   }
 
   try {
-    await transporter.sendMail({
-      from: `"SWING B2B Portal" <${process.env.SMTP_USER}>`,
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
       to,
       subject,
       html,
     });
+
+    if (error) {
+      console.error(`[email] Resend error for "${subject}" to ${to}:`, error);
+      return false;
+    }
+
+    console.log(`[email] Sent: "${subject}" → ${to}`);
     return true;
   } catch (err) {
     console.error(`[email] Failed to send "${subject}" to ${to}:`, err);
