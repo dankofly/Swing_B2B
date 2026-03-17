@@ -102,6 +102,76 @@ interface ParseResult {
   };
 }
 
+/**
+ * Attempt to repair truncated JSON from Gemini (output cut off at token limit).
+ * Extracts the "matched" array even if the rest is incomplete.
+ */
+function repairTruncatedJson(raw: string): Record<string, unknown> | null {
+  try {
+    // Find the start of the matched array
+    const matchedStart = raw.indexOf('"matched"');
+    if (matchedStart === -1) return null;
+
+    const arrStart = raw.indexOf("[", matchedStart);
+    if (arrStart === -1) return null;
+
+    // Try progressively shorter substrings to find valid matched items
+    let lastGoodEnd = -1;
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+
+    for (let i = arrStart; i < raw.length; i++) {
+      const ch = raw[i];
+      if (escape) { escape = false; continue; }
+      if (ch === "\\") { escape = true; continue; }
+      if (ch === '"') { inString = !inString; continue; }
+      if (inString) continue;
+
+      if (ch === "[" || ch === "{") depth++;
+      else if (ch === "]" || ch === "}") {
+        depth--;
+        if (depth === 0) {
+          // Found the complete matched array
+          const arrStr = raw.slice(arrStart, i + 1);
+          try {
+            const matched = JSON.parse(arrStr);
+            return {
+              matched,
+              review_needed: [],
+              no_match: [],
+              missing_in_price_list: [],
+            };
+          } catch { break; }
+        }
+      }
+      // Track last complete object in the array (depth === 1 means we just closed an object in the array)
+      if (depth === 1 && ch === "}") {
+        lastGoodEnd = i;
+      }
+    }
+
+    // Array was truncated — close it at last complete object
+    if (lastGoodEnd > arrStart) {
+      const partialArr = raw.slice(arrStart, lastGoodEnd + 1) + "]";
+      try {
+        const matched = JSON.parse(partialArr);
+        console.log(`[repairTruncatedJson] Recovered ${matched.length} matched items from truncated response`);
+        return {
+          matched,
+          review_needed: [],
+          no_match: [],
+          missing_in_price_list: [],
+        };
+      } catch { /* fall through */ }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export default function PriceListSection({
   companyId,
   uploads: initialUploads,
@@ -287,12 +357,12 @@ export default function PriceListSection({
 
         // Parse Gemini JSON response
         console.log("[PriceListSection] Gemini raw response (first 500):", responseText.slice(0, 500));
+        console.log("[PriceListSection] Response length:", responseText.length, "finishReason:", geminiData.candidates?.[0]?.finishReason);
         let parsed;
         try {
           parsed = JSON.parse(responseText);
-        } catch (parseErr1) {
-          console.error("[PriceListSection] JSON.parse failed:", parseErr1);
-          // Fallback: strip markdown fences
+        } catch {
+          // Try stripping markdown fences
           let cleaned = responseText
             .replace(/^[\s\S]*?```json?\s*/i, "")
             .replace(/```[\s\S]*$/i, "")
@@ -300,7 +370,7 @@ export default function PriceListSection({
           try {
             parsed = JSON.parse(cleaned);
           } catch {
-            // Fallback 2: extract by braces
+            // Extract from first { to last }
             const first = responseText.indexOf("{");
             const last = responseText.lastIndexOf("}");
             if (first !== -1 && last > first) {
@@ -308,18 +378,25 @@ export default function PriceListSection({
               try {
                 parsed = JSON.parse(cleaned);
               } catch {
-                setError("Parse-Fehler (3). Antwort: " + responseText.slice(0, 300));
+                // Truncated JSON — try to repair
+                parsed = repairTruncatedJson(responseText);
+                if (!parsed) {
+                  setError("Die KI-Antwort wurde abgeschnitten. Bitte erneut versuchen.");
+                  setParsing(false);
+                  setUploadingCategory(null);
+                  e.target.value = "";
+                  return;
+                }
+              }
+            } else {
+              parsed = repairTruncatedJson(responseText);
+              if (!parsed) {
+                setError("Kein JSON gefunden. Bitte erneut versuchen.");
                 setParsing(false);
                 setUploadingCategory(null);
                 e.target.value = "";
                 return;
               }
-            } else {
-              setError("Kein JSON gefunden. Antwort: " + responseText.slice(0, 300));
-              setParsing(false);
-              setUploadingCategory(null);
-              e.target.value = "";
-              return;
             }
           }
         }

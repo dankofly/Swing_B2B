@@ -307,6 +307,12 @@ Verwende exakt dieses JSON-Schema:
   ]
 }
 
+WICHTIG zur Ausgabelänge:
+- Halte die Ausgabe so kompakt wie möglich.
+- Gib "missing_in_price_list" als leeres Array aus: "missing_in_price_list": []
+- Gib bei "no_match" nur die ersten 10 Einträge aus, um die Ausgabe kurz zu halten.
+- Fokussiere dich auf "matched" — das ist das Wichtigste.
+
 Zusätzliche Qualitätsregeln:
 1. Prüfe vor der Ausgabe, dass wirklich nur diese zwei Preisfelder verwendet werden:
    - UVP inkl. MwSt.
