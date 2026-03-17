@@ -418,17 +418,26 @@ export default function PriceListSection({
     setEditedPrices({});
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, category: string) {
     if (!confirm("Preisliste wirklich löschen?")) return;
     setDeletingId(id);
     setError(null);
     try {
-      const result = await deletePriceUpload(id, companyId);
-      if (result.success) {
-        setUploads((prev) => prev.filter((u) => u.id !== id));
-      } else {
-        setError(result.error || "Löschen fehlgeschlagen");
+      // Delete ALL uploads for this category (duplicates exist from multiple uploads)
+      const idsToDelete = uploads
+        .filter((u) => u.category === category)
+        .map((u) => u.id);
+
+      for (const uid of idsToDelete) {
+        const result = await deletePriceUpload(uid, companyId);
+        if (!result.success) {
+          setError(result.error || "Löschen fehlgeschlagen");
+          setDeletingId(null);
+          return;
+        }
       }
+
+      setUploads((prev) => prev.filter((u) => u.category !== category));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Löschen fehlgeschlagen");
     } finally {
@@ -800,7 +809,7 @@ export default function PriceListSection({
                         />
                       </label>
                       <button
-                        onClick={() => handleDelete(latestUpload.id)}
+                        onClick={() => handleDelete(latestUpload.id, cat.key)}
                         disabled={deletingId === latestUpload.id}
                         className="shrink-0 cursor-pointer rounded p-1 text-swing-navy/25 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
                       >
