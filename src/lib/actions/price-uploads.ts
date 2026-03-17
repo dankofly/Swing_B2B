@@ -77,15 +77,27 @@ export async function deletePriceUpload(id: string, companyId: string) {
     .eq("id", id)
     .single();
 
-  const { error } = await supabase.from("price_uploads").delete().eq("id", id);
+  if (!upload) {
+    return { success: false, error: "Eintrag nicht gefunden" };
+  }
+
+  const { error } = await supabase
+    .from("price_uploads")
+    .delete()
+    .eq("id", id)
+    .eq("company_id", companyId);
 
   if (error) return { success: false, error: error.message };
 
   // Delete the file from storage
-  if (upload?.file_url) {
-    const path = upload.file_url.split("/price-lists/").pop();
-    if (path) {
-      await supabase.storage.from("price-lists").remove([decodeURIComponent(path)]);
+  if (upload.file_url) {
+    try {
+      const path = upload.file_url.split("/price-lists/").pop();
+      if (path) {
+        await supabase.storage.from("price-lists").remove([decodeURIComponent(path)]);
+      }
+    } catch {
+      // Storage cleanup is best-effort
     }
   }
 

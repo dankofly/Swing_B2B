@@ -118,6 +118,7 @@ export default function PriceListSection({
 
   const [uploads, setUploads] = useState(initialUploads);
   const [uploadingCategory, setUploadingCategory] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Parsing state
@@ -418,16 +419,20 @@ export default function PriceListSection({
   }
 
   async function handleDelete(id: string) {
+    if (!confirm("Preisliste wirklich löschen?")) return;
+    setDeletingId(id);
+    setError(null);
     try {
       const result = await deletePriceUpload(id, companyId);
       if (result.success) {
         setUploads((prev) => prev.filter((u) => u.id !== id));
-        setError(null);
       } else {
         setError(result.error || "Löschen fehlgeschlagen");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Löschen fehlgeschlagen");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -796,9 +801,14 @@ export default function PriceListSection({
                       </label>
                       <button
                         onClick={() => handleDelete(latestUpload.id)}
-                        className="shrink-0 cursor-pointer rounded p-1 text-green-600/30 transition-colors hover:bg-red-50 hover:text-red-500"
+                        disabled={deletingId === latestUpload.id}
+                        className="shrink-0 cursor-pointer rounded p-1 text-swing-navy/25 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
                       >
-                        <Trash2 size={11} />
+                        {deletingId === latestUpload.id ? (
+                          <Loader2 size={11} className="animate-spin" />
+                        ) : (
+                          <Trash2 size={11} />
+                        )}
                       </button>
                     </div>
                   </div>
