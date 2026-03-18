@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 import {
   Package,
   Users,
@@ -12,11 +12,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getDictionary, getLocale, getDateLocale } from "@/lib/i18n";
+import AdminBriefing from "@/components/admin/AdminBriefing";
 
 
 export default async function AdminDashboard() {
   const supabase = createAdminClient();
-  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
+  const [dict, locale, authClient] = await Promise.all([getDictionary(), getLocale(), createClient()]);
   const dl = getDateLocale(locale);
   const td = dict.admin.dashboard;
   const ts = dict.common.status;
@@ -65,6 +66,34 @@ export default async function AdminDashboard() {
       inquiry_items(quantity, unit_price)
     `).order("created_at", { ascending: false }).limit(6),
   ]);
+
+  // Get admin name
+  const { data: { user } } = await authClient.auth.getUser();
+  let adminName = "Admin";
+  if (user) {
+    const { data: profile } = await authClient
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single();
+    if (profile?.full_name) adminName = profile.full_name;
+  }
+
+  const briefingStats = {
+    activeProducts: activeProducts ?? 0,
+    comingSoonProducts: comingSoonProducts ?? 0,
+    preorderProducts: preorderProducts ?? 0,
+    inStockSizes: inStockSizes ?? 0,
+    lowStockSizes: lowStockSizes ?? 0,
+    noStockSizes: noStockSizes ?? 0,
+    newInquiries: newInquiries ?? 0,
+    inProgressInquiries: inProgressInquiries ?? 0,
+    shippedInquiries: shippedInquiries ?? 0,
+    completedMonthly: completedMonthly ?? 0,
+    dealerCount: dealerCount ?? 0,
+    importerCount: importerCount ?? 0,
+    importerNetworkCount: importerNetworkCount ?? 0,
+  };
 
   const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
     new: { label: ts.new, color: "text-blue-700", bg: "bg-blue-100" },
@@ -207,6 +236,9 @@ export default async function AdminDashboard() {
           </div>
         </Link>
       </div>
+
+      {/* AI Briefing */}
+      <AdminBriefing adminName={adminName} locale={locale} stats={briefingStats} />
 
       <div className="overflow-hidden card ">
         <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
