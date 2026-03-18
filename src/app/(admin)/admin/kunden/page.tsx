@@ -11,14 +11,16 @@ export default async function AdminKundenPage() {
     .select("id, name, contact_email, phone, address, is_approved, created_at, company_type, contact_person, vat_id")
     .order("created_at", { ascending: false });
 
-  const [{ data: allProfiles }, { data: { users: authUsers } }] = await Promise.all([
+  const [{ data: allProfiles }, authResult] = await Promise.all([
     supabase.from("profiles").select("id, email, full_name, role, company_id"),
     supabase.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
+  const authUsers = authResult.data?.users ?? [];
+
   // Build a map of user_id → last_sign_in_at
   const lastSignInMap = new Map(
-    (authUsers ?? []).map((u) => [u.id, u.last_sign_in_at ?? null])
+    authUsers.map((u) => [u.id, u.last_sign_in_at ?? null])
   );
 
   const companies = (companiesRaw ?? []).map((c) => ({

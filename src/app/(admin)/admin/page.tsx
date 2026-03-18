@@ -68,7 +68,8 @@ export default async function AdminDashboard() {
   ]);
 
   // Get admin name
-  const { data: { user } } = await authClient.auth.getUser();
+  const authResult = await authClient.auth.getUser();
+  const user = authResult.data?.user;
   let adminName = "Admin";
   if (user) {
     const { data: profile } = await authClient

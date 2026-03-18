@@ -62,13 +62,20 @@ export async function updateSession(request: NextRequest) {
 
   // Role-based protection: only query profile DB for /admin routes
   if (user && pathname.startsWith("/admin")) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
 
-    if (!profile || !["superadmin", "admin", "testadmin"].includes(profile.role)) {
+      if (!profile || !["superadmin", "admin", "testadmin"].includes(profile.role)) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/katalog";
+        return NextResponse.redirect(url);
+      }
+    } catch {
+      // If profile lookup fails, redirect to katalog as a safe fallback
       const url = request.nextUrl.clone();
       url.pathname = "/katalog";
       return NextResponse.redirect(url);

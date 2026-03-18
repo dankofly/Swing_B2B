@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Package, ChevronUp, ChevronDown, Search, X } from "lucide-react";
+import { GripVertical, Pencil, Package, ChevronUp, ChevronDown, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { updateProductSortOrder } from "@/lib/actions/products";
@@ -158,10 +158,13 @@ function MobileCard({
   );
 }
 
+const PAGE_SIZE = 20;
+
 export default function SortableProductList({ products: initialProducts }: { products: ProductRow[] }) {
   const [products, setProducts] = useState(initialProducts);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const dndId = useId();
   const { toast } = useToast();
 
@@ -175,6 +178,10 @@ export default function SortableProductList({ products: initialProducts }: { pro
         p.sizes?.some((s) => s.sku.toLowerCase().includes(q))
     );
   }, [products, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedProducts = filteredProducts.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -229,7 +236,7 @@ export default function SortableProductList({ products: initialProducts }: { pro
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Produkt suchen (Name, Kategorie, SKU)…"
             className="w-full rounded border border-gray-200 py-2 pl-9 pr-9 text-sm text-swing-navy placeholder:text-swing-navy/30 focus:border-swing-gold focus:outline-none focus:ring-1 focus:ring-swing-gold"
           />
@@ -250,7 +257,7 @@ export default function SortableProductList({ products: initialProducts }: { pro
       </div>
 
       <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={filteredProducts.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={pagedProducts.map((p) => p.id)} strategy={verticalListSortingStrategy}>
           {saving && (
             <div className="px-6 py-2 text-center text-xs font-medium text-swing-gold">
               Reihenfolge wird gespeichert...
@@ -277,7 +284,7 @@ export default function SortableProductList({ products: initialProducts }: { pro
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredProducts.map((product) => (
+                  {pagedProducts.map((product) => (
                     <SortableRow key={product.id} product={product} />
                   ))}
                 </tbody>
@@ -285,27 +292,68 @@ export default function SortableProductList({ products: initialProducts }: { pro
 
               {/* Mobile card layout with arrow buttons */}
               <div className="divide-y divide-gray-50 md:hidden">
-                {filteredProducts.map((product, index) => (
-                  <MobileCard
-                    key={product.id}
-                    product={product}
-                    isFirst={index === 0}
-                    isLast={index === filteredProducts.length - 1}
-                    onMoveUp={() => handleMove(
-                      products.findIndex((p) => p.id === product.id),
-                      products.findIndex((p) => p.id === product.id) - 1
-                    )}
-                    onMoveDown={() => handleMove(
-                      products.findIndex((p) => p.id === product.id),
-                      products.findIndex((p) => p.id === product.id) + 1
-                    )}
-                  />
-                ))}
+                {pagedProducts.map((product, index) => {
+                  const globalIndex = (safePage - 1) * PAGE_SIZE + index;
+                  return (
+                    <MobileCard
+                      key={product.id}
+                      product={product}
+                      isFirst={globalIndex === 0}
+                      isLast={globalIndex === filteredProducts.length - 1}
+                      onMoveUp={() => handleMove(
+                        products.findIndex((p) => p.id === product.id),
+                        products.findIndex((p) => p.id === product.id) - 1
+                      )}
+                      onMoveDown={() => handleMove(
+                        products.findIndex((p) => p.id === product.id),
+                        products.findIndex((p) => p.id === product.id) + 1
+                      )}
+                    />
+                  );
+                })}
               </div>
             </>
           )}
         </SortableContext>
       </DndContext>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 sm:px-6">
+          <p className="text-xs tabular-nums text-swing-navy/40">
+            {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredProducts.length)} von {filteredProducts.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(safePage - 1)}
+              disabled={safePage <= 1}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded text-swing-navy/40 transition-colors hover:bg-gray-50 hover:text-swing-navy disabled:cursor-default disabled:text-swing-navy/15"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`flex h-8 min-w-8 cursor-pointer items-center justify-center rounded px-1 text-xs font-bold tabular-nums transition-colors ${
+                  p === safePage
+                    ? "bg-swing-navy text-white"
+                    : "text-swing-navy/40 hover:bg-gray-50 hover:text-swing-navy"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage(safePage + 1)}
+              disabled={safePage >= totalPages}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded text-swing-navy/40 transition-colors hover:bg-gray-50 hover:text-swing-navy disabled:cursor-default disabled:text-swing-navy/15"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

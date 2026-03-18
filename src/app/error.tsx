@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 
 export default function Error({
@@ -9,6 +10,10 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    console.error("[error-boundary]", error.message, error.digest, error.stack);
+  }, [error]);
+
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="card max-w-sm p-10 text-center">

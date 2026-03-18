@@ -145,20 +145,24 @@ export default async function KatalogPage({
   const effectiveCompanyId = viewingAsCompanyId || userCompanyId;
   // priceMap: product_size_id → unit_price (EK netto)
   const priceMap: Record<string, number> = {};
-  if (effectiveCompanyId && products && products.length > 0) {
-    const allSizeIds = products.flatMap((p: any) => (p.sizes || []).map((s: any) => s.id));
-    if (allSizeIds.length > 0) {
-      // Use admin client when viewing as another company (als) to bypass RLS
-      const priceClient = viewingAsCompanyId ? createAdminClient() : supabase;
-      const { data: prices } = await priceClient
-        .from("customer_prices")
-        .select("product_size_id, unit_price")
-        .eq("company_id", effectiveCompanyId)
-        .in("product_size_id", allSizeIds);
-      for (const p of prices ?? []) {
-        priceMap[p.product_size_id] = Number(p.unit_price);
+  try {
+    if (effectiveCompanyId && products && products.length > 0) {
+      const allSizeIds = products.flatMap((p: any) => (p.sizes || []).map((s: any) => s.id));
+      if (allSizeIds.length > 0) {
+        // Use admin client when viewing as another company (als) to bypass RLS
+        const priceClient = viewingAsCompanyId ? createAdminClient() : supabase;
+        const { data: prices } = await priceClient
+          .from("customer_prices")
+          .select("product_size_id, unit_price")
+          .eq("company_id", effectiveCompanyId)
+          .in("product_size_id", allSizeIds);
+        for (const p of prices ?? []) {
+          priceMap[p.product_size_id] = Number(p.unit_price);
+        }
       }
     }
+  } catch (e) {
+    console.error("[katalog] Failed to fetch customer prices:", e);
   }
 
   return (
