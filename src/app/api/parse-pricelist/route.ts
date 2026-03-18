@@ -4,6 +4,8 @@ import { createClient as createAuthClient } from "@/lib/supabase/server";
 import { canonicalKey } from "@/lib/canonical-keys";
 import { buildExtractionPrompt, buildFallbackMatchingPrompt } from "@/lib/gemini-prompts";
 
+export const maxDuration = 60;
+
 interface ExtractedItem {
   product: string;
   size: string;

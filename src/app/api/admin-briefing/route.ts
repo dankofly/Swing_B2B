@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+export const maxDuration = 30;
+
 export async function POST(req: NextRequest) {
   try {
     const { adminName, stats, locale, isFullGreeting } = await req.json();

@@ -3,6 +3,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createAuthClient } from "@/lib/supabase/server";
 
+// Allow up to 60s for Gemini processing of large CSVs
+export const maxDuration = 60;
+
 // Words that indicate an item should be excluded
 const EXCLUDE_PATTERNS = [
   /unverk[aä]uflich/i,
