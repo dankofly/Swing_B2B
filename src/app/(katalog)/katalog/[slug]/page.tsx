@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
@@ -105,7 +105,9 @@ export default async function ProduktDetailPage({
 
     if (effectiveCompanyId) {
       const sizeIds = sizes.map((s) => s.id);
-      const { data: prices } = await supabase
+      // Use admin client when viewing as another company (als) to bypass RLS
+      const priceClient = (als && isAdmin) ? createAdminClient() : supabase;
+      const { data: prices } = await priceClient
         .from("customer_prices")
         .select("product_size_id, unit_price, discount")
         .eq("company_id", effectiveCompanyId)

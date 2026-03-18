@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { Search, ChevronRight, PackageOpen } from "lucide-react";
 import Link from "next/link";
 import type { Product, Category } from "@/lib/types";
@@ -148,7 +148,9 @@ export default async function KatalogPage({
   if (effectiveCompanyId && products && products.length > 0) {
     const allSizeIds = products.flatMap((p: any) => (p.sizes || []).map((s: any) => s.id));
     if (allSizeIds.length > 0) {
-      const { data: prices } = await supabase
+      // Use admin client when viewing as another company (als) to bypass RLS
+      const priceClient = viewingAsCompanyId ? createAdminClient() : supabase;
+      const { data: prices } = await priceClient
         .from("customer_prices")
         .select("product_size_id, unit_price")
         .eq("company_id", effectiveCompanyId)
