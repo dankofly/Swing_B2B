@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: swing-pdf-parser
+    runtime: docker
+    dockerfilePath: services/pdf-parser/Dockerfile
+    dockerContext: services/pdf-parser
+    plan: free
+    region: frankfurt
+    envVars: []
+    healthCheckPath: /health
