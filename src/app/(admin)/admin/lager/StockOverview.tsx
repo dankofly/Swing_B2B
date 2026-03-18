@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import {
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Search,
   Package,
@@ -60,6 +61,8 @@ export default function StockOverview({ products }: { products: Product[] }) {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<"all" | "low" | "out">("all");
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(0);
 
   const filtered = useMemo(() => {
     let result = products;
@@ -95,6 +98,26 @@ export default function StockOverview({ products }: { products: Product[] }) {
     return result;
   }, [products, search, filter]);
 
+  // Reset page when filters change
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages - 1);
+  const paged = filtered.slice(safePage * pageSize, safePage * pageSize + pageSize);
+
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    setPage(0);
+  }
+
+  function handleFilterChange(value: "all" | "low" | "out") {
+    setFilter(value);
+    setPage(0);
+  }
+
+  function handlePageSizeChange(size: number) {
+    setPageSize(size);
+    setPage(0);
+  }
+
   function toggleExpand(id: string) {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -129,7 +152,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
           {/* Filter buttons */}
           <div className="flex rounded border border-swing-gray/40 text-[11px]">
             <button
-              onClick={() => setFilter("all")}
+              onClick={() => handleFilterChange("all")}
               className={`cursor-pointer px-3 py-1.5 font-semibold transition-colors ${
                 filter === "all"
                   ? "bg-swing-navy text-white"
@@ -139,7 +162,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
               Alle
             </button>
             <button
-              onClick={() => setFilter("low")}
+              onClick={() => handleFilterChange("low")}
               className={`cursor-pointer border-l border-swing-gray/40 px-3 py-1.5 font-semibold transition-colors ${
                 filter === "low"
                   ? "bg-amber-500 text-white"
@@ -149,7 +172,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
               Niedrig
             </button>
             <button
-              onClick={() => setFilter("out")}
+              onClick={() => handleFilterChange("out")}
               className={`cursor-pointer border-l border-swing-gray/40 px-3 py-1.5 font-semibold transition-colors ${
                 filter === "out"
                   ? "bg-red-500 text-white"
@@ -170,7 +193,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
               type="text"
               placeholder="Suche..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="h-8 w-full rounded border border-swing-gray/40 pl-8 pr-3 text-xs text-swing-navy outline-none transition-colors focus:border-swing-gold sm:w-44"
             />
           </div>
@@ -186,13 +209,13 @@ export default function StockOverview({ products }: { products: Product[] }) {
       </div>
 
       {/* Product List */}
-      <div className="max-h-[700px] overflow-auto">
+      <div>
         {filtered.length === 0 ? (
           <div className="px-6 py-12 text-center text-sm text-swing-gray-dark/40">
             Keine Produkte gefunden.
           </div>
         ) : (
-          filtered.map((product) => {
+          paged.map((product) => {
             const isExpanded = expanded.has(product.id);
             const sizes = [...(product.sizes ?? [])].sort(
               (a, b) => a.sort_order - b.sort_order
@@ -364,6 +387,67 @@ export default function StockOverview({ products }: { products: Product[] }) {
           })
         )}
       </div>
+
+      {/* Pagination */}
+      {filtered.length > 0 && (
+        <div className="flex flex-col gap-3 border-t border-swing-gray/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          {/* Page size selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-swing-gray-dark/40">Anzeigen:</span>
+            {[10, 20, 50].map((size) => (
+              <button
+                key={size}
+                onClick={() => handlePageSizeChange(size)}
+                className={`cursor-pointer rounded px-2.5 py-1 text-xs font-semibold transition-colors ${
+                  pageSize === size
+                    ? "bg-swing-navy text-white"
+                    : "bg-swing-gray-light text-swing-gray-dark/50 hover:bg-swing-gray"
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+            <span className="ml-2 text-xs text-swing-gray-dark/30">
+              {safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, filtered.length)} von {filtered.length}
+            </span>
+          </div>
+
+          {/* Page navigation */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(0)}
+              disabled={safePage === 0}
+              className="cursor-pointer rounded px-2 py-1 text-xs font-semibold text-swing-gray-dark/40 transition-colors hover:bg-swing-gray-light disabled:cursor-default disabled:opacity-30"
+            >
+              Erste
+            </button>
+            <button
+              onClick={() => setPage(safePage - 1)}
+              disabled={safePage === 0}
+              className="cursor-pointer rounded p-1 text-swing-gray-dark/40 transition-colors hover:bg-swing-gray-light disabled:cursor-default disabled:opacity-30"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="px-3 text-xs font-semibold text-swing-navy">
+              {safePage + 1} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(safePage + 1)}
+              disabled={safePage >= totalPages - 1}
+              className="cursor-pointer rounded p-1 text-swing-gray-dark/40 transition-colors hover:bg-swing-gray-light disabled:cursor-default disabled:opacity-30"
+            >
+              <ChevronRight size={16} />
+            </button>
+            <button
+              onClick={() => setPage(totalPages - 1)}
+              disabled={safePage >= totalPages - 1}
+              className="cursor-pointer rounded px-2 py-1 text-xs font-semibold text-swing-gray-dark/40 transition-colors hover:bg-swing-gray-light disabled:cursor-default disabled:opacity-30"
+            >
+              Letzte
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
