@@ -52,3 +52,76 @@ export function normalizeSize(size: string | null | undefined): string {
 export function canonicalKey(model: string, size: string | null | undefined): string {
   return `${normalizeModel(model)}_${normalizeSize(size)}`;
 }
+
+/** Deterministic German→English color translation map. */
+export const DE_EN_COLOR_MAP: Record<string, string> = {
+  blau: "blue",
+  rot: "red",
+  weiss: "white",
+  "weiß": "white",
+  gruen: "green",
+  "grün": "green",
+  gelb: "yellow",
+  schwarz: "black",
+  lila: "purple",
+  violett: "violet",
+  orange: "orange",
+  silber: "silver",
+  grau: "grey",
+  braun: "brown",
+  rosa: "pink",
+  tuerkis: "turquoise",
+  "türkis": "turquoise",
+  hellblau: "light blue",
+  dunkelblau: "dark blue",
+  hellgruen: "light green",
+  dunkelgruen: "dark green",
+  petrol: "petrol",
+  lime: "lime",
+  mint: "mint",
+  berry: "berry",
+  coral: "coral",
+  sand: "sand",
+  ocean: "ocean",
+  forest: "forest",
+  cosmic: "cosmic",
+  energy: "energy",
+  gold: "gold",
+};
+
+/** Normalize a design/color name to canonical form.
+ *
+ * "Blau"    -> "blue"
+ * "Cosmic"  -> "cosmic"
+ * "GRÜN"    -> "green"
+ * null      -> ""
+ */
+export function normalizeDesign(design: string | null | undefined): string {
+  if (!design) return "";
+  let s = design.trim().toLowerCase();
+  // Normalize unicode (ü -> u, etc.)
+  s = s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  // Apply deterministic DE→EN map
+  const mapped = DE_EN_COLOR_MAP[s];
+  if (mapped) return mapped;
+  // Clean up whitespace
+  s = s.replace(/\s+/g, " ").trim();
+  return s;
+}
+
+/** Generate a stock match key from model, design, and size. */
+export function stockMatchKey(
+  model: string,
+  design: string | null | undefined,
+  size: string | null | undefined,
+): string {
+  return `${normalizeModel(model)}||${normalizeDesign(design)}||${normalizeSize(size)}`;
+}
+
+/** Generate a model+size only key (ignoring design) for partial matching. */
+export function modelSizeKey(
+  model: string,
+  size: string | null | undefined,
+): string {
+  return `${normalizeModel(model)}||${normalizeSize(size)}`;
+}

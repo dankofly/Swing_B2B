@@ -10,6 +10,8 @@ import {
   Loader2,
   X,
   Package,
+  HelpCircle,
+  PackageX,
 } from "lucide-react";
 import { importStockFromCSV } from "@/lib/actions/stock";
 import { useDict } from "@/lib/i18n/context";
@@ -26,24 +28,59 @@ interface StockItem {
   current_stock: number | null;
   matched: boolean;
   color_matched: boolean;
+  match_basis?: string;
 }
 
-interface ParseResult {
-  items: StockItem[];
-  summary: {
-    total: number;
-    matched: number;
-    unmatched: number;
-    csv_rows: number;
-    filtered_items: number;
-  };
+interface ReviewItem {
+  bezeichnung: string;
+  model_raw: string;
+  design_raw: string | null;
+  size_raw: string;
+  stock_total: number;
+  reason: string;
+  portal_candidates: Array<{
+    product_name: string;
+    design: string | null;
+    size: string;
+  }>;
+}
+
+interface MissingItem {
+  product_id: string;
+  product_name: string;
+  design: string | null;
+  size: string;
+}
+
+interface IgnoredItem {
+  bezeichnung: string;
+  model_raw: string;
+  design_raw: string | null;
+  size_raw: string;
+  stock_total: number;
+  reason: string;
+}
+
+interface Summary {
+  total: number;
+  matched: number;
+  review_needed: number;
+  missing_in_csv: number;
+  ignored: number;
+  csv_rows: number;
+  filtered_items: number;
+  llm_fallback_used: boolean;
+  llm_fallback_count: number;
 }
 
 export default function LagerImportClient() {
   const dict = useDict();
   const t = dict.stockImport;
   const [items, setItems] = useState<StockItem[]>([]);
-  const [summary, setSummary] = useState<ParseResult["summary"] | null>(null);
+  const [reviewNeeded, setReviewNeeded] = useState<ReviewItem[]>([]);
+  const [missingInCsv, setMissingInCsv] = useState<MissingItem[]>([]);
+  const [ignoredItems, setIgnoredItems] = useState<IgnoredItem[]>([]);
+  const [summary, setSummary] = useState<Summary | null>(null);
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ updated: number } | null>(null);
@@ -57,6 +94,9 @@ export default function LagerImportClient() {
     setError(null);
     setResult(null);
     setItems([]);
+    setReviewNeeded([]);
+    setMissingInCsv([]);
+    setIgnoredItems([]);
     setSummary(null);
 
     try {
@@ -75,7 +115,10 @@ export default function LagerImportClient() {
         return;
       }
 
-      setItems(data.items);
+      setItems(data.items ?? []);
+      setReviewNeeded(data.review_needed ?? []);
+      setMissingInCsv(data.missing_in_csv ?? []);
+      setIgnoredItems(data.ignored ?? []);
       setSummary(data.summary);
     } catch {
       setError(t.networkError);
@@ -111,13 +154,15 @@ export default function LagerImportClient() {
 
   function handleReset() {
     setItems([]);
+    setReviewNeeded([]);
+    setMissingInCsv([]);
+    setIgnoredItems([]);
     setSummary(null);
     setResult(null);
     setError(null);
   }
 
   const matchedItems = items.filter((i) => i.matched);
-  const unmatchedItems = items.filter((i) => !i.matched);
   const totalStock = matchedItems.reduce((sum, i) => sum + i.count, 0);
 
   // Group matched items by product
@@ -127,6 +172,14 @@ export default function LagerImportClient() {
     const arr = grouped.get(key) ?? [];
     arr.push(item);
     grouped.set(key, arr);
+  }
+
+  // Group missing items by product
+  const missingGrouped = new Map<string, MissingItem[]>();
+  for (const item of missingInCsv) {
+    const arr = missingGrouped.get(item.product_name) ?? [];
+    arr.push(item);
+    missingGrouped.set(item.product_name, arr);
   }
 
   return (
@@ -150,7 +203,7 @@ export default function LagerImportClient() {
           {parsing ? (
             <>
               <Loader2 size={20} className="animate-spin" />
-              {t.geminiAnalyzing}
+              {t.csvProcessing}
             </>
           ) : (
             <>
@@ -181,7 +234,7 @@ export default function LagerImportClient() {
 
       {/* Summary */}
       {summary && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           <div className="rounded border border-gray-200 bg-white p-4 text-center">
             <p className="text-2xl font-bold text-swing-navy">{summary.csv_rows}</p>
             <p className="text-[11px] uppercase tracking-wider text-swing-gray-dark/40">{t.csvRows}</p>
@@ -195,8 +248,16 @@ export default function LagerImportClient() {
             <p className="text-[11px] uppercase tracking-wider text-swing-gray-dark/40">{t.assigned}</p>
           </div>
           <div className="rounded border border-gray-200 bg-white p-4 text-center">
-            <p className="text-2xl font-bold text-red-500">{summary.unmatched}</p>
+            <p className="text-2xl font-bold text-amber-500">{summary.review_needed}</p>
+            <p className="text-[11px] uppercase tracking-wider text-swing-gray-dark/40">{t.reviewNeeded}</p>
+          </div>
+          <div className="rounded border border-gray-200 bg-white p-4 text-center">
+            <p className="text-2xl font-bold text-red-500">{summary.ignored}</p>
             <p className="text-[11px] uppercase tracking-wider text-swing-gray-dark/40">{t.notFound}</p>
+          </div>
+          <div className="rounded border border-gray-200 bg-white p-4 text-center">
+            <p className="text-2xl font-bold text-blue-500">{summary.missing_in_csv}</p>
+            <p className="text-[11px] uppercase tracking-wider text-swing-gray-dark/40">{t.missingInCsv}</p>
           </div>
         </div>
       )}
@@ -310,16 +371,73 @@ export default function LagerImportClient() {
         </div>
       )}
 
-      {/* Unmatched Items */}
-      {unmatchedItems.length > 0 && (
-        <div className="glass-card overflow-hidden rounded">
+      {/* Review Needed */}
+      {reviewNeeded.length > 0 && (
+        <div className="glass-card mb-6 overflow-hidden rounded">
+          <div className="flex items-center gap-2 border-b border-swing-gray/30 px-6 py-4">
+            <HelpCircle size={16} className="text-amber-500" />
+            <h2 className="text-base font-bold text-swing-navy">
+              {t.reviewNeededTitle}
+            </h2>
+            <span className="rounded bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">
+              {reviewNeeded.length}
+            </span>
+          </div>
+          <div className="max-h-[400px] overflow-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 border-b border-swing-gray/30 bg-swing-gray-light/80 text-[11px] uppercase tracking-widest text-swing-gray-dark/40 backdrop-blur-sm">
+                <tr>
+                  <th className="px-6 py-2 text-left">{t.designation}</th>
+                  <th className="px-4 py-2 text-left">{t.recognizedProduct}</th>
+                  <th className="px-4 py-2 text-left">{t.size}</th>
+                  <th className="px-4 py-2 text-left">{t.color}</th>
+                  <th className="px-4 py-2 text-right">{t.pcs}</th>
+                  <th className="px-4 py-2 text-left">{t.reviewReason}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {reviewNeeded.map((item, i) => (
+                  <tr key={i} className="bg-amber-50/30">
+                    <td className="px-6 py-2.5 text-xs text-swing-gray-dark/60">
+                      {item.bezeichnung}
+                    </td>
+                    <td className="px-4 py-2.5 text-xs font-medium text-amber-700">
+                      {item.model_raw}
+                    </td>
+                    <td className="px-4 py-2.5 text-xs">{item.size_raw}</td>
+                    <td className="px-4 py-2.5 text-xs">{item.design_raw ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-right text-xs font-bold">{item.stock_total}</td>
+                    <td className="px-4 py-2.5 text-xs text-amber-600">
+                      {item.reason}
+                      {item.portal_candidates.length > 0 && (
+                        <span className="ml-1 text-swing-gray-dark/40">
+                          ({item.portal_candidates.map((c) => c.design ?? c.product_name).join(", ")})
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="border-t border-swing-gray/20 px-6 py-3">
+            <p className="text-xs text-swing-gray-dark/40">
+              {t.reviewHint}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Ignored (not in portal) */}
+      {ignoredItems.length > 0 && (
+        <div className="glass-card mb-6 overflow-hidden rounded">
           <div className="flex items-center gap-2 border-b border-swing-gray/30 px-6 py-4">
             <AlertTriangle size={16} className="text-red-400" />
             <h2 className="text-base font-bold text-swing-navy">
               {t.unassigned}
             </h2>
             <span className="rounded bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-600">
-              {unmatchedItems.length}
+              {ignoredItems.length}
             </span>
           </div>
           <div className="max-h-[300px] overflow-auto">
@@ -334,20 +452,20 @@ export default function LagerImportClient() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {unmatchedItems.map((item, i) => (
+                {ignoredItems.map((item, i) => (
                   <tr key={i} className="bg-red-50/30">
                     <td className="px-6 py-2.5 text-xs text-swing-gray-dark/60">
                       {item.bezeichnung}
                     </td>
                     <td className="px-4 py-2.5 text-xs font-medium text-red-600">
-                      {item.product_name}
+                      {item.model_raw}
                     </td>
-                    <td className="px-4 py-2.5 text-xs">{item.size_label}</td>
+                    <td className="px-4 py-2.5 text-xs">{item.size_raw}</td>
                     <td className="px-4 py-2.5 text-xs">
-                      {item.color_name ?? "—"}
+                      {item.design_raw ?? "—"}
                     </td>
                     <td className="px-4 py-2.5 text-right text-xs font-bold">
-                      {item.count}
+                      {item.stock_total}
                     </td>
                   </tr>
                 ))}
@@ -357,6 +475,43 @@ export default function LagerImportClient() {
           <div className="border-t border-swing-gray/20 px-6 py-3">
             <p className="text-xs text-swing-gray-dark/40">
               {t.unassignedHint}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Missing in CSV */}
+      {missingInCsv.length > 0 && (
+        <div className="glass-card overflow-hidden rounded">
+          <div className="flex items-center gap-2 border-b border-swing-gray/30 px-6 py-4">
+            <PackageX size={16} className="text-blue-400" />
+            <h2 className="text-base font-bold text-swing-navy">
+              {t.missingInCsvTitle}
+            </h2>
+            <span className="rounded bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
+              {missingInCsv.length}
+            </span>
+          </div>
+          <div className="max-h-[300px] overflow-auto">
+            {Array.from(missingGrouped.entries()).map(([productName, productItems]) => (
+              <div key={productName}>
+                <div className="flex items-center gap-2 border-b border-swing-gray/20 bg-blue-50/30 px-6 py-2">
+                  <Package size={12} className="text-blue-400" />
+                  <span className="text-xs font-bold text-swing-navy">{productName}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 px-6 py-2">
+                  {productItems.map((item, i) => (
+                    <span key={i} className="rounded bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700">
+                      {item.size}{item.design ? ` / ${item.design}` : ""}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-swing-gray/20 px-6 py-3">
+            <p className="text-xs text-swing-gray-dark/40">
+              {t.missingInCsvHint}
             </p>
           </div>
         </div>
