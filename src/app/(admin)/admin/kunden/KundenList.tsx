@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, CheckCircle, XCircle, Search, Plus, LogIn } from "lucide-react";
+import { Users, CheckCircle, XCircle, Search, Plus, LogIn, Mail, Clock } from "lucide-react";
 import DeleteCompanyButton from "./DeleteCompanyButton";
 import { useDict, useLocale } from "@/lib/i18n/context";
 import { getDateLocale } from "@/lib/i18n/shared";
@@ -112,6 +112,17 @@ export default function KundenList({ companies }: { companies: Company[] }) {
                         {dict.common.notApproved}
                       </span>
                     )}
+                    {company.profiles.length === 0 ? (
+                      <span className="flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                        <Mail size={10} />
+                        {tc.invitePending}
+                      </span>
+                    ) : company.profiles.every((p) => !p.last_sign_in_at) ? (
+                      <span className="flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                        <Clock size={10} />
+                        {tc.inviteSent}
+                      </span>
+                    ) : null}
                   </div>
                   <p className="mt-1 text-sm text-swing-gray-dark/60">
                     {company.contact_email}

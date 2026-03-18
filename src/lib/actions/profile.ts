@@ -145,6 +145,59 @@ export async function updateUserRole(userId: string, newRole: string) {
   return { success: true };
 }
 
+export async function deleteUser(userId: string) {
+  await guardAdmin();
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, error: "Nicht angemeldet" };
+
+  // Only superadmins can delete users
+  const { data: callerProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (callerProfile?.role !== "superadmin") {
+    return { success: false, error: "Nur Super Admins können Benutzer löschen" };
+  }
+
+  // Cannot delete yourself
+  if (userId === user.id) {
+    return { success: false, error: "Eigenen Account kann nicht gelöscht werden" };
+  }
+
+  const admin = createAdminClient();
+
+  // Check target user exists and is not superadmin
+  const { data: targetProfile } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  if (!targetProfile) {
+    return { success: false, error: "Benutzer nicht gefunden" };
+  }
+
+  // Delete profile first (FK constraint)
+  await admin.from("profiles").delete().eq("id", userId);
+
+  // Delete auth user
+  const { error: authError } = await admin.auth.admin.deleteUser(userId);
+
+  if (authError) {
+    return { success: false, error: authError.message };
+  }
+
+  revalidatePath("/admin/profil");
+  return { success: true };
+}
+
 export async function inviteUser(email: string, role: string, fullName: string) {
   await guardAdmin();
   if (!["admin", "buyer", "testadmin"].includes(role)) {

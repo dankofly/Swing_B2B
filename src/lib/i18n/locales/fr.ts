@@ -441,6 +441,8 @@ const fr: Dictionary = {
       since: "depuis",
       lock: "Bloquer",
       unlock: "Débloquer",
+      invitePending: "Invitation en attente",
+      inviteSent: "Invitation envoyée",
       detail: {
         title: "Détail client",
         masterData: "Données principales",
@@ -765,8 +767,8 @@ const fr: Dictionary = {
     saving: "Enregistrement...",
     save: "Enregistrer le profil",
     saveError: "Erreur lors de l'enregistrement",
-    roleManagement: "Gestion des rôles",
-    roleManagementHint: "Gérer les rôles de tous les utilisateurs",
+    roleManagement: "Admin — Gestion des utilisateurs",
+    roleManagementHint: "Gérer les utilisateurs, attribuer des rôles et supprimer des accès",
     roleSuperAdmin: "Super Admin",
     roleAdmin: "Admin",
     roleBuyer: "Revendeur",
@@ -780,6 +782,10 @@ const fr: Dictionary = {
     inviting: "Envoi en cours...",
     inviteCancel: "Annuler",
     inviteSuccess: "Utilisateur invité avec succès",
+    deleteUser: "Supprimer",
+    deleteUserConfirm: "Vraiment supprimer l'utilisateur \"{name}\" ? L'accès sera définitivement supprimé.",
+    deleteUserSuccess: "Utilisateur supprimé",
+    deleteUserError: "Erreur lors de la suppression",
   },
 
   deleteCompany: {

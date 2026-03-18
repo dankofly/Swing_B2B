@@ -441,6 +441,8 @@ const en: Dictionary = {
       since: "since",
       lock: "Lock",
       unlock: "Unlock",
+      invitePending: "Invitation pending",
+      inviteSent: "Invitation sent",
       detail: {
         title: "Customer Detail",
         masterData: "Master Data",
@@ -765,8 +767,8 @@ const en: Dictionary = {
     saving: "Saving...",
     save: "Save profile",
     saveError: "Error saving",
-    roleManagement: "Role Management",
-    roleManagementHint: "Manage roles for all users",
+    roleManagement: "Admin — User Management",
+    roleManagementHint: "Manage users, assign roles, and remove access",
     roleSuperAdmin: "Super Admin",
     roleAdmin: "Admin",
     roleBuyer: "Dealer",
@@ -780,6 +782,10 @@ const en: Dictionary = {
     inviting: "Sending...",
     inviteCancel: "Cancel",
     inviteSuccess: "User invited successfully",
+    deleteUser: "Remove",
+    deleteUserConfirm: "Really delete user \"{name}\"? Access will be permanently removed.",
+    deleteUserSuccess: "User deleted",
+    deleteUserError: "Error deleting user",
   },
 
   deleteCompany: {

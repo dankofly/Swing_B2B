@@ -417,6 +417,8 @@ export interface Dictionary {
       since: string;
       lock: string;
       unlock: string;
+      invitePending: string;
+      inviteSent: string;
       detail: {
         title: string;
         masterData: string;
@@ -756,6 +758,10 @@ export interface Dictionary {
     inviting: string;
     inviteCancel: string;
     inviteSuccess: string;
+    deleteUser: string;
+    deleteUserConfirm: string;
+    deleteUserSuccess: string;
+    deleteUserError: string;
   };
 
   deleteCompany: {

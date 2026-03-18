@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateUserRole, inviteUser } from "@/lib/actions/profile";
+import { updateUserRole, inviteUser, deleteUser } from "@/lib/actions/profile";
 import {
   Shield,
   ChevronDown,
@@ -10,6 +10,7 @@ import {
   Loader2,
   UserPlus,
   Mail,
+  Trash2,
 } from "lucide-react";
 import { useDict } from "@/lib/i18n/context";
 
@@ -42,6 +43,8 @@ export default function RoleManager({
   const [savingId, setSavingId] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Invite form state
   const [showInvite, setShowInvite] = useState(false);
@@ -89,6 +92,21 @@ export default function RoleManager({
       }, 3000);
     } else {
       setError(result.error || tp.roleUpdateError);
+    }
+  }
+
+  async function handleDeleteUser(userId: string, displayName: string) {
+    const confirmMsg = tp.deleteUserConfirm.replace("{name}", displayName);
+    if (!window.confirm(confirmMsg)) return;
+
+    setDeletingId(userId);
+    setError(null);
+
+    const result = await deleteUser(userId);
+
+    setDeletingId(null);
+    if (!result.success) {
+      setError(result.error || tp.deleteUserError);
     }
   }
 
@@ -306,6 +324,21 @@ export default function RoleManager({
                         </select>
                       )}
                     </div>
+                    {isSuperAdmin && !isCurrentUser && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteUser(p.id, p.full_name || p.email)}
+                        disabled={deletingId === p.id}
+                        className="flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                      >
+                        {deletingId === p.id ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <Trash2 size={12} />
+                        )}
+                        {tp.deleteUser}
+                      </button>
+                    )}
                   </div>
                 );
               })}

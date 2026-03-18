@@ -441,6 +441,8 @@ const de: Dictionary = {
       since: "seit",
       lock: "Sperren",
       unlock: "Freischalten",
+      invitePending: "Einladung ausstehend",
+      inviteSent: "Einladung versendet",
       detail: {
         title: "Kundendetail",
         masterData: "Stammdaten",
@@ -765,8 +767,8 @@ const de: Dictionary = {
     saving: "Speichert...",
     save: "Profil speichern",
     saveError: "Fehler beim Speichern",
-    roleManagement: "Rollenverwaltung",
-    roleManagementHint: "Rollen für alle Benutzer verwalten",
+    roleManagement: "Admin — Benutzerverwaltung",
+    roleManagementHint: "Benutzer verwalten, Rollen zuweisen und Zugänge entfernen",
     roleSuperAdmin: "Super Admin",
     roleAdmin: "Admin",
     roleBuyer: "Händler",
@@ -780,6 +782,10 @@ const de: Dictionary = {
     inviting: "Wird gesendet...",
     inviteCancel: "Abbrechen",
     inviteSuccess: "Benutzer erfolgreich eingeladen",
+    deleteUser: "Entfernen",
+    deleteUserConfirm: "Benutzer \"{name}\" wirklich löschen? Der Zugang wird unwiderruflich entfernt.",
+    deleteUserSuccess: "Benutzer gelöscht",
+    deleteUserError: "Fehler beim Löschen",
   },
 
   deleteCompany: {
