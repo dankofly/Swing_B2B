@@ -262,6 +262,12 @@ export default async function AdminDashboard() {
                   <span className="hidden flex-1 sm:block" />
                   <span className="flex-1 sm:hidden" />
 
+                  {isNew && (
+                    <span className="relative flex h-2.5 w-2.5 shrink-0">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-500" />
+                    </span>
+                  )}
                   <span className="shrink-0 text-xs tabular-nums text-swing-navy/40">
                     {itemCount} Pos.
                   </span>
@@ -271,12 +277,6 @@ export default async function AdminDashboard() {
                   <span className={`shrink-0 rounded py-0.5 text-center text-[10px] font-bold w-24 ${status.bg} ${status.color} ${isNew ? "animate-pulse" : ""}`}>
                     {status.label}
                   </span>
-                  {isNew && (
-                    <span className="relative flex h-2.5 w-2.5 shrink-0">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
-                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-500" />
-                    </span>
-                  )}
                   <ChevronRight size={14} className="shrink-0 text-swing-navy/15" />
                 </Link>
               );
