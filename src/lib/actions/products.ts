@@ -67,6 +67,8 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
   const action_text_fr = formData.get("action_text_fr") as string;
   const website_url_en = formData.get("website_url_en") as string;
   const website_url_fr = formData.get("website_url_fr") as string;
+  const uvpRaw = formData.get("uvp_brutto") as string;
+  const uvp_brutto = uvpRaw ? parseFloat(uvpRaw.replace(",", ".")) : null;
 
   if (category_id && !isValidUUID(category_id)) return { error: "Ungültige Kategorie-ID" };
 
@@ -92,6 +94,7 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
       use_case: use_case || null,
       website_url: website_url || null,
       images,
+      uvp_brutto: uvp_brutto && !isNaN(uvp_brutto) ? uvp_brutto : null,
       name_en: name_en || null,
       name_fr: name_fr || null,
       description_en: description_en || null,
@@ -215,6 +218,8 @@ export async function updateProduct(productId: string, formData: FormData): Prom
   const action_text_fr = formData.get("action_text_fr") as string;
   const website_url_en = formData.get("website_url_en") as string;
   const website_url_fr = formData.get("website_url_fr") as string;
+  const uvpRaw = formData.get("uvp_brutto") as string;
+  const uvp_brutto = uvpRaw ? parseFloat(uvpRaw.replace(",", ".")) : null;
 
   const { error } = await supabase
     .from("products")
@@ -238,6 +243,7 @@ export async function updateProduct(productId: string, formData: FormData): Prom
       use_case: use_case || null,
       website_url: website_url || null,
       images,
+      uvp_brutto: uvp_brutto && !isNaN(uvp_brutto) ? uvp_brutto : null,
       name_en: name_en || null,
       name_fr: name_fr || null,
       description_en: description_en || null,

@@ -514,6 +514,8 @@ export interface Dictionary {
         uploading: string;
         colorNamePlaceholder: string;
         limitedEdition: string;
+        uvpBrutto: string;
+        uvpBruttoHint: string;
         relatedProducts: string;
         similarProducts: string;
         accessories: string;

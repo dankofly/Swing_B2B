@@ -538,6 +538,8 @@ const en: Dictionary = {
         uploading: "Uploading...",
         colorNamePlaceholder: "Color name (e.g. Design A)",
         limitedEdition: "Limited Edition",
+        uvpBrutto: "RRP incl. VAT",
+        uvpBruttoHint: "Recommended retail price – shown in the catalog for all customers.",
         relatedProducts: "Recommendations / Upsell",
         similarProducts: "Similar Products",
         accessories: "Accessories & Harnesses",

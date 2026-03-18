@@ -538,6 +538,8 @@ const de: Dictionary = {
         uploading: "Lädt...",
         colorNamePlaceholder: "Farbname (z.B. Design A)",
         limitedEdition: "Limited Edition",
+        uvpBrutto: "UVP inkl. MwSt",
+        uvpBruttoHint: "Unverbindliche Preisempfehlung – wird im Katalog für alle Kunden angezeigt.",
         relatedProducts: "Empfehlungen / Upsell",
         similarProducts: "Ähnliche Produkte",
         accessories: "Zubehör & Gurtzeuge",

@@ -538,6 +538,8 @@ const fr: Dictionary = {
         uploading: "Chargement...",
         colorNamePlaceholder: "Nom de la couleur (p.ex. Design A)",
         limitedEdition: "Édition limitée",
+        uvpBrutto: "PPC TTC",
+        uvpBruttoHint: "Prix public conseillé – affiché dans le catalogue pour tous les clients.",
         relatedProducts: "Recommandations / Vente incitative",
         similarProducts: "Produits similaires",
         accessories: "Accessoires & Sellettes",

@@ -927,6 +927,27 @@ export default function ProductForm({
         )}
       </div>
 
+      {/* UVP inkl. MwSt */}
+      <div className="card overflow-hidden">
+        <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
+          <h3 className="text-sm font-bold text-swing-navy">{tf.uvpBrutto}</h3>
+          <p className="mt-0.5 text-[11px] text-swing-gray-dark/40">{tf.uvpBruttoHint}</p>
+        </div>
+        <div className="px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              name="uvp_brutto"
+              defaultValue={product?.uvp_brutto != null ? String(product.uvp_brutto).replace(".", ",") : ""}
+              placeholder="z.B. 2.390,00"
+              inputMode="decimal"
+              className="w-48 rounded border border-gray-300 px-3 py-2 text-sm tabular-nums text-swing-navy focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
+            />
+            <span className="text-sm font-medium text-swing-navy/40">€ inkl. MwSt</span>
+          </div>
+        </div>
+      </div>
+
       {/* Related Products / Upsell */}
       <RelatedProductsPicker
         productId={product?.id}
