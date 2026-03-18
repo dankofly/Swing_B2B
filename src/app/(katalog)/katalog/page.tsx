@@ -78,13 +78,15 @@ export default async function KatalogPage({
   ]);
 
   let isAdmin = false;
+  let userCompanyId: string | null = null;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, company_id")
       .eq("id", user.id)
       .single();
     isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
+    userCompanyId = profile?.company_id ?? null;
   }
 
   const catMap = Object.fromEntries(
@@ -138,6 +140,24 @@ export default async function KatalogPage({
   const viewingAsCompanyId = als && isAdmin ? als : undefined;
   // Hide admin UI (gear icons etc.) when viewing as customer
   const showAdminUI = isAdmin && !viewingAsCompanyId;
+
+  // Fetch customer prices for all product sizes
+  const effectiveCompanyId = viewingAsCompanyId || userCompanyId;
+  // priceMap: product_size_id → unit_price (EK netto)
+  const priceMap: Record<string, number> = {};
+  if (effectiveCompanyId && products && products.length > 0) {
+    const allSizeIds = products.flatMap((p: any) => (p.sizes || []).map((s: any) => s.id));
+    if (allSizeIds.length > 0) {
+      const { data: prices } = await supabase
+        .from("customer_prices")
+        .select("product_size_id, unit_price")
+        .eq("company_id", effectiveCompanyId)
+        .in("product_size_id", allSizeIds);
+      for (const p of prices ?? []) {
+        priceMap[p.product_size_id] = Number(p.unit_price);
+      }
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -416,6 +436,15 @@ export default async function KatalogPage({
               : null;
             const enClass = product.en_class || product.tech_specs?.["EN-Zertifizierung"];
             const enClassCustom = product.en_class_custom;
+
+            // Compute price range for this product
+            const sizePrices = (product.sizes || [])
+              .map((s) => priceMap[s.id])
+              .filter((p): p is number => p != null);
+            const minEk = sizePrices.length > 0 ? Math.min(...sizePrices) : null;
+            const maxEk = sizePrices.length > 0 ? Math.max(...sizePrices) : null;
+            const hasPrices = sizePrices.length > 0;
+            const uvp = product.uvp_brutto ? Number(product.uvp_brutto) : null;
             const isComingSoon = product.is_coming_soon;
             const isPreorder = product.is_preorder;
             const isFadeOut = product.is_fade_out;
@@ -517,6 +546,28 @@ export default async function KatalogPage({
                     <p className="mt-1.5 mb-2 line-clamp-2 text-[12px] leading-relaxed text-swing-gray-dark/50">
                       {localized(product as unknown as Record<string, unknown>, "description", locale)}
                     </p>
+                  )}
+
+                  {/* Prices */}
+                  {hasPrices && (
+                    <div className="mt-1 mb-2 space-y-0.5">
+                      {uvp != null && (
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-[10px] font-medium text-swing-navy/35">{dict.katalog.detail.listPrice}</span>
+                          <span className="text-[11px] tabular-nums text-swing-navy/40">
+                            {uvp.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-[10px] font-medium text-swing-navy/35">{dict.katalog.detail.yourPrice}</span>
+                        <span className="text-[13px] font-extrabold tabular-nums text-swing-navy">
+                          {minEk === maxEk
+                            ? minEk!.toLocaleString("de-DE", { style: "currency", currency: "EUR" })
+                            : `${minEk!.toLocaleString("de-DE", { style: "currency", currency: "EUR" })} – ${maxEk!.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}`}
+                        </span>
+                      </div>
+                    </div>
                   )}
 
                   {/* Sizes + Colors */}

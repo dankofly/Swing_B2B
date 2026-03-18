@@ -280,6 +280,7 @@ export interface Dictionary {
       subtotal: string;
       addToCart: string;
       added: string;
+      priceDisclaimer: string;
       viewOnWebsite: string;
       similarProducts: string;
       accessories: string;

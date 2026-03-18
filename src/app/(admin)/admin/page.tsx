@@ -8,7 +8,6 @@ import {
   Activity,
   Warehouse,
   MessageSquare,
-  FileDown,
   ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
@@ -42,7 +41,6 @@ export default async function AdminDashboard() {
     { count: importerCount },
     { count: importerNetworkCount },
     { data: recentInquiries },
-    { data: recentPriceLists },
   ] = await Promise.all([
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_coming_soon", true),
@@ -66,16 +64,6 @@ export default async function AdminDashboard() {
       user:profiles(full_name, email),
       inquiry_items(quantity, unit_price)
     `).order("created_at", { ascending: false }).limit(6),
-    supabase.from("price_uploads").select(`
-      id,
-      file_url,
-      file_type,
-      status,
-      matched_count,
-      total_count,
-      created_at,
-      company:companies(name)
-    `).order("created_at", { ascending: false }).limit(5),
   ]);
 
   const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -290,76 +278,6 @@ export default async function AdminDashboard() {
         )}
       </div>
 
-      {/* Recent Price Lists */}
-      <div className="overflow-hidden card">
-        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-swing-navy text-white">
-              <FileText size={18} strokeWidth={1.75} />
-            </div>
-            <div>
-              <h2 className="text-[15px] font-bold text-swing-navy">{td.recentPriceLists}</h2>
-              <p className="text-[11px] text-swing-gray-dark/35">{td.recentPriceListsHint}</p>
-            </div>
-          </div>
-        </div>
-
-        {!recentPriceLists || recentPriceLists.length === 0 ? (
-          <div className="flex flex-col items-center justify-center border-t border-gray-100 px-6 py-20">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50">
-              <FileText size={22} className="text-swing-navy/12" />
-            </div>
-            <p className="text-sm font-medium text-swing-navy/40">{td.noPriceLists}</p>
-            <p className="mt-1 text-xs text-swing-gray-dark/25">{td.noPriceListsHint}</p>
-          </div>
-        ) : (
-          <div className="space-y-1 border-t border-gray-100 p-2">
-            {recentPriceLists.map((upload: any) => {
-              const statusLabel = upload.status === "completed"
-                ? `${upload.matched_count}/${upload.total_count}`
-                : upload.status === "failed"
-                ? "Fehler"
-                : upload.status === "review"
-                ? "Review"
-                : "...";
-              const statusColor = upload.status === "completed"
-                ? "bg-emerald-100 text-emerald-700"
-                : upload.status === "failed"
-                ? "bg-red-100 text-red-700"
-                : "bg-amber-100 text-amber-700";
-              return (
-                <div
-                  key={upload.id}
-                  className="flex w-full cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-white px-3 py-3 transition-colors duration-150 hover:bg-gray-50/40 sm:flex-nowrap sm:gap-4 sm:px-4"
-                >
-                  <span className="shrink-0 text-sm font-bold text-swing-navy sm:w-44 sm:truncate">
-                    {(upload as any).company?.name ?? "—"}
-                  </span>
-                  <span className="shrink-0 text-xs tabular-nums text-swing-navy/40">
-                    {new Date(upload.created_at).toLocaleDateString(dl, { day: "2-digit", month: "long", year: "numeric" })}
-                  </span>
-
-                  <span className="hidden flex-1 sm:block" />
-                  <span className="flex-1 sm:hidden" />
-
-                  <span className={`shrink-0 rounded py-0.5 text-center text-[10px] font-bold w-24 ${statusColor}`}>
-                    {statusLabel}
-                  </span>
-                  <a
-                    href={upload.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0 rounded-lg p-1.5 text-red-500/60 transition-colors hover:bg-red-50 hover:text-red-600"
-                    title="PDF"
-                  >
-                    <FileDown size={14} />
-                  </a>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

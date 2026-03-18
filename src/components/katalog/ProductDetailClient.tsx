@@ -185,6 +185,13 @@ export default function ProductDetailClient({
             )}
           </div>
 
+          {/* Price disclaimer */}
+          {hasPrices && (
+            <p className="px-4 pb-2 text-[10px] leading-relaxed text-swing-navy/30 sm:px-6">
+              {t.priceDisclaimer}
+            </p>
+          )}
+
           {/* Sizes — cards on mobile, table on md+ */}
           <div className="border-t border-gray-100">
             {/* Desktop table */}
@@ -193,6 +200,8 @@ export default function ProductDetailClient({
                 <thead>
                   <tr className="bg-gray-50/60 text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
                     <th className="px-5 py-2.5 text-left">{t.size}</th>
+                    <th className="px-5 py-2.5 text-left">{t.stock}</th>
+                    <th className="px-5 py-2.5 text-left">{t.deliveryTime}</th>
                     {hasPrices && (
                       <>
                         {uvpBrutto != null && <th className="px-5 py-2.5 text-right">{t.listPrice}</th>}
@@ -200,8 +209,6 @@ export default function ProductDetailClient({
                         <th className="px-5 py-2.5 text-right">{t.discount}</th>
                       </>
                     )}
-                    <th className="px-5 py-2.5 text-left">{t.stock}</th>
-                    <th className="px-5 py-2.5 text-left">{t.deliveryTime}</th>
                     <th className="px-5 py-2.5 text-right">{t.quantity}</th>
                   </tr>
                 </thead>
@@ -215,17 +222,6 @@ export default function ProductDetailClient({
                     return (
                       <tr key={size.id} className={`transition-colors duration-150 hover:bg-swing-gold/4 ${qty > 0 ? "bg-swing-gold/3" : ""}`}>
                         <td className="px-5 py-3.5"><span className="font-bold text-swing-navy">{size.size_label}</span></td>
-                        {hasPrices && (
-                          <>
-                            {uvpBrutto != null && <td className="px-5 py-3.5 text-right tabular-nums text-swing-navy/40">{eur(uvpBrutto)}</td>}
-                            <td className="px-5 py-3.5 text-right text-lg font-extrabold tabular-nums text-swing-navy">
-                              {ekNetto != null ? eur(ekNetto) : <span className="text-sm text-swing-navy/30">{ts.onRequest}</span>}
-                            </td>
-                            <td className="px-5 py-3.5 text-right">
-                              {rabatt > 0 ? <span className="rounded-lg bg-swing-gold/15 px-2.5 py-1 text-[11px] font-bold tabular-nums text-swing-gold-dark">-{rabatt}%</span> : <span className="text-[11px] text-swing-navy/15">—</span>}
-                            </td>
-                          </>
-                        )}
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-2">
                             <span className={`inline-block h-2 w-2 rounded-full ${stockDot(stock)}`} />
@@ -237,6 +233,17 @@ export default function ProductDetailClient({
                         <td className="px-5 py-3.5 text-swing-navy/35">
                           {stock > 0 ? ts.immediate : size.delivery_days > 0 ? ts.weeksDelivery.replace("{weeks}", String(Math.round(size.delivery_days / 7))) : ts.onRequest}
                         </td>
+                        {hasPrices && (
+                          <>
+                            {uvpBrutto != null && <td className="px-5 py-3.5 text-right tabular-nums text-swing-navy/40">{eur(uvpBrutto)}</td>}
+                            <td className="px-5 py-3.5 text-right text-lg font-extrabold tabular-nums text-swing-navy">
+                              {ekNetto != null ? eur(ekNetto) : <span className="text-sm text-swing-navy/30">{ts.onRequest}</span>}
+                            </td>
+                            <td className="px-5 py-3.5 text-right">
+                              {rabatt > 0 ? <span className="rounded-lg bg-swing-gold/15 px-2.5 py-1 text-[11px] font-bold tabular-nums text-swing-gold-dark">-{rabatt}%</span> : <span className="text-[11px] text-swing-navy/15">—</span>}
+                            </td>
+                          </>
+                        )}
                         <td className="px-5 py-3.5 text-right">
                           <input type="number" min={0} value={qty} onChange={(e) => setQuantities((prev) => ({ ...prev, [size.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
                             aria-label={`${t.quantity} ${size.size_label}`}
@@ -268,21 +275,21 @@ export default function ProductDetailClient({
                         </span>
                       </div>
                     </div>
+                    <div className="mt-1 text-xs text-swing-navy/35">
+                      {stock > 0 ? ts.immediate : size.delivery_days > 0 ? ts.weeksDelivery.replace("{weeks}", String(Math.round(size.delivery_days / 7))) : ts.onRequest}
+                    </div>
                     {hasPrices && (
                       <div className="mt-2 flex items-baseline gap-3">
+                        {uvpBrutto != null && <span className="text-xs tabular-nums text-swing-navy/35">{t.listPrice} {eur(uvpBrutto)}</span>}
                         {ekNetto != null ? (
                           <span className="text-lg font-extrabold tabular-nums text-swing-navy">{eur(ekNetto)}</span>
                         ) : (
                           <span className="text-sm text-swing-navy/30">{ts.onRequest}</span>
                         )}
-                        {uvpBrutto != null && <span className="text-xs tabular-nums text-swing-navy/35">{t.listPrice} {eur(uvpBrutto)}</span>}
                         {rabatt > 0 && <span className="rounded bg-swing-gold/15 px-2 py-0.5 text-[10px] font-bold tabular-nums text-swing-gold-dark">-{rabatt}%</span>}
                       </div>
                     )}
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-xs text-swing-navy/35">
-                        {stock > 0 ? ts.immediate : size.delivery_days > 0 ? ts.weeksDelivery.replace("{weeks}", String(Math.round(size.delivery_days / 7))) : ts.onRequest}
-                      </span>
+                    <div className="mt-2 flex items-center justify-end">
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-swing-navy/30">{t.quantity}</span>
                         <input type="number" min={0} value={qty} onChange={(e) => setQuantities((prev) => ({ ...prev, [size.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
