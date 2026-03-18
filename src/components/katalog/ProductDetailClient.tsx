@@ -83,7 +83,9 @@ export default function ProductDetailClient({
   }
 
   const selectedColorName = colors.find((c) => c.id === selectedColor)?.color_name ?? "";
-  const hasPrices = Object.keys(priceMap).length > 0;
+  const hasEkPrices = Object.keys(priceMap).length > 0;
+  const hasUvp = uvpBrutto != null;
+  const hasPrices = hasEkPrices || hasUvp;
   const totalQty = Object.values(quantities).reduce((s, q) => s + q, 0);
 
   return (
@@ -202,9 +204,9 @@ export default function ProductDetailClient({
                     <th className="px-5 py-2.5 text-left">{t.size}</th>
                     <th className="px-5 py-2.5 text-left">{t.stock}</th>
                     <th className="px-5 py-2.5 text-left">{t.deliveryTime}</th>
-                    {hasPrices && (
+                    {hasUvp && <th className="px-5 py-2.5 text-right">{t.listPrice}</th>}
+                    {hasEkPrices && (
                       <>
-                        {uvpBrutto != null && <th className="px-5 py-2.5 text-right">{t.listPrice}</th>}
                         <th className="px-5 py-2.5 text-right">{t.yourPrice}</th>
                         <th className="px-5 py-2.5 text-right">{t.discount}</th>
                       </>
@@ -233,9 +235,9 @@ export default function ProductDetailClient({
                         <td className="px-5 py-3.5 text-swing-navy/35">
                           {stock > 0 ? ts.immediate : size.delivery_days > 0 ? ts.weeksDelivery.replace("{weeks}", String(Math.round(size.delivery_days / 7))) : ts.onRequest}
                         </td>
-                        {hasPrices && (
+                        {hasUvp && <td className="px-5 py-3.5 text-right tabular-nums text-swing-navy/40">{eur(uvpBrutto!)}</td>}
+                        {hasEkPrices && (
                           <>
-                            {uvpBrutto != null && <td className="px-5 py-3.5 text-right tabular-nums text-swing-navy/40">{eur(uvpBrutto)}</td>}
                             <td className="px-5 py-3.5 text-right text-lg font-extrabold tabular-nums text-swing-navy">
                               {ekNetto != null ? eur(ekNetto) : <span className="text-sm text-swing-navy/30">{ts.onRequest}</span>}
                             </td>
@@ -278,15 +280,19 @@ export default function ProductDetailClient({
                     <div className="mt-1 text-xs text-swing-navy/35">
                       {stock > 0 ? ts.immediate : size.delivery_days > 0 ? ts.weeksDelivery.replace("{weeks}", String(Math.round(size.delivery_days / 7))) : ts.onRequest}
                     </div>
-                    {hasPrices && (
+                    {(hasUvp || hasEkPrices) && (
                       <div className="mt-2 flex items-baseline gap-3">
-                        {uvpBrutto != null && <span className="text-xs tabular-nums text-swing-navy/35">{t.listPrice} {eur(uvpBrutto)}</span>}
-                        {ekNetto != null ? (
-                          <span className="text-lg font-extrabold tabular-nums text-swing-navy">{eur(ekNetto)}</span>
-                        ) : (
-                          <span className="text-sm text-swing-navy/30">{ts.onRequest}</span>
+                        {hasUvp && <span className="text-xs tabular-nums text-swing-navy/35">{t.listPrice} {eur(uvpBrutto!)}</span>}
+                        {hasEkPrices && (
+                          <>
+                            {ekNetto != null ? (
+                              <span className="text-lg font-extrabold tabular-nums text-swing-navy">{eur(ekNetto)}</span>
+                            ) : (
+                              <span className="text-sm text-swing-navy/30">{ts.onRequest}</span>
+                            )}
+                            {rabatt > 0 && <span className="rounded bg-swing-gold/15 px-2 py-0.5 text-[10px] font-bold tabular-nums text-swing-gold-dark">-{rabatt}%</span>}
+                          </>
                         )}
-                        {rabatt > 0 && <span className="rounded bg-swing-gold/15 px-2 py-0.5 text-[10px] font-bold tabular-nums text-swing-gold-dark">-{rabatt}%</span>}
                       </div>
                     )}
                     <div className="mt-2 flex items-center justify-end">
@@ -307,7 +313,7 @@ export default function ProductDetailClient({
           <div className="relative flex flex-col gap-3 border-t border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="absolute left-0 top-0 bottom-0 w-0.75 bg-swing-gold/40" />
             <div>
-              {hasPrices && totalQty > 0 && (
+              {hasEkPrices && totalQty > 0 && (
                 <div className="flex items-baseline gap-3">
                   <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">
                     {t.subtotal}
