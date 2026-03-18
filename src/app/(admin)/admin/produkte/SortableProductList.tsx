@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Package, ChevronUp, ChevronDown, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { GripVertical, Pencil, Package, ChevronUp, ChevronDown, Search, X, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { updateProductSortOrder } from "@/lib/actions/products";
@@ -31,6 +31,7 @@ type ProductRow = {
   name: string;
   slug: string;
   is_active: boolean;
+  source: string | null;
   images: string[] | null;
   sort_order: number;
   category: { name: string } | null;
@@ -79,6 +80,12 @@ function SortableRow({ product }: { product: ProductRow }) {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 text-xs text-swing-navy/40">—</div>
           )}
           <span className="font-medium text-swing-navy">{product.name}</span>
+          {product.source === "winline_import" && (
+            <span className="ml-2 inline-flex items-center gap-1 rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-purple-700">
+              <Lock size={9} />
+              WinLine
+            </span>
+          )}
         </div>
       </td>
       <td className="px-4 py-4 text-swing-gray-dark/60">{product.category?.name || "—"}</td>
@@ -137,7 +144,15 @@ function MobileCard({
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-xs text-swing-navy/40">—</div>
         )}
         <div className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-swing-navy">{product.name}</span>
+          <div className="flex items-center gap-1.5">
+            <span className="block truncate font-medium text-swing-navy">{product.name}</span>
+            {product.source === "winline_import" && (
+              <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-purple-100 px-1 py-0.5 text-[9px] font-bold uppercase text-purple-700">
+                <Lock size={8} />
+                WL
+              </span>
+            )}
+          </div>
           <span className="text-xs text-swing-gray-dark/50">{product.category?.name || "—"}</span>
         </div>
         <ToggleActiveButton productId={product.id} isActive={product.is_active} />
@@ -164,20 +179,32 @@ export default function SortableProductList({ products: initialProducts }: { pro
   const [products, setProducts] = useState(initialProducts);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "active" | "locked" | "winline">("all");
   const [page, setPage] = useState(1);
   const dndId = useId();
   const { toast } = useToast();
 
   const filteredProducts = useMemo(() => {
-    if (!search.trim()) return products;
-    const q = search.toLowerCase();
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.category?.name?.toLowerCase().includes(q) ||
-        p.sizes?.some((s) => s.sku.toLowerCase().includes(q))
-    );
-  }, [products, search]);
+    let result = products;
+
+    // Apply status filter
+    if (filter === "active") result = result.filter((p) => p.is_active);
+    else if (filter === "locked") result = result.filter((p) => !p.is_active);
+    else if (filter === "winline") result = result.filter((p) => p.source === "winline_import");
+
+    // Apply search
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.category?.name?.toLowerCase().includes(q) ||
+          p.sizes?.some((s) => s.sku.toLowerCase().includes(q))
+      );
+    }
+
+    return result;
+  }, [products, search, filter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -249,11 +276,26 @@ export default function SortableProductList({ products: initialProducts }: { pro
             </button>
           )}
         </div>
-        {isSearching && (
+        {(isSearching || filter !== "all") && (
           <p className="mt-1.5 text-[11px] text-swing-navy/40">
             {filteredProducts.length} von {products.length} Produkten
           </p>
         )}
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {(["all", "active", "locked", "winline"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => { setFilter(f); setPage(1); }}
+              className={`rounded px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                filter === f
+                  ? "bg-swing-navy text-white"
+                  : "bg-gray-100 text-swing-navy/50 hover:bg-gray-200 hover:text-swing-navy/70"
+              }`}
+            >
+              {f === "all" ? "Alle" : f === "active" ? "Aktiv" : f === "locked" ? "Gesperrt" : "WinLine-Import"}
+            </button>
+          ))}
+        </div>
       </div>
 
       <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

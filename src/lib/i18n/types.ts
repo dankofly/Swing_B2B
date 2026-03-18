@@ -814,6 +814,9 @@ export interface Dictionary {
     reviewHint: string;
     missingInCsvTitle: string;
     missingInCsvHint: string;
+    createdLocked: string;
+    createdLockedTitle: string;
+    createdLockedHint: string;
     positions: string;
     pieces: string;
     reset: string;

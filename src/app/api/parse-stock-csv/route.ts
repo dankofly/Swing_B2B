@@ -76,6 +76,15 @@ interface IgnoredItem {
   reason: string;
 }
 
+interface CreatedLockedItem {
+  model: string;
+  design: string | null;
+  size: string;
+  stock: number;
+  product_id: string;
+  reason: string;
+}
+
 // ─── Route Handler ───────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
@@ -113,12 +122,14 @@ export async function POST(request: NextRequest) {
         review_needed: [],
         missing_in_csv: [],
         ignored: [],
+        created_locked: [],
         summary: {
           total: 0,
           matched: 0,
           review_needed: 0,
           missing_in_csv: 0,
           ignored: 0,
+          created_locked: 0,
           csv_rows: csvRowCount,
           filtered_items: filteredCount,
           llm_fallback_used: false,
@@ -135,7 +146,7 @@ export async function POST(request: NextRequest) {
 
     const [{ data: allProducts }, { data: allSizes }, { data: allColors }] =
       await Promise.all([
-        supabase.from("products").select("id, name, slug").eq("is_active", true).order("name"),
+        supabase.from("products").select("id, name, slug, is_active, source").order("name"),
         supabase.from("product_sizes").select("id, product_id, size_label, sku, stock_quantity").order("sort_order"),
         supabase.from("product_colors").select("id, product_id, color_name").order("sort_order"),
       ]);
@@ -417,18 +428,192 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Phase 10: Create locked products for unmatched CSV variants ──
+    const createdLocked: CreatedLockedItem[] = [];
+    const remainingIgnored: IgnoredItem[] = [];
+
+    // Separate creation candidates from truly ignored items
+    const creationCandidates: IgnoredItem[] = [];
+    for (const item of ignoredItems) {
+      if (item.reason === "no_matching_portal_product" && item.model_raw && item.size_raw) {
+        creationCandidates.push(item);
+      } else {
+        remainingIgnored.push(item);
+      }
+    }
+
+    if (creationCandidates.length > 0) {
+      // Build a set of existing canonical keys (including just-matched items) to avoid duplicates
+      const existingKeys = new Set<string>();
+      for (const pv of portalVariants) {
+        existingKeys.add(pv.match_key);
+      }
+
+      // Group candidates by normalized model to batch product creation
+      const byModel = new Map<string, IgnoredItem[]>();
+      for (const item of creationCandidates) {
+        const modelNorm = normalizeModel(item.model_raw);
+        const arr = byModel.get(modelNorm) ?? [];
+        arr.push(item);
+        byModel.set(modelNorm, arr);
+      }
+
+      for (const [modelNorm, items] of byModel) {
+        // Check if product already exists (active or inactive)
+        let existingProduct = (allProducts ?? []).find(
+          (p) => normalizeModel(p.name) === modelNorm,
+        );
+
+        let productId: string;
+
+        if (existingProduct) {
+          productId = existingProduct.id;
+        } else {
+          // Create new locked product
+          const displayName = items[0].model_raw;
+          const slug = displayName
+            .toLowerCase()
+            .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe")
+            .replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
+            .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+          const { data: newProduct, error: createErr } = await supabase
+            .from("products")
+            .insert({
+              name: displayName,
+              slug: `${slug}-${Date.now()}`,
+              is_active: false,
+              source: "winline_import",
+              description: null,
+              category_id: null,
+              tech_specs: {},
+              images: [],
+            })
+            .select("id")
+            .single();
+
+          if (createErr || !newProduct) {
+            console.error(`[stock-csv] Failed to create locked product "${displayName}":`, createErr);
+            // Move back to ignored
+            for (const item of items) {
+              remainingIgnored.push({ ...item, reason: "creation_failed" });
+            }
+            continue;
+          }
+
+          productId = newProduct.id;
+        }
+
+        // For each variant: ensure size + color exist, set stock
+        for (const item of items) {
+          const sizeNorm = normalizeSize(item.size_raw);
+          const designNorm = normalizeDesign(item.design_raw);
+          const canonicalKey = `${modelNorm}||${designNorm}||${sizeNorm}`;
+
+          // Skip if canonical key already exists
+          if (existingKeys.has(canonicalKey)) {
+            remainingIgnored.push({ ...item, reason: "duplicate_canonical_key" });
+            continue;
+          }
+
+          // Safety: skip if design is empty and size is empty
+          if (!sizeNorm) {
+            remainingIgnored.push({ ...item, reason: "invalid_size" });
+            continue;
+          }
+
+          // Find or create size
+          const { data: existingSize } = await supabase
+            .from("product_sizes")
+            .select("id")
+            .eq("product_id", productId)
+            .eq("size_label", item.size_raw)
+            .maybeSingle();
+
+          if (!existingSize) {
+            const { error: sizeErr } = await supabase
+              .from("product_sizes")
+              .insert({
+                product_id: productId,
+                size_label: item.size_raw,
+                sku: `${modelNorm}-${sizeNorm}`.toUpperCase().replace(/[^A-Z0-9-]/g, ""),
+                stock_quantity: item.stock_total,
+                delivery_days: 35,
+              });
+
+            if (sizeErr) {
+              console.error(`[stock-csv] Failed to create size "${item.size_raw}" for product ${productId}:`, sizeErr);
+              remainingIgnored.push({ ...item, reason: "size_creation_failed" });
+              continue;
+            }
+          } else {
+            // Update stock on existing size
+            await supabase
+              .from("product_sizes")
+              .update({ stock_quantity: item.stock_total })
+              .eq("id", existingSize.id);
+          }
+
+          // Find or create color (if design exists)
+          if (item.design_raw) {
+            const { data: existingColor } = await supabase
+              .from("product_colors")
+              .select("id")
+              .eq("product_id", productId)
+              .eq("color_name", item.design_raw)
+              .maybeSingle();
+
+            if (!existingColor) {
+              await supabase
+                .from("product_colors")
+                .insert({
+                  product_id: productId,
+                  color_name: item.design_raw,
+                  color_image_url: null,
+                  sort_order: 0,
+                });
+            }
+
+            // Update color_size_stock
+            await supabase
+              .from("color_size_stock")
+              .upsert({
+                product_id: productId,
+                color_name: item.design_raw,
+                size_label: item.size_raw,
+                stock_quantity: item.stock_total,
+              }, {
+                onConflict: "product_id,color_name,size_label",
+              });
+          }
+
+          existingKeys.add(canonicalKey);
+          createdLocked.push({
+            model: item.model_raw,
+            design: item.design_raw,
+            size: item.size_raw,
+            stock: item.stock_total,
+            product_id: productId,
+            reason: "not_existing_in_portal_created_as_locked",
+          });
+        }
+      }
+    }
+
     // ── Response ──
     return NextResponse.json({
       items: matchedItems,
       review_needed: reviewItems,
       missing_in_csv: missingItems,
-      ignored: ignoredItems,
+      ignored: remainingIgnored,
+      created_locked: createdLocked,
       summary: {
         total: aggregated.length,
         matched: matchedItems.length,
         review_needed: reviewItems.length,
         missing_in_csv: missingItems.length,
-        ignored: ignoredItems.length,
+        ignored: remainingIgnored.length,
+        created_locked: createdLocked.length,
         csv_rows: csvRowCount,
         filtered_items: filteredCount,
         llm_fallback_used: llmFallbackUsed,

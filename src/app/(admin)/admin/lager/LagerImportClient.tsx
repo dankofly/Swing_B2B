@@ -12,6 +12,7 @@ import {
   Package,
   HelpCircle,
   PackageX,
+  Lock,
 } from "lucide-react";
 import { importStockFromCSV } from "@/lib/actions/stock";
 import { useDict } from "@/lib/i18n/context";
@@ -61,12 +62,22 @@ interface IgnoredItem {
   reason: string;
 }
 
+interface CreatedLockedItem {
+  model: string;
+  design: string | null;
+  size: string;
+  stock: number;
+  product_id: string;
+  reason: string;
+}
+
 interface Summary {
   total: number;
   matched: number;
   review_needed: number;
   missing_in_csv: number;
   ignored: number;
+  created_locked: number;
   csv_rows: number;
   filtered_items: number;
   llm_fallback_used: boolean;
@@ -80,6 +91,7 @@ export default function LagerImportClient() {
   const [reviewNeeded, setReviewNeeded] = useState<ReviewItem[]>([]);
   const [missingInCsv, setMissingInCsv] = useState<MissingItem[]>([]);
   const [ignoredItems, setIgnoredItems] = useState<IgnoredItem[]>([]);
+  const [createdLocked, setCreatedLocked] = useState<CreatedLockedItem[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -97,6 +109,7 @@ export default function LagerImportClient() {
     setReviewNeeded([]);
     setMissingInCsv([]);
     setIgnoredItems([]);
+    setCreatedLocked([]);
     setSummary(null);
 
     try {
@@ -119,6 +132,7 @@ export default function LagerImportClient() {
       setReviewNeeded(data.review_needed ?? []);
       setMissingInCsv(data.missing_in_csv ?? []);
       setIgnoredItems(data.ignored ?? []);
+      setCreatedLocked(data.created_locked ?? []);
       setSummary(data.summary);
     } catch {
       setError(t.networkError);
@@ -157,6 +171,7 @@ export default function LagerImportClient() {
     setReviewNeeded([]);
     setMissingInCsv([]);
     setIgnoredItems([]);
+    setCreatedLocked([]);
     setSummary(null);
     setResult(null);
     setError(null);
@@ -234,7 +249,7 @@ export default function LagerImportClient() {
 
       {/* Summary */}
       {summary && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
           <div className="rounded border border-gray-200 bg-white p-4 text-center">
             <p className="text-2xl font-bold text-swing-navy">{summary.csv_rows}</p>
             <p className="text-[11px] uppercase tracking-wider text-swing-gray-dark/40">{t.csvRows}</p>
@@ -250,6 +265,10 @@ export default function LagerImportClient() {
           <div className="rounded border border-gray-200 bg-white p-4 text-center">
             <p className="text-2xl font-bold text-amber-500">{summary.review_needed}</p>
             <p className="text-[11px] uppercase tracking-wider text-swing-gray-dark/40">{t.reviewNeeded}</p>
+          </div>
+          <div className="rounded border border-gray-200 bg-white p-4 text-center">
+            <p className="text-2xl font-bold text-purple-500">{summary.created_locked}</p>
+            <p className="text-[11px] uppercase tracking-wider text-swing-gray-dark/40">{t.createdLocked}</p>
           </div>
           <div className="rounded border border-gray-200 bg-white p-4 text-center">
             <p className="text-2xl font-bold text-red-500">{summary.ignored}</p>
@@ -423,6 +442,57 @@ export default function LagerImportClient() {
           <div className="border-t border-swing-gray/20 px-6 py-3">
             <p className="text-xs text-swing-gray-dark/40">
               {t.reviewHint}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Created Locked */}
+      {createdLocked.length > 0 && (
+        <div className="glass-card mb-6 overflow-hidden rounded">
+          <div className="flex items-center gap-2 border-b border-swing-gray/30 px-6 py-4">
+            <Lock size={16} className="text-purple-500" />
+            <h2 className="text-base font-bold text-swing-navy">
+              {t.createdLockedTitle}
+            </h2>
+            <span className="rounded bg-purple-100 px-2.5 py-0.5 text-xs font-bold text-purple-700">
+              {createdLocked.length}
+            </span>
+          </div>
+          <div className="max-h-75 overflow-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 border-b border-swing-gray/30 bg-swing-gray-light/80 text-[11px] uppercase tracking-widest text-swing-gray-dark/40 backdrop-blur-sm">
+                <tr>
+                  <th className="px-6 py-2 text-left">{t.recognizedProduct}</th>
+                  <th className="px-4 py-2 text-left">{t.size}</th>
+                  <th className="px-4 py-2 text-left">{t.color}</th>
+                  <th className="px-4 py-2 text-right">{t.pcs}</th>
+                  <th className="px-4 py-2 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {createdLocked.map((item, i) => (
+                  <tr key={i} className="bg-purple-50/30">
+                    <td className="px-6 py-2.5 text-xs font-medium text-purple-700">
+                      {item.model}
+                    </td>
+                    <td className="px-4 py-2.5 text-xs">{item.size}</td>
+                    <td className="px-4 py-2.5 text-xs">{item.design ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-right text-xs font-bold">{item.stock}</td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className="inline-flex items-center gap-1 rounded bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-700">
+                        <Lock size={10} />
+                        LOCKED
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="border-t border-swing-gray/20 px-6 py-3">
+            <p className="text-xs text-swing-gray-dark/40">
+              {t.createdLockedHint}
             </p>
           </div>
         </div>
