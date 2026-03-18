@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createAuthClient } from "@/lib/supabase/server";
 import { canonicalKey } from "@/lib/canonical-keys";
-import { buildFallbackMatchingPrompt } from "@/lib/gemini-prompts";
+import { buildExtractionPrompt, buildFallbackMatchingPrompt } from "@/lib/gemini-prompts";
 
 interface ExtractedItem {
   product: string;
   size: string;
   uvp_gross: number | null;
   dealer_net: number | null;
-  canonical_key: string;
 }
 
 interface ProductSizeRow {
@@ -22,8 +21,9 @@ interface ProductSizeRow {
 }
 
 /**
- * New pipeline: receives PDF file, sends to Python pdfplumber service,
- * matches via canonical keys, optional Gemini fallback, saves prices.
+ * Pipeline: receives PDF text (extracted client-side via pdf.js),
+ * uses Gemini for structured extraction, canonical keys for matching,
+ * Gemini fallback for unmatched, saves prices.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -42,21 +42,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
     }
 
-    // Parse form data
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-    const companyId = formData.get("company_id") as string | null;
+    const body = await request.json();
+    const { company_id: companyId, pdf_text: pdfText } = body;
 
-    if (!file || !companyId) {
+    if (!companyId || !pdfText) {
       return NextResponse.json(
-        { error: "file and company_id are required" },
+        { error: "company_id and pdf_text are required" },
         { status: 400 }
       );
     }
 
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
+    if (pdfText.length < 50) {
       return NextResponse.json(
-        { error: "Nur PDF-Dateien werden unterstützt" },
+        { error: "Das PDF enthält zu wenig Text." },
         { status: 400 }
       );
     }
@@ -66,33 +64,70 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // ── Step 1: Send PDF to Python pdfplumber service ──
-    const parserUrl = process.env.PDF_PARSER_URL;
-    if (!parserUrl) {
+    // ── Step 1: Gemini extraction (PDF text → structured JSON) ──
+    const extractionPrompt = buildExtractionPrompt(pdfText);
+
+    const geminiExtractRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: extractionPrompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            maxOutputTokens: 16384,
+          },
+        }),
+      }
+    );
+
+    if (!geminiExtractRes.ok) {
+      const errText = await geminiExtractRes.text();
       return NextResponse.json(
-        { error: "PDF_PARSER_URL nicht konfiguriert" },
-        { status: 500 }
-      );
-    }
-
-    const pdfFormData = new FormData();
-    pdfFormData.append("file", file);
-
-    const parserRes = await fetch(`${parserUrl}/extract`, {
-      method: "POST",
-      body: pdfFormData,
-    });
-
-    if (!parserRes.ok) {
-      const errText = await parserRes.text();
-      return NextResponse.json(
-        { error: `PDF-Parser Fehler: ${errText.slice(0, 300)}` },
+        { error: `Gemini-Fehler: ${errText.slice(0, 300)}` },
         { status: 422 }
       );
     }
 
-    const parserData = await parserRes.json();
-    const extracted: ExtractedItem[] = parserData.items ?? [];
+    const geminiData = await geminiExtractRes.json();
+    const responseText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+    if (!responseText) {
+      const reason = geminiData.candidates?.[0]?.finishReason
+        || geminiData.promptFeedback?.blockReason
+        || "Keine Antwort";
+      return NextResponse.json(
+        { error: `Gemini hat keine Antwort geliefert: ${reason}` },
+        { status: 422 }
+      );
+    }
+
+    let extracted: ExtractedItem[];
+    try {
+      const parsed = JSON.parse(responseText);
+      extracted = Array.isArray(parsed) ? parsed : (parsed.products ?? parsed);
+      if (!Array.isArray(extracted)) throw new Error("Unexpected format");
+    } catch {
+      // Try to extract array from response
+      const arrStart = responseText.indexOf("[");
+      const arrEnd = responseText.lastIndexOf("]");
+      if (arrStart !== -1 && arrEnd > arrStart) {
+        try {
+          extracted = JSON.parse(responseText.slice(arrStart, arrEnd + 1));
+        } catch {
+          return NextResponse.json(
+            { error: "KI-Antwort konnte nicht gelesen werden" },
+            { status: 422 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          { error: "Kein gültiges JSON in der KI-Antwort" },
+          { status: 422 }
+        );
+      }
+    }
 
     if (extracted.length === 0) {
       return NextResponse.json(
@@ -132,28 +167,25 @@ export async function POST(request: NextRequest) {
     const rejected: Array<{ product: string; size: string; reason: string }> = [];
 
     for (const item of extracted) {
-      // Validate
       if (!item.product || item.product.trim().length === 0) {
         rejected.push({ product: "", size: item.size, reason: "empty_product" });
         continue;
       }
-      if (item.dealer_net == null || item.dealer_net <= 0) {
-        // Keep items with only UVP if they have a valid product
-        if (item.uvp_gross == null || item.uvp_gross <= 0) {
-          rejected.push({ product: item.product, size: item.size, reason: "no_valid_price" });
-          continue;
-        }
+      if ((item.dealer_net == null || item.dealer_net <= 0) &&
+          (item.uvp_gross == null || item.uvp_gross <= 0)) {
+        rejected.push({ product: item.product, size: item.size, reason: "no_valid_price" });
+        continue;
       }
 
-      // Generate canonical key (use the one from Python or re-generate in TS)
-      const ck = item.canonical_key || canonicalKey(item.product, item.size);
-
+      const ck = canonicalKey(item.product, item.size);
       const row = keyMap.get(ck);
+
       if (row) {
+        const productName = (row.product as unknown as { name: string })?.name ?? "";
         matched.push({
           product_size_id: row.id,
           product_id: row.product_id,
-          portal_model: (row.product as unknown as { name: string })?.name ?? "",
+          portal_model: productName,
           portal_size: row.size_label,
           sku: row.sku,
           uvp_incl_vat: item.uvp_gross,
@@ -192,27 +224,27 @@ export async function POST(request: NextRequest) {
         );
 
         if (geminiRes.ok) {
-          const geminiData = await geminiRes.json();
-          const responseText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-          if (responseText) {
+          const fallbackData = await geminiRes.json();
+          const fallbackText = fallbackData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (fallbackText) {
             const llmMatches: Array<{ pdf_product: string; pdf_size: string; canonical_key: string }> =
-              JSON.parse(responseText);
+              JSON.parse(fallbackText);
 
             for (const lm of llmMatches) {
               if (!lm.canonical_key) continue;
               const row = keyMap.get(lm.canonical_key);
               if (!row) continue;
 
-              // Find the original unmatched item
               const orig = unmatched.find(
                 (u) => u.product === lm.pdf_product && u.size === lm.pdf_size
               );
               if (!orig) continue;
 
+              const productName = (row.product as unknown as { name: string })?.name ?? "";
               matched.push({
                 product_size_id: row.id,
                 product_id: row.product_id,
-                portal_model: (row.product as unknown as { name: string })?.name ?? "",
+                portal_model: productName,
                 portal_size: row.size_label,
                 sku: row.sku,
                 uvp_incl_vat: orig.uvp_gross,
@@ -224,7 +256,6 @@ export async function POST(request: NextRequest) {
         }
       } catch (err) {
         console.error("[parse-pricelist] Gemini fallback error:", err);
-        // Non-fatal: continue without LLM matches
       }
     }
 
@@ -287,12 +318,11 @@ export async function POST(request: NextRequest) {
       unmatched_items: unmatched.map((u) => ({
         product: u.product,
         size: u.size,
-        canonical_key: u.canonical_key,
+        canonical_key: canonicalKey(u.product, u.size),
       })),
       rejected_items: rejected,
     };
 
-    // Update the most recent price_upload for this company with parse_result
     const { data: latestUpload } = await supabase
       .from("price_uploads")
       .select("id")

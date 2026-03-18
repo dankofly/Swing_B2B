@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AiInfoTooltip from "@/components/ui/AiInfoTooltip";
 import { uploadPriceList, deleteAllCategoryUploads } from "@/lib/actions/price-uploads";
+import { extractPdfText } from "@/lib/pdf-extract";
 import {
   Upload,
   Trash2,
@@ -32,7 +33,7 @@ type ParseStep = "uploading" | "extracting" | "matching" | "saving" | null;
 
 const STEP_LABELS: Record<Exclude<ParseStep, null>, string> = {
   uploading: "Datei wird hochgeladen...",
-  extracting: "Tabellen werden extrahiert (pdfplumber)...",
+  extracting: "PDF wird analysiert...",
   matching: "Preise werden zugeordnet...",
   saving: "Preise werden gespeichert...",
 };
@@ -79,20 +80,37 @@ export default function PriceListSection({
       return;
     }
 
-    // If PDF, send to server-side pipeline (pdfplumber → canonical keys → save)
     const ext = file.name.split(".").pop()?.toLowerCase();
 
     if (ext === "pdf") {
-      setStep("extracting");
-
       try {
-        const apiFormData = new FormData();
-        apiFormData.append("file", file);
-        apiFormData.append("company_id", companyId);
+        // Step 1: Extract text from PDF in the browser (pdf.js)
+        setStep("extracting");
+        let pdfText: string;
+        try {
+          pdfText = await extractPdfText(file);
+        } catch (extractErr) {
+          setError(`PDF konnte nicht gelesen werden: ${extractErr instanceof Error ? extractErr.message : "Unbekannter Fehler"}`);
+          setStep(null);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
+        }
 
+        if (!pdfText || pdfText.trim().length < 50) {
+          setError("Das PDF enthält keinen extrahierbaren Text. Möglicherweise ist es ein gescanntes Dokument.");
+          setStep(null);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
+        }
+
+        // Step 2: Send text to API (Gemini extraction + canonical key matching + save)
+        setStep("matching");
         const res = await fetch("/api/parse-pricelist", {
           method: "POST",
-          body: apiFormData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ company_id: companyId, pdf_text: pdfText }),
         });
 
         let data;
@@ -161,15 +179,14 @@ export default function PriceListSection({
       <div className="mb-3 flex items-center gap-1.5">
         <span className="text-[10px] font-bold uppercase tracking-wide text-swing-navy/30">Upload + KI-Zuordnung</span>
         <AiInfoTooltip
-          action="Beim Upload einer PDF-Preisliste werden Tabellen automatisch extrahiert (pdfplumber) und die Preise deterministisch den Katalog-Produkten zugeordnet. Nur nicht erkannte Produkte werden per KI aufgelöst."
-          costNote="Pro PDF-Upload können geringe API-Kosten anfallen (nur für nicht erkannte Produkte)."
+          action="Beim Upload einer PDF-Preisliste wird der Text automatisch extrahiert und per KI analysiert. Die Preise werden deterministisch den Katalog-Produkten zugeordnet."
+          costNote="Pro PDF-Upload werden API-Tokens verbraucht, die Kosten verursachen können."
         />
       </div>
       {error && (
         <p className="mb-3 text-xs font-medium text-red-600">{error}</p>
       )}
 
-      {/* Pipeline progress indicator */}
       {step && (
         <div className="mb-3 flex items-center gap-2 rounded border border-swing-gold/30 bg-swing-gold/10 p-3">
           <Loader2 size={14} className="animate-spin text-swing-navy" />
