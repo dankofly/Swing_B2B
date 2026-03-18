@@ -125,7 +125,7 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
         .from("product_sizes")
         .insert(sizes.map(({ delivery_weeks, ...s }) => ({
           ...s,
-          delivery_days: (delivery_weeks || 2) * 7,
+          delivery_days: (delivery_weeks || 5) * 7,
           product_id: product.id,
         })));
       if (sizesError) {
@@ -277,7 +277,7 @@ export async function updateProduct(productId: string, formData: FormData): Prom
         .from("product_sizes")
         .insert(sizes.map(({ delivery_weeks, ...s }) => ({
           ...s,
-          delivery_days: (delivery_weeks || 2) * 7,
+          delivery_days: (delivery_weeks || 5) * 7,
           product_id: productId,
         })));
       if (sizesError) {

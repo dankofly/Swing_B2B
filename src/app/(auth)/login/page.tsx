@@ -145,14 +145,14 @@ export default function LoginPage() {
 
           <div className="mt-6 border-t border-gray-100 pt-5 text-center">
             <p className="text-sm text-swing-gray-dark/40">
-              {dict.auth.login.noAccount}{" "}
-              <Link
-                href="/register"
-                className="font-semibold text-swing-navy transition-colors hover:text-swing-gold"
-              >
-                {dict.auth.login.register}
-              </Link>
+              {dict.auth.login.noAccount}
             </p>
+            <Link
+              href="/register"
+              className="mt-1 inline-block text-sm font-semibold text-swing-navy transition-colors hover:text-swing-gold"
+            >
+              {dict.auth.login.register}
+            </Link>
           </div>
         </div>
 

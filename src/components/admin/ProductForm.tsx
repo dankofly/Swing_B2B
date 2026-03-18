@@ -201,7 +201,7 @@ export default function ProductForm({
   }
 
   function addSize() {
-    setSizes([...sizes, { size_label: "", sku: "", delivery_weeks: 2, sort_order: sizes.length }]);
+    setSizes([...sizes, { size_label: "", sku: "", delivery_weeks: 5, sort_order: sizes.length }]);
   }
 
   function removeSize(index: number) {
