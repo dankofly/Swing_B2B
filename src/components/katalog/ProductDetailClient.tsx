@@ -188,7 +188,7 @@ export default function ProductDetailClient({
           </div>
 
           {/* Price disclaimer */}
-          {hasPrices && (
+          {hasEkPrices && (
             <p className="px-4 pb-2 text-[10px] leading-relaxed text-swing-navy/30 sm:px-6">
               {t.priceDisclaimer}
             </p>
