@@ -2,13 +2,57 @@
 
 import { useState } from "react";
 import { updateInquiryStatus, updateInquiryTracking } from "@/lib/actions/inquiries";
-import { ChevronRight, ExternalLink, FileText, Settings, Truck } from "lucide-react";
+import { ChevronRight, ExternalLink, FileText, Search, Settings, Truck } from "lucide-react";
 import Link from "next/link";
 import { useDict, useLocale } from "@/lib/i18n/context";
 import { getDateLocale } from "@/lib/i18n/shared";
 import { useToast } from "@/components/ui/Toast";
 
-export default function InquiryList({ inquiries }: { inquiries: any[] }) {
+interface InquiryProduct {
+  name: string;
+}
+
+interface InquirySize {
+  size_label: string;
+  sku: string;
+  product: InquiryProduct | null;
+}
+
+interface InquiryColor {
+  color_name: string;
+}
+
+interface InquiryItem {
+  id: string;
+  quantity: number;
+  unit_price: number;
+  product_size: InquirySize | null;
+  product_color: InquiryColor | null;
+}
+
+interface InquiryCompany {
+  name: string;
+}
+
+interface InquiryUser {
+  full_name: string | null;
+  email: string;
+}
+
+interface Inquiry {
+  id: string;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  company_id: string;
+  tracking_number: string | null;
+  shipping_carrier: string | null;
+  company: InquiryCompany | null;
+  user: InquiryUser | null;
+  items: InquiryItem[];
+}
+
+export default function InquiryList({ inquiries }: { inquiries: Inquiry[] }) {
   const dict = useDict();
   const locale = useLocale();
   const dl = getDateLocale(locale);
@@ -30,6 +74,8 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
   const [updating, setUpdating] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [trackingData, setTrackingData] = useState<Record<string, { carrier: string; trackingNumber: string }>>({});
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   async function handleStatusChange(inquiryId: string, status: string) {
     setUpdating(inquiryId);
@@ -62,6 +108,14 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
     }
   }
 
+  // Filter inquiries
+  const filtered = inquiries.filter((inq) => {
+    const companyName = (inq.company?.name ?? "").toLowerCase();
+    const matchesSearch = !search || companyName.includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "all" || inq.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   if (inquiries.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -75,13 +129,57 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
   }
 
   return (
-    <div className="space-y-2">
-      {inquiries.map((inquiry) => {
+    <div className="space-y-4">
+      {/* Search & Filter */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-swing-navy/25" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Kunde suchen..."
+            className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm transition-all focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          {[
+            { value: "all", label: "Alle" },
+            ...statusOptions,
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setStatusFilter(opt.value)}
+              className={`rounded px-3 py-1.5 text-xs font-semibold transition-colors ${
+                statusFilter === opt.value
+                  ? "bg-swing-navy text-white"
+                  : "bg-gray-100 text-swing-navy/50 hover:bg-gray-200"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Results count */}
+      <p className="text-xs text-swing-navy/30">
+        {filtered.length} von {inquiries.length} Anfragen
+      </p>
+
+      {filtered.length === 0 && search && (
+        <p className="py-8 text-center text-sm text-swing-navy/30">
+          Keine Anfragen gefunden für &bdquo;{search}&ldquo;
+        </p>
+      )}
+
+      <div className="space-y-2">
+        {filtered.map((inquiry) => {
         const status = statusOptions.find((s) => s.value === inquiry.status) ?? statusOptions[0];
-        const itemCount = (inquiry.items ?? []).length;
-        const totalPrice = (inquiry.items ?? []).reduce((sum: number, i: any) => sum + Number(i.unit_price) * i.quantity, 0);
+        const itemCount = inquiry.items.length;
+        const totalPrice = inquiry.items.reduce((sum: number, i) => sum + Number(i.unit_price) * i.quantity, 0);
         const isExpanded = expandedId === inquiry.id;
-        const companyName = (inquiry.company as any)?.name ?? "—";
+        const companyName = inquiry.company?.name ?? "—";
 
         return (
           <div
@@ -197,15 +295,15 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {(inquiry.items ?? []).map((item: any, i: number) => (
+                        {inquiry.items.map((item, i: number) => (
                           <tr
                             key={item.id}
-                            className={i < (inquiry.items ?? []).length - 1 ? "border-b border-gray-50" : ""}
+                            className={i < inquiry.items.length - 1 ? "border-b border-gray-50" : ""}
                           >
-                            <td className="px-4 py-3 font-semibold text-swing-navy">{(item.product_size as any)?.product?.name ?? "—"}</td>
-                            <td className="px-4 py-3 text-swing-navy/40">{(item.product_size as any)?.size_label ?? "—"}</td>
-                            <td className="hidden px-4 py-3 text-swing-navy/40 sm:table-cell">{(item.product_size as any)?.sku ?? "—"}</td>
-                            <td className="hidden px-4 py-3 text-swing-navy/40 sm:table-cell">{(item.product_color as any)?.color_name ?? "—"}</td>
+                            <td className="px-4 py-3 font-semibold text-swing-navy">{item.product_size?.product?.name ?? "—"}</td>
+                            <td className="px-4 py-3 text-swing-navy/40">{item.product_size?.size_label ?? "—"}</td>
+                            <td className="hidden px-4 py-3 text-swing-navy/40 sm:table-cell">{item.product_size?.sku ?? "—"}</td>
+                            <td className="hidden px-4 py-3 text-swing-navy/40 sm:table-cell">{item.product_color?.color_name ?? "—"}</td>
                             <td className="px-4 py-3 text-right tabular-nums text-swing-navy">{item.quantity}</td>
                             <td className="hidden px-4 py-3 text-right tabular-nums text-swing-navy/40 sm:table-cell">{eur(Number(item.unit_price))}</td>
                             <td className="px-4 py-3 text-right font-semibold tabular-nums text-swing-navy">{eur(Number(item.unit_price) * item.quantity)}</td>
@@ -293,6 +391,7 @@ export default function InquiryList({ inquiries }: { inquiries: any[] }) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

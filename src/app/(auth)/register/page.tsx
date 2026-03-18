@@ -129,6 +129,32 @@ export default function RegisterPage() {
             <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-swing-gray-dark/50">
               {dict.auth.register.successMessage}
             </p>
+
+            {/* What happens next */}
+            <div className="mx-auto mt-6 max-w-xs space-y-3 text-left">
+              <p className="text-center text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">
+                Nächste Schritte
+              </p>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-[10px] font-bold text-green-600">1</div>
+                <p className="text-xs leading-relaxed text-swing-gray-dark/50">
+                  <span className="font-semibold text-swing-navy/70">E-Mail bestätigen</span> — Prüfen Sie Ihren Posteingang
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-swing-navy/10 text-[10px] font-bold text-swing-navy/50">2</div>
+                <p className="text-xs leading-relaxed text-swing-gray-dark/50">
+                  <span className="font-semibold text-swing-navy/70">Freischaltung</span> — Unser Team prüft Ihre Daten
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-swing-navy/10 text-[10px] font-bold text-swing-navy/50">3</div>
+                <p className="text-xs leading-relaxed text-swing-gray-dark/50">
+                  <span className="font-semibold text-swing-navy/70">Katalogzugang</span> — Sie erhalten eine E-Mail sobald Ihr Zugang aktiv ist
+                </p>
+              </div>
+            </div>
+
             <Link
               href="/login"
               className="mt-8 inline-flex items-center gap-2 rounded-lg bg-swing-gold px-8 py-3 text-sm font-bold tracking-wide text-swing-navy transition-all duration-200 hover:bg-swing-gold-dark hover:shadow-lg hover:shadow-swing-gold/20"

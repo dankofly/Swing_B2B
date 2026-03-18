@@ -1,69 +1,32 @@
 "use client";
 
-import { useEffect } from "react";
-import Link from "next/link";
-import { useDict } from "@/lib/i18n/context";
-import { RefreshCw, Home } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
-export default function GlobalError({
+export default function Error({
   error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const dict = useDict();
-  const t = dict.errors.generic;
-
-  useEffect(() => {
-    console.error("Unhandled error:", error);
-  }, [error]);
-
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
-      <div className="card mx-auto max-w-md p-8 sm:p-12">
-        <div className="mb-6 flex justify-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-50">
-            <svg className="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
+    <div className="flex min-h-[60vh] items-center justify-center px-4">
+      <div className="card max-w-sm p-10 text-center">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-red-50">
+          <AlertTriangle size={24} className="text-red-400" />
         </div>
-        <h1 className="mb-2 text-2xl font-extrabold text-swing-navy">{t.heading}</h1>
-        <p className="mb-5 text-swing-gray-dark/70">{t.message}</p>
-        <div className="mx-auto mb-6 max-w-xs rounded-lg bg-gray-50 px-5 py-4 text-left">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">{t.recoveryTitle}</p>
-          <ul className="mt-2 space-y-1.5 text-xs text-swing-gray-dark/50">
-            <li className="flex items-start gap-2">
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-swing-gold" />
-              {t.recoveryHint1}
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-swing-gold" />
-              {t.recoveryHint2}
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-swing-gold" />
-              {t.recoveryHint3}
-            </li>
-          </ul>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <button
-            onClick={reset}
-            className="btn-gold inline-flex items-center justify-center gap-2 rounded bg-swing-gold px-6 py-2.5 text-sm font-semibold text-swing-navy hover:bg-swing-gold-dark"
-          >
-            <RefreshCw className="h-4 w-4" />
-            {t.retry}
-          </button>
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center gap-2 rounded border border-swing-navy/20 px-6 py-2.5 text-sm font-semibold text-swing-navy hover:bg-swing-navy/5"
-          >
-            <Home className="h-4 w-4" />
-            {t.backHome}
-          </Link>
-        </div>
+        <h2 className="text-lg font-extrabold uppercase tracking-[2px] text-swing-navy">
+          Fehler
+        </h2>
+        <p className="mt-3 text-sm text-swing-gray-dark/50">
+          Ein unerwarteter Fehler ist aufgetreten.
+        </p>
+        <button
+          onClick={reset}
+          className="mt-6 rounded bg-swing-gold px-8 py-3 text-sm font-bold text-swing-navy transition-colors hover:bg-swing-gold-dark"
+        >
+          Erneut versuchen
+        </button>
       </div>
     </div>
   );

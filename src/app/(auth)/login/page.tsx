@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Lock, Loader2 } from "lucide-react";
 import { useDict } from "@/lib/i18n/context";
 
@@ -14,6 +14,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const dict = useDict();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
+
+  const LOGIN_REQUIRED_MSG = "Bitte melden Sie sich an, um fortzufahren.";
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -32,7 +36,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/katalog");
+    router.push(redirectPath || "/katalog");
     router.refresh();
   }
 
@@ -71,6 +75,12 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
+            {redirectPath && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
+                {LOGIN_REQUIRED_MSG}
+              </div>
+            )}
+
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                 {error}
