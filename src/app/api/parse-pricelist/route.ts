@@ -269,11 +269,15 @@ export async function POST(request: NextRequest) {
       }, { status: 422 });
     }
 
-    // Delete existing prices
-    await supabase
+    // Delete existing prices (await result to ensure completion)
+    const { error: deleteErr } = await supabase
       .from("customer_prices")
       .delete()
       .eq("company_id", companyId);
+
+    if (deleteErr) {
+      console.error("[parse-pricelist] Delete error:", deleteErr);
+    }
 
     // Batch update UVP on product level
     const uvpUpdates = new Map<string, number>();
@@ -288,9 +292,15 @@ export async function POST(request: NextRequest) {
       )
     );
 
-    // Insert new prices
+    // Deduplicate by product_size_id (keep first match)
+    const seenSizeIds = new Set<string>();
     const rows = matched
       .filter((m) => m.ek_netto != null && m.ek_netto > 0)
+      .filter((m) => {
+        if (seenSizeIds.has(m.product_size_id)) return false;
+        seenSizeIds.add(m.product_size_id);
+        return true;
+      })
       .map((m) => ({
         company_id: companyId,
         product_size_id: m.product_size_id,
