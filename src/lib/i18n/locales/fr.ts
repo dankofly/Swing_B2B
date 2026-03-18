@@ -841,6 +841,8 @@ const fr: Dictionary = {
     createdLocked: "Nouvellement créés",
     createdLockedTitle: "Produits nouvellement créés (verrouillés)",
     createdLockedHint: "Ces produits ont été créés automatiquement à partir du fichier CSV et ne sont pas visibles pour les clients. Veuillez les vérifier et les activer dans la section produits.",
+    zeroedOut: "{count} variantes mises à stock 0 (absentes du CSV)",
+    fullSyncNote: "Synchronisation complète : Tous les niveaux de stock sont définis selon les valeurs CSV. Les variantes non incluses sont mises à 0.",
     positions: "positions",
     pieces: "pcs.",
     reset: "Réinitialiser",

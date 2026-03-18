@@ -51,13 +51,56 @@ interface CSVStockEntry {
   count: number;
 }
 
+/**
+ * Full-sync stock import from CSV.
+ * 1. Zero ALL product_sizes.stock_quantity → 0 for all products
+ * 2. Delete ALL color_size_stock entries
+ * 3. Apply matched CSV values (overwrite)
+ *
+ * This ensures: matched variants = CSV stock, unmatched = 0.
+ * No products are ever deleted.
+ */
 export async function importStockFromCSV(
-  stockData: CSVStockEntry[]
-): Promise<{ updated: number }> {
+  stockData: CSVStockEntry[],
+  options?: { fullSync?: boolean }
+): Promise<{ updated: number; zeroed: number }> {
   await guardAdmin();
   const supabase = createAdminClient();
   let updated = 0;
+  let zeroed = 0;
 
+  const isFullSync = options?.fullSync ?? true;
+
+  // ── Step 1: Zero out ALL stock (full sync) ──
+  if (isFullSync) {
+    // Zero all product_sizes.stock_quantity → 0
+    const { data: allSizes } = await supabase
+      .from("product_sizes")
+      .select("id, stock_quantity")
+      .gt("stock_quantity", 0);
+
+    if (allSizes && allSizes.length > 0) {
+      // Batch update in chunks of 50
+      const CHUNK = 50;
+      for (let i = 0; i < allSizes.length; i += CHUNK) {
+        const chunk = allSizes.slice(i, i + CHUNK);
+        await Promise.all(
+          chunk.map((s) =>
+            supabase
+              .from("product_sizes")
+              .update({ stock_quantity: 0 })
+              .eq("id", s.id)
+          )
+        );
+      }
+      zeroed = allSizes.length;
+    }
+
+    // Delete ALL color_size_stock entries
+    await supabase.from("color_size_stock").delete().neq("stock_quantity", -999);
+  }
+
+  // ── Step 2: Apply matched CSV values ──
   // Group by product_id for batch processing
   const byProduct = new Map<string, CSVStockEntry[]>();
   for (const entry of stockData) {
@@ -71,14 +114,9 @@ export async function importStockFromCSV(
     Array.from(byProduct.entries()).map(async ([productId, entries]) => {
       let productUpdated = 0;
 
-      // 1. Update color_size_stock for entries with a color
+      // 1. Insert color_size_stock for entries with a color
       const colorEntries = entries.filter((e) => e.color_name);
       if (colorEntries.length > 0) {
-        await supabase
-          .from("color_size_stock")
-          .delete()
-          .eq("product_id", productId);
-
         const { error: insertError } = await supabase
           .from("color_size_stock")
           .insert(
@@ -129,5 +167,5 @@ export async function importStockFromCSV(
   revalidatePath("/admin/produkte");
   revalidatePath("/admin/lager");
 
-  return { updated };
+  return { updated, zeroed };
 }

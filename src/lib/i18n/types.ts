@@ -817,6 +817,8 @@ export interface Dictionary {
     createdLocked: string;
     createdLockedTitle: string;
     createdLockedHint: string;
+    zeroedOut: string;
+    fullSyncNote: string;
     positions: string;
     pieces: string;
     reset: string;

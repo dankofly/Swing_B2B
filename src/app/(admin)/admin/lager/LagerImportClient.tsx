@@ -95,7 +95,7 @@ export default function LagerImportClient() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState<{ updated: number } | null>(null);
+  const [result, setResult] = useState<{ updated: number; zeroed: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -157,8 +157,8 @@ export default function LagerImportClient() {
         count: item.count,
       }));
 
-      const res = await importStockFromCSV(stockData);
-      setResult({ updated: res.updated });
+      const res = await importStockFromCSV(stockData, { fullSync: true });
+      setResult({ updated: res.updated, zeroed: res.zeroed });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Fehler beim Speichern");
     } finally {
@@ -208,10 +208,13 @@ export default function LagerImportClient() {
             costNote={t.aiTooltipCost}
           />
         </h2>
-        <p className="mb-4 text-sm text-swing-gray-dark/60">
+        <p className="mb-2 text-sm text-swing-gray-dark/60">
           {t.description}{" "}
           <code className="rounded bg-swing-gray-light px-1.5 py-0.5 text-xs font-mono">{t.nlTag}</code>{" / "}
           <code className="rounded bg-swing-gray-light px-1.5 py-0.5 text-xs font-mono">{t.neTag}</code>.
+        </p>
+        <p className="mb-4 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+          {t.fullSyncNote}
         </p>
 
         <label className="flex cursor-pointer items-center justify-center gap-2 rounded border-2 border-dashed border-swing-gray px-6 py-8 text-sm text-swing-gray-dark/40 transition-all duration-200 hover:border-swing-gold hover:bg-swing-gold/5 hover:text-swing-navy">
@@ -283,9 +286,17 @@ export default function LagerImportClient() {
 
       {/* Success */}
       {result && (
-        <div className="mb-6 flex items-center gap-2 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
-          <Check size={16} />
-          {t.stockUpdated.replace("{count}", String(result.updated)).replace("{pieces}", String(totalStock))}
+        <div className="mb-6 space-y-2">
+          <div className="flex items-center gap-2 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+            <Check size={16} />
+            {t.stockUpdated.replace("{count}", String(result.updated)).replace("{pieces}", String(totalStock))}
+          </div>
+          {result.zeroed > 0 && (
+            <div className="flex items-center gap-2 rounded border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+              <Package size={16} />
+              {t.zeroedOut.replace("{count}", String(result.zeroed))}
+            </div>
+          )}
         </div>
       )}
 

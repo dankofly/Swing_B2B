@@ -841,6 +841,8 @@ const de: Dictionary = {
     createdLocked: "Neu angelegt",
     createdLockedTitle: "Neu angelegte Produkte (gesperrt)",
     createdLockedHint: "Diese Produkte wurden automatisch aus der CSV-Datei angelegt und sind für Kunden nicht sichtbar. Bitte prüfen und im Produktbereich aktivieren.",
+    zeroedOut: "{count} Varianten auf Lagerstand 0 gesetzt (nicht in CSV enthalten)",
+    fullSyncNote: "Vollsynchronisation: Alle Lagerstände werden auf den CSV-Stand gesetzt. Nicht enthaltene Varianten werden auf 0 gesetzt.",
     positions: "Positionen",
     pieces: "Stk.",
     reset: "Zurücksetzen",
