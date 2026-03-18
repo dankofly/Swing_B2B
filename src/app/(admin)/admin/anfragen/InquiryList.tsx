@@ -138,13 +138,13 @@ export default function InquiryList({ inquiries }: { inquiries: Inquiry[] }) {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Kunde suchen..."
+            placeholder={ti.searchCustomer}
             className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm transition-all focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
           />
         </div>
         <div className="flex items-center gap-2">
           {[
-            { value: "all", label: "Alle" },
+            { value: "all", label: ti.filterAll },
             ...statusOptions,
           ].map((opt) => (
             <button
@@ -164,12 +164,12 @@ export default function InquiryList({ inquiries }: { inquiries: Inquiry[] }) {
 
       {/* Results count */}
       <p className="text-xs text-swing-navy/30">
-        {filtered.length} von {inquiries.length} Anfragen
+        {ti.countOf.replace("{filtered}", String(filtered.length)).replace("{total}", String(inquiries.length))}
       </p>
 
       {filtered.length === 0 && search && (
         <p className="py-8 text-center text-sm text-swing-navy/30">
-          Keine Anfragen gefunden für &bdquo;{search}&ldquo;
+          {ti.noResults.replace("{search}", search)}
         </p>
       )}
 
@@ -215,7 +215,7 @@ export default function InquiryList({ inquiries }: { inquiries: Inquiry[] }) {
 
               {/* Count */}
               <span className="shrink-0 text-xs tabular-nums text-swing-navy/40">
-                {itemCount} Pos.
+                {itemCount} {ti.items}
               </span>
 
               {/* Price */}

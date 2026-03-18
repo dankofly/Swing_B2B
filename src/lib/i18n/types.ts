@@ -76,6 +76,8 @@ export interface Dictionary {
       noAccount: string;
       register: string;
       invalidCredentials: string;
+      redirectMessage: string;
+      portalSubtitle: string;
     };
     register: {
       title: string;
@@ -107,6 +109,13 @@ export interface Dictionary {
       successTitle: string;
       successMessage: string;
       toLogin: string;
+      nextSteps: string;
+      step1Title: string;
+      step1Desc: string;
+      step2Title: string;
+      step2Desc: string;
+      step3Title: string;
+      step3Desc: string;
       errorPasswordMismatch: string;
       errorPasswordMin: string;
       errorEmailExists: string;
@@ -155,6 +164,8 @@ export interface Dictionary {
     footer: string;
     impressum: string;
     datenschutz: string;
+    guide: string;
+    adminGuide: string;
   };
 
   legal: {
@@ -564,6 +575,26 @@ export interface Dictionary {
       emptyFieldsHint: string;
       saved: string;
       saveError: string;
+      allProducts: string;
+      productsCount: string;
+      filterAll: string;
+      filterLow: string;
+      filterOut: string;
+      searchPlaceholder: string;
+      collapseAll: string;
+      expandAll: string;
+      noProducts: string;
+      design: string;
+      totalLabel: string;
+      sizeLabel: string;
+      skuLabel: string;
+      stockLabel: string;
+      statusLabel: string;
+      showLabel: string;
+      firstPage: string;
+      lastPage: string;
+      ofCount: string;
+      pcs: string;
     };
     priceLists: {
       title: string;
@@ -629,6 +660,10 @@ export interface Dictionary {
       allOrdersCustomer: string;
       toCustomer: string;
       openAtCustomer: string;
+      filterAll: string;
+      searchCustomer: string;
+      countOf: string;
+      noResults: string;
     };
     kanban: {
       inquiryFrom: string;

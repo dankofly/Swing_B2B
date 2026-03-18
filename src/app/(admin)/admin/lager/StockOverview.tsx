@@ -9,6 +9,7 @@ import {
   Package,
   Palette,
 } from "lucide-react";
+import { useDict } from "@/lib/i18n/context";
 
 interface ProductSize {
   id: string;
@@ -58,6 +59,8 @@ function StockBadge({ qty }: { qty: number }) {
 }
 
 export default function StockOverview({ products }: { products: Product[] }) {
+  const dict = useDict();
+  const t = dict.admin.stock;
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<"all" | "low" | "out">("all");
@@ -141,10 +144,10 @@ export default function StockOverview({ products }: { products: Product[] }) {
       <div className="flex flex-col gap-3 border-b border-swing-gray/30 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="flex items-center gap-3">
           <h2 className="text-base font-bold text-swing-navy">
-            Alle Produkte
+            {t.allProducts}
           </h2>
           <span className="rounded bg-swing-gray-light px-2.5 py-0.5 text-xs font-bold text-swing-gray-dark/60">
-            {filtered.length} Produkte
+            {filtered.length} {t.productsCount}
           </span>
         </div>
 
@@ -159,7 +162,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
                   : "text-swing-gray-dark/50 hover:bg-swing-gray-light"
               }`}
             >
-              Alle
+              {t.filterAll}
             </button>
             <button
               onClick={() => handleFilterChange("low")}
@@ -169,7 +172,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
                   : "text-swing-gray-dark/50 hover:bg-swing-gray-light"
               }`}
             >
-              Niedrig
+              {t.filterLow}
             </button>
             <button
               onClick={() => handleFilterChange("out")}
@@ -179,7 +182,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
                   : "text-swing-gray-dark/50 hover:bg-swing-gray-light"
               }`}
             >
-              Ausverkauft
+              {t.filterOut}
             </button>
           </div>
 
@@ -191,7 +194,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
             />
             <input
               type="text"
-              placeholder="Suche..."
+              placeholder={t.searchPlaceholder}
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="h-8 w-full rounded border border-swing-gray/40 pl-8 pr-3 text-xs text-swing-navy outline-none transition-colors focus:border-swing-gold sm:w-44"
@@ -203,7 +206,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
             onClick={expandAll}
             className="cursor-pointer rounded border border-swing-gray/40 px-3 py-1.5 text-[11px] font-semibold text-swing-gray-dark/50 transition-colors hover:bg-swing-gray-light"
           >
-            {expanded.size === filtered.length ? "Alle zuklappen" : "Alle aufklappen"}
+            {expanded.size === filtered.length ? t.collapseAll : t.expandAll}
           </button>
         </div>
       </div>
@@ -212,7 +215,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
       <div>
         {filtered.length === 0 ? (
           <div className="px-6 py-12 text-center text-sm text-swing-gray-dark/40">
-            Keine Produkte gefunden.
+            {t.noProducts}
           </div>
         ) : (
           paged.map((product) => {
@@ -273,7 +276,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
                   </div>
 
                   <span className="ml-2 min-w-[48px] text-right text-xs font-semibold text-swing-gray-dark/40">
-                    {totalQty} Stk.
+                    {totalQty} {t.pcs}
                   </span>
                 </button>
 
@@ -290,7 +293,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
                                 <th className="pb-2 pl-7 text-left font-semibold">
                                   <span className="flex items-center gap-1.5">
                                     <Palette size={11} className="text-swing-gray-dark/30" />
-                                    Design
+                                    {t.design}
                                   </span>
                                 </th>
                                 {sizes.map((sz) => (
@@ -299,7 +302,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
                                   </th>
                                 ))}
                                 <th className="pb-2 text-right font-semibold pr-1">
-                                  Gesamt
+                                  {t.totalLabel}
                                 </th>
                               </tr>
                             </thead>
@@ -349,14 +352,14 @@ export default function StockOverview({ products }: { products: Product[] }) {
                         <thead>
                           <tr className="text-[10px] uppercase tracking-wider text-swing-gray-dark/35">
                             <th className="pb-2 pl-7 text-left font-semibold">
-                              Größe
+                              {t.sizeLabel}
                             </th>
-                            <th className="pb-2 text-left font-semibold">SKU</th>
+                            <th className="pb-2 text-left font-semibold">{t.skuLabel}</th>
                             <th className="pb-2 text-right font-semibold">
-                              Bestand
+                              {t.stockLabel}
                             </th>
                             <th className="pb-2 text-right font-semibold">
-                              Status
+                              {t.statusLabel}
                             </th>
                           </tr>
                         </thead>
@@ -393,7 +396,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
         <div className="flex flex-col gap-3 border-t border-swing-gray/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           {/* Page size selector */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-swing-gray-dark/40">Anzeigen:</span>
+            <span className="text-xs text-swing-gray-dark/40">{t.showLabel}</span>
             {[10, 20, 50].map((size) => (
               <button
                 key={size}
@@ -408,7 +411,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
               </button>
             ))}
             <span className="ml-2 text-xs text-swing-gray-dark/30">
-              {safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, filtered.length)} von {filtered.length}
+              {safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, filtered.length)} {t.ofCount} {filtered.length}
             </span>
           </div>
 
@@ -419,7 +422,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
               disabled={safePage === 0}
               className="cursor-pointer rounded px-2 py-1 text-xs font-semibold text-swing-gray-dark/40 transition-colors hover:bg-swing-gray-light disabled:cursor-default disabled:opacity-30"
             >
-              Erste
+              {t.firstPage}
             </button>
             <button
               onClick={() => setPage(safePage - 1)}
@@ -443,7 +446,7 @@ export default function StockOverview({ products }: { products: Product[] }) {
               disabled={safePage >= totalPages - 1}
               className="cursor-pointer rounded px-2 py-1 text-xs font-semibold text-swing-gray-dark/40 transition-colors hover:bg-swing-gray-light disabled:cursor-default disabled:opacity-30"
             >
-              Letzte
+              {t.lastPage}
             </button>
           </div>
         </div>

@@ -17,7 +17,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect");
 
-  const LOGIN_REQUIRED_MSG = "Bitte melden Sie sich an, um fortzufahren.";
+  const LOGIN_REQUIRED_MSG = dict.auth.login.redirectMessage;
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -55,7 +55,7 @@ export default function LoginPage() {
             </span>
           </Link>
           <p className="mt-2 text-xs font-extrabold uppercase tracking-[3px] text-white/30">
-            B2B Händlerportal
+            {dict.auth.login.portalSubtitle}
           </p>
         </div>
 
@@ -101,7 +101,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm transition-all duration-150 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
-                placeholder="ihre@email.de"
+                placeholder="your@email.com"
               />
             </div>
 

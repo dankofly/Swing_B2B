@@ -133,24 +133,24 @@ export default function RegisterPage() {
             {/* What happens next */}
             <div className="mx-auto mt-6 max-w-xs space-y-3 text-left">
               <p className="text-center text-[10px] font-bold uppercase tracking-[0.12em] text-swing-navy/30">
-                Nächste Schritte
+                {dict.auth.register.nextSteps}
               </p>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-[10px] font-bold text-green-600">1</div>
                 <p className="text-xs leading-relaxed text-swing-gray-dark/50">
-                  <span className="font-semibold text-swing-navy/70">E-Mail bestätigen</span> — Prüfen Sie Ihren Posteingang
+                  <span className="font-semibold text-swing-navy/70">{dict.auth.register.step1Title}</span> — {dict.auth.register.step1Desc}
                 </p>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-swing-navy/10 text-[10px] font-bold text-swing-navy/50">2</div>
                 <p className="text-xs leading-relaxed text-swing-gray-dark/50">
-                  <span className="font-semibold text-swing-navy/70">Freischaltung</span> — Unser Team prüft Ihre Daten
+                  <span className="font-semibold text-swing-navy/70">{dict.auth.register.step2Title}</span> — {dict.auth.register.step2Desc}
                 </p>
               </div>
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-swing-navy/10 text-[10px] font-bold text-swing-navy/50">3</div>
                 <p className="text-xs leading-relaxed text-swing-gray-dark/50">
-                  <span className="font-semibold text-swing-navy/70">Katalogzugang</span> — Sie erhalten eine E-Mail sobald Ihr Zugang aktiv ist
+                  <span className="font-semibold text-swing-navy/70">{dict.auth.register.step3Title}</span> — {dict.auth.register.step3Desc}
                 </p>
               </div>
             </div>
@@ -190,7 +190,7 @@ export default function RegisterPage() {
             </span>
           </Link>
           <p className="mt-2 text-xs font-extrabold uppercase tracking-[3px] text-white/30">
-            B2B Händlerportal
+            {dict.auth.login.portalSubtitle}
           </p>
         </div>
 
