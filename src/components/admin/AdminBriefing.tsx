@@ -82,12 +82,16 @@ export default function AdminBriefing({ adminName, locale, stats }: AdminBriefin
 
   if (loading) {
     return (
-      <div className="card overflow-hidden border-l-[3px] border-l-swing-gold">
-        <div className="flex items-center gap-3 px-5 py-4">
-          <div className="flex h-8 w-8 items-center justify-center">
-            <Sparkles size={18} className="animate-spin text-swing-gold" />
+      <div className="briefing-card relative overflow-hidden rounded-xl border border-swing-navy/[0.06] bg-white fade-in-up">
+        <div className="absolute inset-0 bg-gradient-to-r from-swing-gold/[0.03] via-transparent to-swing-navy/[0.02]" />
+        <div className="relative flex items-center gap-4 px-6 py-5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-swing-gold/10">
+            <Sparkles size={16} className="animate-spin text-swing-gold" />
           </div>
-          <div className="h-4 w-48 animate-pulse rounded bg-gray-100" />
+          <div className="flex-1 space-y-2">
+            <div className="h-3.5 w-52 animate-pulse rounded bg-swing-navy/[0.06]" />
+            <div className="h-3 w-36 animate-pulse rounded bg-swing-navy/[0.04]" />
+          </div>
         </div>
       </div>
     );
@@ -98,15 +102,27 @@ export default function AdminBriefing({ adminName, locale, stats }: AdminBriefin
   // Compact mode (3+ visits today)
   if (!isFullGreeting) {
     return (
-      <div className="card overflow-hidden border-l-[3px] border-l-swing-gold/50 fade-in-up">
-        <div className="flex items-start gap-3 px-5 py-3">
-          <span className="mt-0.5 text-lg">{data.emoji}</span>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+      <div className="briefing-card group relative overflow-hidden rounded-xl border border-swing-navy/[0.06] bg-white transition-all duration-300 hover:border-swing-gold/20 hover:shadow-[0_2px_12px_rgba(252,185,35,0.08)] fade-in-up">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-swing-gold/[0.02] via-transparent to-swing-navy/[0.015]" />
+        {/* Gold accent line left */}
+        <div className="absolute left-0 top-3 bottom-3 w-[2px] rounded-full bg-gradient-to-b from-swing-gold/60 via-swing-gold/30 to-transparent" />
+
+        <div className="relative flex items-center gap-4 px-6 py-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-swing-navy/[0.06] to-swing-navy/[0.02]">
+            <span className="text-base leading-none">{data.emoji}</span>
+          </div>
+          <div className="flex flex-1 flex-wrap items-center gap-x-1.5">
             {data.briefing.map((point, i) => (
-              <span key={i} className="text-xs text-swing-navy/50">
+              <span key={i} className="flex items-center gap-1.5 text-[13px] leading-relaxed text-swing-navy/55">
+                {i > 0 && <span className="mx-1 inline-block h-[3px] w-[3px] rounded-full bg-swing-gold/40" />}
                 {point}
               </span>
             ))}
+          </div>
+          <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <Sparkles size={9} className="text-swing-gold/30" />
+            <span className="text-[8px] font-semibold uppercase tracking-[0.1em] text-swing-navy/15">AI</span>
           </div>
         </div>
       </div>
@@ -115,32 +131,51 @@ export default function AdminBriefing({ adminName, locale, stats }: AdminBriefin
 
   // Full greeting (1st or 2nd visit today)
   return (
-    <div className="card overflow-hidden border-l-[3px] border-l-swing-gold fade-in-up">
-      <div className="px-5 py-5 sm:px-6">
-        <div className="flex items-start gap-3">
-          <span className="text-2xl">{data.emoji}</span>
+    <div className="briefing-card group relative overflow-hidden rounded-xl border border-swing-navy/[0.06] bg-white transition-all duration-300 hover:border-swing-gold/20 hover:shadow-[0_4px_20px_rgba(252,185,35,0.08)] fade-in-up">
+      {/* Layered gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-swing-gold/[0.03] via-transparent to-swing-navy/[0.02]" />
+      <div className="absolute -right-20 -top-20 h-40 w-40 rounded-full bg-swing-gold/[0.04] blur-3xl" />
+      {/* Gold accent line left */}
+      <div className="absolute left-0 top-4 bottom-4 w-[2px] rounded-full bg-gradient-to-b from-swing-gold via-swing-gold/40 to-transparent" />
+
+      <div className="relative px-6 py-5 sm:px-7 sm:py-6">
+        <div className="flex items-start gap-4">
+          {/* Emoji container */}
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-swing-gold/15 to-swing-gold/5 ring-1 ring-swing-gold/10">
+            <span className="text-xl leading-none">{data.emoji}</span>
+          </div>
+
           <div className="min-w-0 flex-1">
+            {/* Greeting */}
             {data.greeting && (
-              <p className="text-[15px] font-bold leading-snug text-swing-navy">
+              <p className="text-[15px] font-semibold leading-snug tracking-[-0.01em] text-swing-navy">
                 {data.greeting}
               </p>
             )}
-            <ul className="mt-2.5 space-y-1.5">
+
+            {/* Briefing points */}
+            <div className="mt-3 space-y-2">
               {data.briefing.map((point, i) => (
-                <li
+                <div
                   key={i}
-                  className="flex items-start gap-2 text-[13px] leading-relaxed text-swing-navy/60"
+                  className="flex items-start gap-2.5"
                 >
-                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-swing-gold" />
-                  {point}
-                </li>
+                  <div className="mt-[7px] flex h-[5px] w-[5px] shrink-0 items-center justify-center">
+                    <span className="block h-[5px] w-[5px] rounded-full bg-gradient-to-br from-swing-gold to-swing-gold-dark" />
+                  </div>
+                  <p className="text-[13px] leading-relaxed text-swing-navy/55">
+                    {point}
+                  </p>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </div>
-        <div className="mt-3 flex items-center gap-1.5 border-t border-gray-50 pt-2.5">
-          <Sparkles size={10} className="text-swing-gold/40" />
-          <span className="text-[9px] font-medium uppercase tracking-wider text-swing-navy/20">
+
+        {/* Footer badge */}
+        <div className="mt-4 flex items-center gap-1.5 border-t border-swing-navy/[0.04] pt-3">
+          <Sparkles size={10} className="text-swing-gold/35" />
+          <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-swing-navy/20">
             Gemini Briefing
           </span>
         </div>

@@ -224,7 +224,100 @@ export function buildInquiryStatusEmail(
   );
 }
 
-// ─── 3. Tracking Info ───────────────────────────────────────────────────────
+// ─── 3. New Inquiry Notification (to SWING) ────────────────────────────────
+
+export interface InquiryEmailItem {
+  productName: string;
+  sizeLabel: string;
+  sku: string;
+  colorName: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export function buildNewInquiryEmail(
+  inquiryId: string,
+  companyName: string,
+  contactName: string,
+  contactEmail: string,
+  items: InquiryEmailItem[],
+  notes: string | null,
+  companyId: string,
+): string {
+  const date = new Date().toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const totalQty = items.reduce((s, i) => s + i.quantity, 0);
+
+  const itemRows = items
+    .map(
+      (item, idx) => `
+    <tr style="border-bottom:1px solid #f0f0f0;">
+      <td style="padding:8px 10px; font-size:12px; color:#414142;">${idx + 1}</td>
+      <td style="padding:8px 10px; font-size:12px; color:#173045; font-weight:600;">${item.productName}</td>
+      <td style="padding:8px 10px; font-size:12px; color:#414142;">${item.sizeLabel}</td>
+      <td style="padding:8px 10px; font-size:12px; color:#414142;">${item.colorName}</td>
+      <td style="padding:8px 10px; font-size:12px; color:#414142; text-align:center; font-weight:600;">${item.quantity}</td>
+      <td style="padding:8px 10px; font-size:12px; color:#414142; text-align:right; font-family:monospace;">${item.unitPrice > 0 ? item.unitPrice.toFixed(2).replace(".", ",") + " &euro;" : "&mdash;"}</td>
+    </tr>`
+    )
+    .join("");
+
+  const itemsTable = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e8e8; border-radius:2px; border-collapse:collapse; margin-top:12px;">
+      <tr style="background-color:#173045;">
+        <th style="padding:8px 10px; font-size:10px; color:rgba(255,255,255,0.7); text-align:left; font-weight:700; letter-spacing:1px; text-transform:uppercase;">Pos.</th>
+        <th style="padding:8px 10px; font-size:10px; color:rgba(255,255,255,0.7); text-align:left; font-weight:700; letter-spacing:1px; text-transform:uppercase;">Produkt</th>
+        <th style="padding:8px 10px; font-size:10px; color:rgba(255,255,255,0.7); text-align:left; font-weight:700; letter-spacing:1px; text-transform:uppercase;">Gr&ouml;&szlig;e</th>
+        <th style="padding:8px 10px; font-size:10px; color:rgba(255,255,255,0.7); text-align:left; font-weight:700; letter-spacing:1px; text-transform:uppercase;">Farbe</th>
+        <th style="padding:8px 10px; font-size:10px; color:rgba(255,255,255,0.7); text-align:center; font-weight:700; letter-spacing:1px; text-transform:uppercase;">Menge</th>
+        <th style="padding:8px 10px; font-size:10px; color:rgba(255,255,255,0.7); text-align:right; font-weight:700; letter-spacing:1px; text-transform:uppercase;">EK netto</th>
+      </tr>
+      ${itemRows}
+      <tr style="background-color:#fafafa;">
+        <td colspan="4" style="padding:10px; font-size:12px; color:rgba(23,48,69,0.4); font-weight:600; text-align:right;">Gesamt:</td>
+        <td style="padding:10px; font-size:13px; color:#173045; font-weight:700; text-align:center;">${totalQty} Stk.</td>
+        <td style="padding:10px;"></td>
+      </tr>
+    </table>`;
+
+  const body = `
+    ${infoCard("H&auml;ndler", `
+      ${infoRow("Firma", `<strong>${companyName}</strong>`)}
+      ${infoRow("Kontakt", contactName || "&mdash;")}
+      ${infoRow("E-Mail", contactEmail || "&mdash;")}
+      ${infoRow("Datum", date)}
+      ${infoRow("Anfrage-Nr.", `<code style="font-family:monospace; background:#f0f0f0; padding:2px 6px; border-radius:2px;">${inquiryId.slice(0, 8)}</code>`)}
+    `)}
+
+    <div style="margin-top:16px;">
+      <p style="margin:0 0 4px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:rgba(23,48,69,0.35);">Bestellpositionen</p>
+      ${itemsTable}
+    </div>
+
+    ${notes ? `
+    <div style="margin-top:16px;">
+      <p style="margin:0 0 4px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:rgba(23,48,69,0.35);">Anmerkungen</p>
+      <div style="background:#fafafa; border:1px solid #e8e8e8; border-radius:2px; padding:12px 16px;">
+        <p style="margin:0; font-size:13px; color:#414142; line-height:1.6; white-space:pre-line;">${notes}</p>
+      </div>
+    </div>` : ""}
+  `;
+
+  return emailWrapper(
+    `Neue Bestellanfrage von ${companyName}`,
+    `${items.length} Position${items.length !== 1 ? "en" : ""}, ${totalQty} St&uuml;ck gesamt`,
+    body,
+    { label: "Anfrage im Portal &ouml;ffnen &rarr;", href: `${SITE_URL}/admin/kunden/${companyId}` }
+  );
+}
+
+// ─── 4. Tracking Info ───────────────────────────────────────────────────────
 
 const CARRIER_URLS: Record<string, string> = {
   dhl: "https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?piececode=",

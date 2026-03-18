@@ -2,7 +2,8 @@
 
 import { createClient, createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { sendEmail, buildInquiryStatusEmail, buildTrackingEmail } from "@/lib/email";
+import { sendEmail, buildInquiryStatusEmail, buildTrackingEmail, buildNewInquiryEmail } from "@/lib/email";
+import type { InquiryEmailItem } from "@/lib/email";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isValidUUID(id: string): boolean { return UUID_RE.test(id); }
@@ -69,6 +70,48 @@ export async function submitInquiry(items: InquiryItem[], notes: string) {
 
   revalidatePath("/katalog/anfragen");
   revalidatePath("/admin/anfragen");
+
+  // Send branded email to info@swing.de with full order (fire-and-forget)
+  (async () => {
+    try {
+      const admin = createAdminClient();
+
+      // Fetch company + user details + item details in parallel
+      const [{ data: company }, { data: userProfile }, { data: itemDetails }] = await Promise.all([
+        admin.from("companies").select("name, contact_email").eq("id", profile.company_id).single(),
+        admin.from("profiles").select("full_name, email").eq("id", user.id).single(),
+        admin.from("inquiry_items")
+          .select("quantity, unit_price, product_size:product_sizes(size_label, sku, product:products(name)), product_color:product_colors(color_name)")
+          .eq("inquiry_id", inquiry.id),
+      ]);
+
+      if (!company || !itemDetails) return;
+
+      const emailItems: InquiryEmailItem[] = itemDetails.map((item: any) => ({
+        productName: item.product_size?.product?.name ?? "—",
+        sizeLabel: item.product_size?.size_label ?? "—",
+        sku: item.product_size?.sku ?? "—",
+        colorName: item.product_color?.color_name ?? "—",
+        quantity: item.quantity,
+        unitPrice: Number(item.unit_price) || 0,
+      }));
+
+      const html = buildNewInquiryEmail(
+        inquiry.id,
+        company.name,
+        userProfile?.full_name ?? "",
+        userProfile?.email ?? user.email ?? "",
+        emailItems,
+        notes || null,
+        profile.company_id,
+      );
+
+      const adminEmail = process.env.ADMIN_EMAIL || "info@swing.de";
+      await sendEmail(adminEmail, `Neue Bestellanfrage von ${company.name}`, html);
+    } catch (err) {
+      console.error("[inquiry-email] Failed to send notification:", err);
+    }
+  })();
 
   return { inquiryId: inquiry.id };
 }

@@ -29,39 +29,40 @@ Aktuelle Daten:
 - Importeur-Netzwerke: ${stats.importerNetworkCount}
     `.trim();
 
+    const lang = locale === "en" ? "Englisch" : locale === "fr" ? "Französisch" : "Deutsch";
+
     const prompt = isFullGreeting
-      ? `Du bist der freundliche KI-Assistent im B2B-Portal von SWING Flugsportgeräte (Paragleiter-Hersteller).
-Es ist ${weekday} ${timeOfDay}. Begrüße ${firstName} persönlich, freundlich und mit einem Hauch Humor (Paragleiter/Flug-Bezug erlaubt).
-Dann gib ein kurzes Tages-Briefing basierend auf den Daten.
+      ? `Formuliere ein kurzes internes Briefing für ein B2B-Portal im Bereich Gleitschirmvertrieb. Der Text soll natürlich und menschlich klingen, nicht generisch oder nach KI.
+
+Ton: sachlich, ruhig, leicht direkt, minimal trockener Humor, professionell, keine Floskeln, keine Übertreibungen.
+
+Anrede: Variiere die Anrede jedes Mal. Name: ${firstName}. Es ist ${weekday} ${timeOfDay}.
+Beispiele für Stilrichtung: "Guten Morgen Daniel, hoffe dir geht's gut." / "Hallo Daniel, kurzer Überblick für dich." / "Hi Daniel, hier der aktuelle Stand."
+Keine verspielten oder kindischen Formulierungen.
 
 ${briefingData}
 
 Antworte als JSON:
-{
-  "greeting": "Persönliche Begrüßung (1-2 Sätze, warm und lustig)",
-  "briefing": ["Punkt 1", "Punkt 2", "Punkt 3"],
-  "emoji": "ein passendes Emoji"
-}
+{"greeting":"Individuelle natürliche Anrede (1 Satz)","briefing":["Punkt 1","Punkt 2","Punkt 3"],"emoji":"ein passendes Emoji"}
 
 Regeln:
-- Maximal 3 Briefing-Punkte, kurz und knackig
-- Hebe nur Wichtiges hervor (neue Anfragen, Lagerprobleme, Erfolge)
+- Maximal 3 Briefing-Punkte, kurze klare Sätze
+- Maximal 4-5 Zeilen insgesamt
+- Hebe nur Wichtiges hervor (neue Anfragen, Lagerprobleme, Handlungsbedarf)
 - Wenn nichts auffällig ist, sag dass alles rund läuft
-- Sprache: ${locale === "en" ? "Englisch" : locale === "fr" ? "Französisch" : "Deutsch"}`
-      : `Du bist der KI-Assistent im SWING B2B-Portal. Erstelle einen kompakten Überblick.
+- Keine Emojis im Text, keine Marketing-Sprache, keine Standard-KI-Phrasen
+- Sprache: ${lang}`
+      : `Kompakter Statusüberblick für B2B-Gleitschirmportal. Sachlich, keine Floskeln.
 
 ${briefingData}
 
 Antworte als JSON:
-{
-  "briefing": ["Punkt 1", "Punkt 2"],
-  "emoji": "📊"
-}
+{"briefing":["Punkt 1","Punkt 2"],"emoji":"ein passendes Emoji"}
 
 Regeln:
-- Maximal 2 Punkte, nur das Wichtigste
-- Kurz und sachlich
-- Sprache: ${locale === "en" ? "Englisch" : locale === "fr" ? "Französisch" : "Deutsch"}`;
+- Maximal 2 Punkte, nur das Wichtigste, kurze klare Sätze
+- Keine Emojis im Text, keine Marketing-Sprache
+- Sprache: ${lang}`;
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
     const model = genAI.getGenerativeModel({
