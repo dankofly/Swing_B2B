@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 
 interface NewsTickerProps {
   items: { id: string; message: string }[];
@@ -31,7 +31,7 @@ export default function NewsTicker({ items }: NewsTickerProps) {
           <div
             className={`flex whitespace-nowrap ${paused ? "[animation-play-state:paused]" : ""}`}
             style={{
-              animation: `ticker ${Math.max(items.length * 8, 16)}s linear infinite`,
+              animation: `ticker ${Math.max(items.length * 4, 8)}s linear infinite`,
             }}
           >
             <span className="inline-block text-[12px] font-medium tracking-wide text-white/80 sm:text-[13px]">
