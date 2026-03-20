@@ -26,6 +26,17 @@ export default async function AdminDashboard() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
+  // Start admin name fetch early (parallel with dashboard queries)
+  const adminNamePromise = authClient.auth.getUser().then(async ({ data: { user } }) => {
+    if (!user) return "Admin";
+    const { data: profile } = await authClient
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single();
+    return profile?.full_name || "Admin";
+  });
+
   // Parallelize ALL dashboard queries in a single batch
   const [
     { count: activeProducts },
@@ -67,18 +78,7 @@ export default async function AdminDashboard() {
     `).order("created_at", { ascending: false }).limit(6),
   ]);
 
-  // Get admin name
-  const authResult = await authClient.auth.getUser();
-  const user = authResult.data?.user;
-  let adminName = "Admin";
-  if (user) {
-    const { data: profile } = await authClient
-      .from("profiles")
-      .select("full_name")
-      .eq("id", user.id)
-      .single();
-    if (profile?.full_name) adminName = profile.full_name;
-  }
+  const adminName = await adminNamePromise;
 
   const briefingStats = {
     activeProducts: activeProducts ?? 0,
