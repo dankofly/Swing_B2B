@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@/lib/supabase/server";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
+
+const checkLimit = createRateLimiter("gemini", 10, 60_000);
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +17,8 @@ export async function POST(req: NextRequest) {
     if (!profile || !["superadmin", "admin", "testadmin"].includes(profile.role)) {
       return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
     }
+
+    if (checkLimit(user.id)) return NextResponse.json({ error: "Zu viele Anfragen. Bitte warten Sie eine Minute." }, { status: 429 });
 
     const { adminName, stats, locale, isFullGreeting } = await req.json();
 
@@ -92,7 +97,6 @@ Regeln:
     return NextResponse.json(parsed);
   } catch (e: unknown) {
     console.error("Admin briefing error:", e);
-    const errorMessage = e instanceof Error ? e.message : String(e);
     return NextResponse.json(
       { greeting: "", briefing: ["Dashboard geladen."], emoji: "📊" },
       { status: 200 }

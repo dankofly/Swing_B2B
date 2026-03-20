@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { buildInvitationEmail, sendEmail } from "@/lib/email";
 
 export async function updateMyProfile(formData: FormData) {
   const supabase = await createClient();
@@ -274,15 +275,29 @@ export async function inviteUser(email: string, role: string, fullName: string) 
       .eq("id", newUser.user.id);
   }
 
-  // Send password reset so user can set their password
-  const { error: resetError } = await admin.auth.admin.generateLink({
-    type: "magiclink",
+  // Generate recovery link so user can set their password
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://swingparagliders.pro";
+  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+    type: "recovery",
     email,
+    options: {
+      redirectTo: `${siteUrl}/reset-password`,
+    },
   });
 
-  if (resetError) {
-    // User is created but link failed - not critical
-    console.error("Failed to send magic link:", resetError.message);
+  if (linkError || !linkData?.properties?.action_link) {
+    console.error("Failed to generate invite link:", linkError?.message);
+    // User is created but link failed — return success with warning
+    revalidatePath("/admin/profil");
+    return { success: true, warning: "Benutzer erstellt, aber Einladungs-Email konnte nicht gesendet werden" };
+  }
+
+  // Send branded invitation email
+  const html = buildInvitationEmail(null, fullName, linkData.properties.action_link);
+  const sent = await sendEmail(email, "Einladung zum SWING B2B Portal", html);
+
+  if (!sent) {
+    console.error("Failed to send invitation email to:", email);
   }
 
   revalidatePath("/admin/profil");

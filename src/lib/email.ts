@@ -143,22 +143,45 @@ function infoCard(heading: string, rows: string): string {
 // ─── 0. Customer Invitation ──────────────────────────────────────────────────
 
 export function buildInvitationEmail(
-  companyName: string,
+  companyName: string | null,
   contactName: string,
   passwordSetupUrl: string,
 ): string {
+  const isDealer = !!companyName;
+
+  const introText = isDealer
+    ? `Sie wurden als H&auml;ndler f&uuml;r <strong>&bdquo;${companyName}&ldquo;</strong> zum SWING B2B H&auml;ndlerportal eingeladen.
+      &Uuml;ber das Portal k&ouml;nnen Sie unseren aktuellen Katalog einsehen, Ihre individuellen Preise abrufen und Bestellanfragen direkt an uns senden.`
+    : `Sie wurden zum SWING B2B H&auml;ndlerportal eingeladen.
+      &Uuml;ber das Portal verwalten Sie Produkte, Bestellungen und Kunden.`;
+
+  const accessCard = isDealer
+    ? infoCard("Ihr Zugang", `
+        ${infoRow("Firma", `<strong>${companyName}</strong>`)}
+        ${infoRow("Status", '<span style="color:#16a34a; font-weight:700;">Freigeschaltet</span>')}
+      `)
+    : infoCard("Ihr Zugang", `
+        ${infoRow("Rolle", '<span style="color:#16a34a; font-weight:700;">Teammitglied</span>')}
+        ${infoRow("Status", '<span style="color:#16a34a; font-weight:700;">Freigeschaltet</span>')}
+      `);
+
+  const adminGuideBlock = !isDealer
+    ? `<p style="color:#414142; font-size:13px; line-height:1.7; margin:16px 0 0; padding:14px 18px; background-color:#f8f9fa; border-left:3px solid #FCB923; border-radius:2px;">
+        <strong>Wichtig:</strong> Bitte lesen Sie vor dem ersten Login die
+        <a href="${SITE_URL}/admin-anleitung" style="color:#173045; font-weight:700; text-decoration:underline;">Admin-Anleitung</a>,
+        um sich mit allen Funktionen des Portals vertraut zu machen.
+      </p>`
+    : "";
+
   const body = `
     <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">
       Hallo${contactName ? ` ${contactName}` : ""},
     </p>
     <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">
-      Sie wurden als H&auml;ndler f&uuml;r <strong>&bdquo;${companyName}&ldquo;</strong> zum SWING B2B H&auml;ndlerportal eingeladen.
-      &Uuml;ber das Portal k&ouml;nnen Sie unseren aktuellen Katalog einsehen, Ihre individuellen Preise abrufen und Bestellanfragen direkt an uns senden.
+      ${introText}
     </p>
-    ${infoCard("Ihr Zugang", `
-      ${infoRow("Firma", `<strong>${companyName}</strong>`)}
-      ${infoRow("Status", '<span style="color:#16a34a; font-weight:700;">Freigeschaltet</span>')}
-    `)}
+    ${accessCard}
+    ${adminGuideBlock}
     <p style="color:#414142; font-size:13px; line-height:1.7; margin:16px 0 0;">
       Klicken Sie auf den Button unten, um Ihr Passwort festzulegen und sich anzumelden.
       Der Link ist <strong>24 Stunden</strong> g&uuml;ltig.
