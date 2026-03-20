@@ -273,6 +273,31 @@ function parseBezeichnung(bezeichnung: string): {
   return { model, size: sizeValue, design };
 }
 
+/** Extract size from AUG 3 by stripping the AUG 2 model prefix.
+ *
+ * AUG 3 contains "model size" (e.g. "Mito 2 RS ML"), NOT just size.
+ * We strip the AUG 2 prefix to get the actual size part.
+ *
+ * Examples:
+ *   aug2="Mito 2 RS",  aug3="Mito 2 RS ML"   → "ML"
+ *   aug2="Spitfire 3",  aug3="Spitfire 3.9,5" → "9,5"
+ *   aug2="ESCAPE",      aug3="Escape 30"       → "30"
+ */
+function extractSizeFromAug3(aug2: string, aug3: string): string | null {
+  const aug2Clean = aug2.trim();
+  const aug3Clean = aug3.trim();
+
+  // Case-insensitive prefix match
+  if (aug3Clean.toLowerCase().startsWith(aug2Clean.toLowerCase())) {
+    const remainder = aug3Clean.slice(aug2Clean.length);
+    // Strip leading dots, spaces, hyphens (e.g. "Spitfire 3.9,5" → ".9,5" → "9,5")
+    const size = remainder.replace(/^[.\s-]+/, "").trim();
+    return size || null;
+  }
+
+  return null;
+}
+
 /** Extract variants from parsed CSV rows. */
 export function extractVariants(rows: CSVRow[]): ExtractedVariant[] {
   const variants: ExtractedVariant[] = [];
@@ -280,9 +305,21 @@ export function extractVariants(rows: CSVRow[]): ExtractedVariant[] {
   for (const row of rows) {
     const parsed = parseBezeichnung(row.bezeichnung);
 
-    // Use AUG columns if available, overriding parsed values
+    // AUG 2 is the authoritative model name from the ERP system.
+    // Always prefer it over parsed Bezeichnung.
     const model = row.aug2 || parsed.model;
-    const size = row.aug3 || parsed.size;
+
+    // Determine size: AUG 3 contains "model size" — extract just the size part
+    let size: string;
+    if (row.aug3 && row.aug2) {
+      const extracted = extractSizeFromAug3(row.aug2, row.aug3);
+      size = extracted || parsed.size;
+    } else if (row.aug3) {
+      size = row.aug3;
+    } else {
+      size = parsed.size;
+    }
+
     const design = parsed.design;
     const stock = row.lagerstand ?? 1; // fallback: each row = 1 unit
 

@@ -85,7 +85,7 @@ Example: { "id-1": { "en": "Paragliders", "fr": "Parapentes" } }`;
   } catch (err) {
     console.error("Category translation error:", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Translation failed" },
+      { error: err instanceof Error ? err.message : "Übersetzung fehlgeschlagen" },
       { status: 500 }
     );
   }

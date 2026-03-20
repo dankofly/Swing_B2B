@@ -14,6 +14,7 @@ export interface Dictionary {
       loggedInAs: string;
       zumKatalog: string;
       adminBereich: string;
+      news: string;
     };
     status: {
       new: string;
@@ -840,6 +841,8 @@ export interface Dictionary {
     colorNotInCatalog: string;
     networkError: string;
     error: string;
+    status: string;
+    locked: string;
   };
 
   productActions: {

@@ -124,7 +124,8 @@ export default function LagerImportClient() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error + (data.raw ? `\n\nAnfang:\n${data.raw}` : "") + (data.rawEnd ? `\n\n...Ende:\n${data.rawEnd}` : ""));
+        const msg = data.error || `HTTP ${res.status}: ${res.statusText}`;
+        setError(msg + (data.raw ? `\n\nAnfang:\n${data.raw}` : "") + (data.rawEnd ? `\n\n...Ende:\n${data.rawEnd}` : ""));
         return;
       }
 
@@ -478,7 +479,7 @@ export default function LagerImportClient() {
                   <th className="px-4 py-2 text-left">{t.size}</th>
                   <th className="px-4 py-2 text-left">{t.color}</th>
                   <th className="px-4 py-2 text-right">{t.pcs}</th>
-                  <th className="px-4 py-2 text-center">Status</th>
+                  <th className="px-4 py-2 text-center">{t.status || "Status"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -493,7 +494,7 @@ export default function LagerImportClient() {
                     <td className="px-4 py-2.5 text-center">
                       <span className="inline-flex items-center gap-1 rounded bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-700">
                         <Lock size={10} />
-                        LOCKED
+                        {t.locked}
                       </span>
                     </td>
                   </tr>

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     if (!companyId || !pdfText) {
       return NextResponse.json(
-        { error: "company_id and pdf_text are required" },
+        { error: "company_id und pdf_text sind erforderlich" },
         { status: 400 }
       );
     }

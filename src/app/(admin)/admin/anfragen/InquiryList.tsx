@@ -378,7 +378,7 @@ export default function InquiryList({ inquiries }: { inquiries: Inquiry[] }) {
                         <Truck size={16} className="text-emerald-600" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-400">Tracking</p>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-400">{dict.inquiries.tracking}</p>
                         <p className="mt-0.5 font-mono text-xs text-emerald-700">
                           {inquiry.shipping_carrier} &middot; {inquiry.tracking_number}
                         </p>

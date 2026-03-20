@@ -214,16 +214,16 @@ export default async function KatalogPage({
         <div className="relative z-10 -mx-5 mt-6 overflow-x-auto px-5 sm:-mx-8 sm:px-8 katalog-tabs-scroll">
           <div className="flex items-end gap-0 border-t border-white/[0.06]">
             {[
-              { label: "Alle", href: "/katalog", slug: undefined },
-              { label: "Paragleiter", href: "/katalog?kategorie=gleitschirme", slug: "gleitschirme" },
-              { label: "Tandem", href: "/katalog?kategorie=gleitschirme&sub=tandem", slug: "tandem" },
-              { label: "Motor", href: "/katalog?kategorie=gleitschirme&sub=motorschirme", slug: "motorschirme" },
-              { label: "Miniwings", href: "/katalog?kategorie=miniwings", slug: "miniwings" },
-              { label: "Speedflying/riding", href: "/katalog?kategorie=speedflying", slug: "speedflying" },
-              { label: "Parakites", href: "/katalog?kategorie=parakites", slug: "parakites" },
-              { label: "Gurtzeuge", href: "/katalog?kategorie=gurtzeuge", slug: "gurtzeuge" },
-              { label: "Rettungen", href: "#", slug: "_rettungen" },
-              { label: "Zubehör", href: "#", slug: "_zubehoer" },
+              { label: dict.katalog.filters.all, href: "/katalog", slug: undefined },
+              { label: localized(catMap["gleitschirme"] as unknown as Record<string, unknown>, "name", locale) ?? "Paragleiter", href: "/katalog?kategorie=gleitschirme", slug: "gleitschirme" },
+              { label: localized(catMap["tandem"] as unknown as Record<string, unknown>, "name", locale) ?? "Tandem", href: "/katalog?kategorie=gleitschirme&sub=tandem", slug: "tandem" },
+              { label: localized(catMap["motorschirme"] as unknown as Record<string, unknown>, "name", locale) ?? "Motor", href: "/katalog?kategorie=gleitschirme&sub=motorschirme", slug: "motorschirme" },
+              { label: localized(catMap["miniwings"] as unknown as Record<string, unknown>, "name", locale) ?? "Miniwings", href: "/katalog?kategorie=miniwings", slug: "miniwings" },
+              { label: localized(catMap["speedflying"] as unknown as Record<string, unknown>, "name", locale) ?? "Speedflying/Riding", href: "/katalog?kategorie=speedflying", slug: "speedflying" },
+              { label: localized(catMap["parakites"] as unknown as Record<string, unknown>, "name", locale) ?? "Parakites", href: "/katalog?kategorie=parakites", slug: "parakites" },
+              { label: localized(catMap["gurtzeuge"] as unknown as Record<string, unknown>, "name", locale) ?? "Gurtzeuge", href: "/katalog?kategorie=gurtzeuge", slug: "gurtzeuge" },
+              { label: localized(catMap["rettungsgeraete"] as unknown as Record<string, unknown>, "name", locale) ?? "Rettungen", href: "#", slug: "_rettungen" },
+              { label: localized(catMap["zubehoer"] as unknown as Record<string, unknown>, "name", locale) ?? "Zubehör", href: "#", slug: "_zubehoer" },
             ].map((tab) => {
               const isActive =
                 tab.slug === undefined

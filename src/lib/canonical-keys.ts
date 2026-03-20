@@ -14,8 +14,8 @@ export function normalizeModel(name: string): string {
   let s = name.trim().toLowerCase();
   // Normalize unicode (ü -> u, etc.)
   s = s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
-  // Remove "rs" as standalone word (but keep "d-lite" to distinguish models)
-  s = s.replace(/\brs\b/g, "");
+  // Keep "RS" — it is a meaningful part of the canonical product name
+  // (e.g., "Miura 2 RS" ≠ "Miura 2")
   // Remove all whitespace
   s = s.replace(/\s+/g, "");
   // Remove special chars except hyphen (needed for "d-lite")
@@ -101,12 +101,36 @@ export function normalizeDesign(design: string | null | undefined): string {
   let s = design.trim().toLowerCase();
   // Normalize unicode (ü -> u, etc.)
   s = s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  // Strip trailing punctuation (CSV typos like "Blau:")
+  s = s.replace(/[^a-z0-9\s]+$/g, "").trim();
   // Apply deterministic DE→EN map
   const mapped = DE_EN_COLOR_MAP[s];
   if (mapped) return mapped;
   // Clean up whitespace
   s = s.replace(/\s+/g, " ").trim();
   return s;
+}
+
+/** Known text-based size labels (normalized form). */
+const VALID_TEXT_SIZES = new Set([
+  "xxs", "xs", "s", "sm", "m", "ml", "l", "xl", "xxl",
+  "small", "medium", "large",
+  "uni", "unisex",
+]);
+
+/** Check if a normalized size is valid.
+ *
+ * Valid sizes are either:
+ * - Known text labels (XS, S, SM, M, ML, L, XL, etc.)
+ * - Numeric values in range 7–50 (covers speedflyer, kite, area, and tandem sizes)
+ * - "uni" / "unisex"
+ */
+export function isValidSize(sizeNormalized: string): boolean {
+  if (VALID_TEXT_SIZES.has(sizeNormalized)) return true;
+  // Accept reasonable numeric sizes (7–50, with optional .5 decimal)
+  const num = parseFloat(sizeNormalized);
+  if (!isNaN(num) && num >= 7 && num <= 50 && /^\d+(\.\d+)?$/.test(sizeNormalized)) return true;
+  return false;
 }
 
 /** Generate a stock match key from model, design, and size. */

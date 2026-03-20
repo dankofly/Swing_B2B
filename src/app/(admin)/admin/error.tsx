@@ -61,7 +61,7 @@ export default function AdminError({
             className="inline-flex items-center justify-center gap-2 rounded border border-swing-navy/20 px-5 py-2 text-sm font-semibold text-swing-navy hover:bg-swing-navy/5"
           >
             <LayoutDashboard className="h-4 w-4" />
-            Dashboard
+            {dict.common.nav.dashboard}
           </Link>
         </div>
       </div>

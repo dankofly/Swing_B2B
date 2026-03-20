@@ -55,7 +55,7 @@ export default function Header({
     { href: "/admin/kunden", label: dict.common.nav.kunden },
     { href: "/admin/lager", label: dict.common.nav.lager },
     { href: "/admin/anfragen", label: dict.common.nav.anfragen },
-    { href: "/admin/news", label: "News", icon: Megaphone },
+    { href: "/admin/news", label: dict.common.nav.news, icon: Megaphone },
     { href: "/katalog", label: dict.common.nav.katalog, icon: ExternalLink },
   ];
 

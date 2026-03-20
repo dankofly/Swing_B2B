@@ -16,6 +16,7 @@ const en: Dictionary = {
       loggedInAs: "Signed in as",
       zumKatalog: "Go to Catalog",
       adminBereich: "Admin Area",
+      news: "News",
     },
     status: {
       new: "Received",
@@ -864,6 +865,8 @@ const en: Dictionary = {
     colorNotInCatalog: "Color not in catalog",
     networkError: "Network error during upload",
     error: "Error",
+    status: "Status",
+    locked: "Locked",
   },
 
   productActions: {

@@ -7,6 +7,7 @@ import {
   normalizeSize,
   normalizeDesign,
   modelSizeKey,
+  isValidSize,
 } from "@/lib/canonical-keys";
 import {
   parseStockCSV,
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File;
     if (!file) {
-      return NextResponse.json({ error: "file is required" }, { status: 400 });
+      return NextResponse.json({ error: "Datei ist erforderlich" }, { status: 400 });
     }
 
     const csvText = await file.text();
@@ -242,6 +243,20 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
+      // Validate size against known valid sizes
+      if (!isValidSize(csv.size_normalized)) {
+        reviewItems.push({
+          bezeichnung: csv.bezeichnung,
+          model_raw: csv.model_raw,
+          design_raw: csv.design_raw,
+          size_raw: csv.size_raw,
+          stock_total: csv.stock_total,
+          reason: "unknown_size",
+          portal_candidates: [],
+        });
+        continue;
+      }
+
       // Tier 1: Exact match
       const exactMatches = portalByKey.get(csv.match_key);
       if (exactMatches && exactMatches.length === 1) {
@@ -293,10 +308,16 @@ export async function POST(request: NextRequest) {
       }
 
       if (msGroup.length === 1 && csv.design_normalized) {
-        // Only 1 design option — match regardless of design name
         const pv = msGroup[0];
-        matchedItems.push(buildMatchedItem(csv, pv, "single_design_auto"));
-        matchedPortalKeys.add(`${pv.product_id}||${pv.size_label}||${pv.color_name ?? ""}`);
+        // Only auto-match if the single portal design matches the CSV design
+        // or if the portal variant has no design at all
+        if (!pv.design_normalized || pv.design_normalized === csv.design_normalized) {
+          matchedItems.push(buildMatchedItem(csv, pv, "single_design_auto"));
+          matchedPortalKeys.add(`${pv.product_id}||${pv.size_label}||${pv.color_name ?? ""}`);
+          continue;
+        }
+        // Design mismatch with single portal option — queue for LLM or review
+        designMismatches.push({ csv, candidates: msGroup });
         continue;
       }
 
@@ -554,38 +575,10 @@ export async function POST(request: NextRequest) {
               .eq("id", existingSize.id);
           }
 
-          // Find or create color (if design exists)
-          if (item.design_raw) {
-            const { data: existingColor } = await supabase
-              .from("product_colors")
-              .select("id")
-              .eq("product_id", productId)
-              .eq("color_name", item.design_raw)
-              .maybeSingle();
-
-            if (!existingColor) {
-              await supabase
-                .from("product_colors")
-                .insert({
-                  product_id: productId,
-                  color_name: item.design_raw,
-                  color_image_url: null,
-                  sort_order: 0,
-                });
-            }
-
-            // Update color_size_stock
-            await supabase
-              .from("color_size_stock")
-              .upsert({
-                product_id: productId,
-                color_name: item.design_raw,
-                size_label: item.size_raw,
-                stock_quantity: item.stock_total,
-              }, {
-                onConflict: "product_id,color_name,size_label",
-              });
-          }
+          // Designs are NOT created automatically — new products are only
+          // created at model level. Design/color entries must be added
+          // manually by an admin. CSV design info is preserved in the
+          // created_locked response for reference only.
 
           existingKeys.add(canonicalKey);
           createdLocked.push({
