@@ -50,7 +50,7 @@ export default function RoleManager({
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
-  const [inviteRole, setInviteRole] = useState("buyer");
+  const [inviteRole, setInviteRole] = useState("admin");
   const [inviting, setInviting] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState(false);
 
@@ -85,7 +85,7 @@ export default function RoleManager({
       setInviteSuccess(true);
       setInviteEmail("");
       setInviteName("");
-      setInviteRole("buyer");
+      setInviteRole("admin");
       setTimeout(() => {
         setInviteSuccess(false);
         setShowInvite(false);
@@ -223,7 +223,6 @@ export default function RoleManager({
                       <option value="superadmin">{tp.roleSuperAdmin}</option>
                     )}
                     <option value="admin">{tp.roleAdmin}</option>
-                    <option value="buyer">{tp.roleBuyer}</option>
                   </select>
                 </div>
               </div>
