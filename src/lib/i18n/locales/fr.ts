@@ -311,7 +311,7 @@ const fr: Dictionary = {
       yourPrice: "ton prix HT",
       discount: "Remise",
       stock: "Stock",
-      deliveryTime: "Délai de livraison",
+      deliveryTime: "Délai de livraison si pas en stock",
       quantity: "Quantité",
       subtotal: "Sous-total",
       addToCart: "Ajouter au panier",

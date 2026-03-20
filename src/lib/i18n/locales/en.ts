@@ -311,7 +311,7 @@ const en: Dictionary = {
       yourPrice: "your net price",
       discount: "Discount",
       stock: "Stock",
-      deliveryTime: "Delivery time",
+      deliveryTime: "Delivery time if not in stock",
       quantity: "Quantity",
       subtotal: "Subtotal",
       addToCart: "Add to cart",

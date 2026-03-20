@@ -311,7 +311,7 @@ const de: Dictionary = {
       yourPrice: "dein EK netto",
       discount: "Rabatt",
       stock: "Lagerstand",
-      deliveryTime: "Lieferzeit",
+      deliveryTime: "Lieferzeit, wenn nicht auf Lager",
       quantity: "Menge",
       subtotal: "Zwischensumme",
       addToCart: "In den Warenkorb",
