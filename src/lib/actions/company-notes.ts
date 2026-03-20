@@ -2,8 +2,10 @@
 
 import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { isValidUUID } from "@/lib/rate-limit";
 
 export async function getCompanyNotes(companyId: string) {
+  if (!isValidUUID(companyId)) throw new Error("Ungültige ID");
   const supabase = createAdminClient();
 
   const { data } = await supabase
@@ -16,6 +18,7 @@ export async function getCompanyNotes(companyId: string) {
 }
 
 export async function getCustomerVisibleNotes(companyId: string) {
+  if (!isValidUUID(companyId)) throw new Error("Ungültige ID");
   const supabase = createAdminClient();
 
   const { data } = await supabase
@@ -34,6 +37,7 @@ export async function createCompanyNote(
   content: string,
   visibleToCustomer: boolean = false
 ) {
+  if (!isValidUUID(companyId)) throw new Error("Ungültige ID");
   await guardAdmin();
   const supabase = createAdminClient();
 
@@ -51,6 +55,8 @@ export async function createCompanyNote(
 }
 
 export async function toggleNoteVisibility(noteId: string, companyId: string, visible: boolean) {
+  if (!isValidUUID(noteId)) throw new Error("Ungültige ID");
+  if (!isValidUUID(companyId)) throw new Error("Ungültige ID");
   await guardAdmin();
   const supabase = createAdminClient();
 
@@ -66,6 +72,8 @@ export async function toggleNoteVisibility(noteId: string, companyId: string, vi
 }
 
 export async function deleteCompanyNote(noteId: string, companyId: string) {
+  if (!isValidUUID(noteId)) throw new Error("Ungültige ID");
+  if (!isValidUUID(companyId)) throw new Error("Ungültige ID");
   await guardAdmin();
   const supabase = createAdminClient();
 

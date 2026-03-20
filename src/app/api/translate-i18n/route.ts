@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@/lib/supabase/server";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 const SYSTEM_PROMPT = `Du bist ein erfahrener Sales-Experte und professioneller Gleitschirm-Pilot, der mehrere Sprachen auf C2-Niveau beherrscht. Du kennst die gesamte Fachsprache der Paragliding-Szene in allen Sprachen perfekt — von EN-Klassifizierungen über Gurtzeuge bis hin zu Flugmanövern.
 
@@ -18,6 +19,8 @@ WICHTIGE REGELN:
 9. Gewichtsklassen (N-LITE, D-LITE, U-LITE) bleiben unverändert
 10. Antworte NUR mit dem JSON-Objekt, kein Markdown, keine Erklärungen`;
 
+const checkLimit = createRateLimiter("gemini", 10, 60_000);
+
 export async function POST(request: NextRequest) {
   try {
     // Auth guard: admin only
@@ -30,6 +33,8 @@ export async function POST(request: NextRequest) {
     if (!profile || !["superadmin", "admin"].includes(profile.role)) {
       return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
     }
+
+    if (checkLimit(user.id)) return NextResponse.json({ error: "Zu viele Anfragen. Bitte warten Sie eine Minute." }, { status: 429 });
 
     const { targetLocale, sourceDict } = await request.json();
 

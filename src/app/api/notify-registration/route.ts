@@ -3,6 +3,21 @@ import { sendEmail } from "@/lib/email";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "info@swing.de";
 
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 3;
+const WINDOW_MS = 60_000;
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    return false;
+  }
+  entry.count++;
+  return entry.count > RATE_LIMIT;
+}
+
 interface RegistrationData {
   companyName: string;
   companyType: string;
@@ -201,6 +216,11 @@ function buildHtml(data: RegistrationData): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (isRateLimited(ip)) {
+      return NextResponse.json({ error: "Zu viele Anfragen" }, { status: 429 });
+    }
+
     const data: RegistrationData = await request.json();
 
     const sent = await sendEmail(

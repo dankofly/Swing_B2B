@@ -7,6 +7,7 @@ import { localized } from "@/lib/i18n/localized";
 import AdminEditButton from "@/components/katalog/AdminEditButton";
 import CollapsibleFilters from "@/components/katalog/CollapsibleFilters";
 
+export const revalidate = 60;
 
 const CLASSIFICATIONS = ["N-LITE", "D-LITE", "U-LITE"];
 const EN_CLASSES = [
@@ -77,17 +78,10 @@ export default async function KatalogPage({
     supabase.from("categories").select("*").order("sort_order"),
   ]);
 
-  let isAdmin = false;
-  let userCompanyId: string | null = null;
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, company_id")
-      .eq("id", user.id)
-      .single();
-    isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
-    userCompanyId = profile?.company_id ?? null;
-  }
+  // Start profile fetch early (will be awaited later, parallel with product query)
+  const profilePromise = user
+    ? supabase.from("profiles").select("role, company_id").eq("id", user.id).single()
+    : null;
 
   const catMap = Object.fromEntries(
     (categories as Category[])?.map((c) => [c.slug, c]) ?? []
@@ -131,6 +125,15 @@ export default async function KatalogPage({
   }
 
   const { data: products } = await query;
+
+  // Resolve profile (started in parallel with product query)
+  let isAdmin = false;
+  let userCompanyId: string | null = null;
+  if (profilePromise) {
+    const { data: profile } = await profilePromise;
+    isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
+    userCompanyId = profile?.company_id ?? null;
+  }
 
   const hasActiveFilters = !!(kategorie || en || gewicht || q);
   const isGleitschirmeActive = kategorie === "gleitschirme";

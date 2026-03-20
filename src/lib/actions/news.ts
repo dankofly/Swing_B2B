@@ -2,6 +2,7 @@
 
 import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { isValidUUID } from "@/lib/rate-limit";
 
 export async function getActiveNews() {
   const supabase = createAdminClient();
@@ -51,6 +52,7 @@ export async function updateNews(
   messageEn?: string,
   messageFr?: string
 ) {
+  if (!isValidUUID(id)) throw new Error("Ungültige ID");
   await guardAdmin();
   const supabase = createAdminClient();
 
@@ -72,6 +74,7 @@ export async function updateNews(
 }
 
 export async function toggleNewsActive(id: string, isActive: boolean) {
+  if (!isValidUUID(id)) throw new Error("Ungültige ID");
   await guardAdmin();
   const supabase = createAdminClient();
 
@@ -88,6 +91,7 @@ export async function toggleNewsActive(id: string, isActive: boolean) {
 }
 
 export async function deleteNews(id: string) {
+  if (!isValidUUID(id)) throw new Error("Ungültige ID");
   await guardAdmin();
   const supabase = createAdminClient();
 
@@ -101,6 +105,7 @@ export async function deleteNews(id: string) {
 }
 
 export async function reorderNews(ids: string[]) {
+  if (!ids.every(isValidUUID)) throw new Error("Ungültige ID");
   await guardAdmin();
   const supabase = createAdminClient();
 

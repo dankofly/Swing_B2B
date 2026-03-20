@@ -3,8 +3,12 @@ import { createClient } from "@supabase/supabase-js";
 import { createClient as createAuthClient } from "@/lib/supabase/server";
 import { canonicalKey } from "@/lib/canonical-keys";
 import { buildExtractionPrompt, buildFallbackMatchingPrompt } from "@/lib/gemini-prompts";
+import { createRateLimiter } from "@/lib/rate-limit";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const maxDuration = 60;
+
+const checkLimit = createRateLimiter("gemini", 10, 60_000);
 
 interface ExtractedItem {
   product: string;
@@ -44,6 +48,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
     }
 
+    if (checkLimit(user.id)) return NextResponse.json({ error: "Zu viele Anfragen. Bitte warten Sie eine Minute." }, { status: 429 });
+
     const body = await request.json();
     const { company_id: companyId, pdf_text: pdfText } = body;
 
@@ -69,38 +75,26 @@ export async function POST(request: NextRequest) {
     // ── Step 1: Gemini extraction (PDF text → structured JSON) ──
     const extractionPrompt = buildExtractionPrompt(pdfText);
 
-    const geminiExtractRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: extractionPrompt }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            maxOutputTokens: 16384,
-          },
-        }),
-      }
-    );
-
-    if (!geminiExtractRes.ok) {
-      const errText = await geminiExtractRes.text();
+    let responseText: string;
+    try {
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.0-flash",
+        generationConfig: { responseMimeType: "application/json", maxOutputTokens: 16384 }
+      });
+      const geminiResult = await model.generateContent([{ text: extractionPrompt }]);
+      responseText = geminiResult.response.text().trim();
+    } catch (geminiErr) {
+      const errMsg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
       return NextResponse.json(
-        { error: `Gemini-Fehler: ${errText.slice(0, 300)}` },
+        { error: `Gemini-Fehler: ${errMsg.slice(0, 300)}` },
         { status: 422 }
       );
     }
 
-    const geminiData = await geminiExtractRes.json();
-    const responseText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-
     if (!responseText) {
-      const reason = geminiData.candidates?.[0]?.finishReason
-        || geminiData.promptFeedback?.blockReason
-        || "Keine Antwort";
       return NextResponse.json(
-        { error: `Gemini hat keine Antwort geliefert: ${reason}` },
+        { error: "Gemini hat keine Antwort geliefert" },
         { status: 422 }
       );
     }
@@ -210,25 +204,15 @@ export async function POST(request: NextRequest) {
       const prompt = buildFallbackMatchingPrompt(unmatched, portalList);
 
       try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: {
-                responseMimeType: "application/json",
-                maxOutputTokens: 4096,
-              },
-            }),
-          }
-        );
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+        const model = genAI.getGenerativeModel({
+          model: "gemini-2.0-flash",
+          generationConfig: { responseMimeType: "application/json", maxOutputTokens: 4096 }
+        });
+        const fallbackResult = await model.generateContent([{ text: prompt }]);
+        const fallbackText = fallbackResult.response.text().trim();
 
-        if (geminiRes.ok) {
-          const fallbackData = await geminiRes.json();
-          const fallbackText = fallbackData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-          if (fallbackText) {
+        if (fallbackText) {
             const llmMatches: Array<{ pdf_product: string; pdf_size: string; canonical_key: string }> =
               JSON.parse(fallbackText);
 
@@ -254,7 +238,6 @@ export async function POST(request: NextRequest) {
                 pdf_model_raw: orig.product,
               });
             }
-          }
         }
       } catch (err) {
         console.error("[parse-pricelist] Gemini fallback error:", err);

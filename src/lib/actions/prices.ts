@@ -119,7 +119,7 @@ export async function saveCustomerPrices(
     }
   }
 
-  const ops: Promise<unknown>[] = [];
+  const ops: PromiseLike<unknown>[] = [];
 
   if (toInsert.length > 0) {
     ops.push(supabase.from("customer_prices").insert(toInsert));

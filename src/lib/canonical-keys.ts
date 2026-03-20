@@ -35,6 +35,8 @@ export function normalizeModel(name: string): string {
 export function normalizeSize(size: string | null | undefined): string {
   if (!size) return "uni";
   let s = size.trim().toLowerCase();
+  // Replace ß before NFKD (ß doesn't decompose with NFKD)
+  s = s.replace(/ß/g, "ss");
   // Normalize unicode
   s = s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
   // Map "one size" variants to "uni"
@@ -61,6 +63,7 @@ export const DE_EN_COLOR_MAP: Record<string, string> = {
   "weiß": "white",
   gruen: "green",
   "grün": "green",
+  grun: "green",
   gelb: "yellow",
   schwarz: "black",
   lila: "purple",
@@ -72,10 +75,13 @@ export const DE_EN_COLOR_MAP: Record<string, string> = {
   rosa: "pink",
   tuerkis: "turquoise",
   "türkis": "turquoise",
+  turkis: "turquoise",
   hellblau: "light blue",
   dunkelblau: "dark blue",
   hellgruen: "light green",
+  hellgrun: "light green",
   dunkelgruen: "dark green",
+  dunkelgrun: "dark green",
   petrol: "petrol",
   lime: "lime",
   mint: "mint",
@@ -99,6 +105,8 @@ export const DE_EN_COLOR_MAP: Record<string, string> = {
 export function normalizeDesign(design: string | null | undefined): string {
   if (!design) return "";
   let s = design.trim().toLowerCase();
+  // Replace ß before NFKD (ß doesn't decompose with NFKD)
+  s = s.replace(/ß/g, "ss");
   // Normalize unicode (ü -> u, etc.)
   s = s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
   // Strip trailing punctuation (CSV typos like "Blau:")

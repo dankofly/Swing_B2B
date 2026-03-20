@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createClient } from "@/lib/supabase/server";
 
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
+    // Auth guard
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    if (!profile || !["superadmin", "admin", "testadmin"].includes(profile.role)) {
+      return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
+    }
+
     const { adminName, stats, locale, isFullGreeting } = await req.json();
 
     const firstName = (adminName || "Admin").split(" ")[0];
@@ -80,8 +90,9 @@ Regeln:
     const parsed = JSON.parse(text);
 
     return NextResponse.json(parsed);
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Admin briefing error:", e);
+    const errorMessage = e instanceof Error ? e.message : String(e);
     return NextResponse.json(
       { greeting: "", briefing: ["Dashboard geladen."], emoji: "📊" },
       { status: 200 }

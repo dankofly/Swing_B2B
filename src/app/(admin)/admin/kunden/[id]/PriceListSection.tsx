@@ -132,10 +132,6 @@ export default function PriceListSection({
           return;
         }
 
-        console.log(
-          `[PriceList] Extracted: ${data.total_extracted}, Matched: ${data.matched}, Saved: ${data.saved}, Unmatched: ${data.unmatched}`
-        );
-
         setStep(null);
         setUploadingCategory(null);
         e.target.value = "";

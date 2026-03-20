@@ -2,6 +2,7 @@
 
 import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { isValidUUID } from "@/lib/rate-limit";
 
 interface StockEntry {
   color_name: string;
@@ -13,6 +14,7 @@ export async function updateColorSizeStock(
   productId: string,
   stockData: StockEntry[]
 ) {
+  if (!isValidUUID(productId)) throw new Error("Ungültige ID");
   await guardAdmin();
   const supabase = createAdminClient();
 

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const checkLimit = createRateLimiter("gemini", 10, 60_000);
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,6 +18,8 @@ export async function POST(req: NextRequest) {
     if (!profile || !["superadmin", "admin"].includes(profile.role)) {
       return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
     }
+
+    if (checkLimit(user.id)) return NextResponse.json({ error: "Zu viele Anfragen. Bitte warten Sie eine Minute." }, { status: 429 });
 
     const supabase = createAdminClient();
     const { data: categories, error } = await supabase

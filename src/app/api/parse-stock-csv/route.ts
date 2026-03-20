@@ -13,9 +13,12 @@ import {
   parseStockCSV,
   type AggregatedVariant,
 } from "@/lib/stock-csv-parser";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 // Allow up to 60s (for rare LLM fallback cases)
 export const maxDuration = 60;
+
+const checkLimit = createRateLimiter("gemini", 10, 60_000);
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -105,6 +108,8 @@ export async function POST(request: NextRequest) {
     if (!profile || !["superadmin", "admin"].includes(profile.role)) {
       return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
     }
+
+    if (checkLimit(user.id)) return NextResponse.json({ error: "Zu viele Anfragen. Bitte warten Sie eine Minute." }, { status: 429 });
 
     const formData = await request.formData();
     const file = formData.get("file") as File;

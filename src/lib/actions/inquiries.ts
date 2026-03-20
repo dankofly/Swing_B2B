@@ -205,7 +205,19 @@ export async function getAllInquiries() {
     )
     .order("created_at", { ascending: false });
 
-  return data ?? [];
+  // Supabase returns joined single-relations as arrays without typed client.
+  // Normalize them to single objects to match the Inquiry interface.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((row: any) => ({
+    ...row,
+    company: Array.isArray(row.company) ? row.company[0] ?? null : row.company,
+    user: Array.isArray(row.user) ? row.user[0] ?? null : row.user,
+    items: (row.items ?? []).map((item: any) => ({  // eslint-disable-line @typescript-eslint/no-explicit-any
+      ...item,
+      product_size: Array.isArray(item.product_size) ? item.product_size[0] ?? null : item.product_size,
+      product_color: Array.isArray(item.product_color) ? item.product_color[0] ?? null : item.product_color,
+    })),
+  }));
 }
 
 export async function updateInquiryStatus(
@@ -234,7 +246,7 @@ export async function updateInquiryStatus(
   if (error) throw new Error("Status konnte nicht aktualisiert werden");
 
   // Notify customer about status change (fire-and-forget)
-  const company = current?.company as { name: string; contact_email: string } | null;
+  const company = current?.company as unknown as { name: string; contact_email: string } | null;
   if (company?.contact_email) {
     sendEmail(
       company.contact_email,
@@ -294,7 +306,7 @@ export async function updateInquiryTracking(
   if (error) throw new Error("Trackingnummer konnte nicht gespeichert werden");
 
   // Notify customer with tracking info (fire-and-forget)
-  const company = current?.company as { name: string; contact_email: string } | null;
+  const company = current?.company as unknown as { name: string; contact_email: string } | null;
   if (company?.contact_email) {
     sendEmail(
       company.contact_email,

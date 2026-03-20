@@ -19,9 +19,8 @@ export async function extractPdfText(file: File): Promise<string> {
 
     // Group text items by y-position to reconstruct lines
     const items = content.items.filter(
-      (item): item is { str: string; transform: number[] } =>
-        "str" in item && item.str.length > 0
-    );
+      (item) => "str" in item && (item as { str: string }).str.length > 0
+    ) as { str: string; transform: number[] }[];
 
     // Sort by y (descending = top to bottom) then x (left to right)
     items.sort((a, b) => {
