@@ -171,50 +171,52 @@ export default async function KatalogPage({
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="dash-hero rounded-xl px-5 pb-0 pt-7 sm:px-8 sm:pt-9">
-        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
-              {dict.common.nav.katalog}
-            </p>
-            <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-              {dict.katalog.title}
-            </h1>
-            <p className="mt-1.5 text-sm text-white/40 tabular-nums">
-              {products?.length ?? 0} {(products?.length ?? 0) !== 1 ? dict.katalog.productsCount : dict.katalog.productCount}
-              {hasActiveFilters && (
-                <> &middot; <Link href="/katalog" className="text-swing-gold hover:text-white transition-colors duration-200">{dict.common.buttons.resetFilters}</Link></>
-              )}
-            </p>
-          </div>
-          <form method="GET" className="flex gap-2">
-            {kategorie && <input type="hidden" name="kategorie" value={kategorie} />}
-            {sub && <input type="hidden" name="sub" value={sub} />}
-            {en && <input type="hidden" name="en" value={en} />}
-            {gewicht && <input type="hidden" name="gewicht" value={gewicht} />}
-            {viewingAsCompanyId && <input type="hidden" name="als" value={viewingAsCompanyId} />}
-            <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-swing-navy/40" />
-              <input
-                type="search"
-                name="q"
-                defaultValue={q}
-                placeholder={dict.katalog.searchPlaceholder}
-                className="w-full rounded-lg border border-white/10 bg-white py-2.5 pl-9 pr-4 text-sm text-swing-navy transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20 sm:w-64"
-              />
+      <div className="overflow-hidden rounded-xl">
+        <div className="dash-hero dash-hero-no-line px-5 pb-0 pt-7 sm:px-8 sm:pt-9">
+          <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
+                {dict.common.nav.katalog}
+              </p>
+              <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                {dict.katalog.title}
+              </h1>
+              <p className="mt-1.5 text-sm text-white/40 tabular-nums">
+                {products?.length ?? 0} {(products?.length ?? 0) !== 1 ? dict.katalog.productsCount : dict.katalog.productCount}
+                {hasActiveFilters && (
+                  <> &middot; <Link href="/katalog" className="text-swing-gold hover:text-white transition-colors duration-200">{dict.common.buttons.resetFilters}</Link></>
+                )}
+              </p>
             </div>
-            <button
-              type="submit"
-              aria-label={dict.common.buttons.search}
-              className="rounded-lg bg-swing-gold px-4 py-2.5 text-sm font-bold text-swing-navy transition-colors duration-200 hover:bg-swing-gold-dark active:scale-[0.97]"
-            >
-              <Search size={16} />
-            </button>
-          </form>
+            <form method="GET" className="flex gap-2">
+              {kategorie && <input type="hidden" name="kategorie" value={kategorie} />}
+              {sub && <input type="hidden" name="sub" value={sub} />}
+              {en && <input type="hidden" name="en" value={en} />}
+              {gewicht && <input type="hidden" name="gewicht" value={gewicht} />}
+              {viewingAsCompanyId && <input type="hidden" name="als" value={viewingAsCompanyId} />}
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-swing-navy/40" />
+                <input
+                  type="search"
+                  name="q"
+                  defaultValue={q}
+                  placeholder={dict.katalog.searchPlaceholder}
+                  className="w-full rounded-lg border border-white/10 bg-white py-2.5 pl-9 pr-4 text-sm text-swing-navy transition-all duration-200 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20 sm:w-64"
+                />
+              </div>
+              <button
+                type="submit"
+                aria-label={dict.common.buttons.search}
+                className="rounded-lg bg-swing-gold px-4 py-2.5 text-sm font-bold text-swing-navy transition-colors duration-200 hover:bg-swing-gold-dark active:scale-[0.97]"
+              >
+                <Search size={16} />
+              </button>
+            </form>
+          </div>
         </div>
 
-        {/* Quick category tabs */}
-        <div className="relative z-10 -mx-5 mt-6 overflow-x-auto px-5 sm:-mx-8 sm:px-8 katalog-tabs-scroll">
+        {/* Quick category tabs — outside dash-hero to allow horizontal scroll */}
+        <div className="overflow-x-auto bg-[#0D1F30] px-5 sm:px-8 katalog-tabs-scroll">
           <div className="flex items-end gap-0 border-t border-white/[0.06]">
             {[
               { label: dict.katalog.filters.all, href: "/katalog", slug: undefined },

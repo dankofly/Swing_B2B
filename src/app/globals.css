@@ -310,6 +310,11 @@ body::before {
     opacity: 0.6;
   }
 
+  /* When dash-hero has no bottom rounding (tabs below it), hide its gold line */
+  .dash-hero-no-line::after {
+    display: none;
+  }
+
   /* ===== Button press feedback — taktile Interaktion ===== */
   .btn-press {
     transition: transform 0.1s ease, box-shadow 0.1s ease;
@@ -449,11 +454,23 @@ body::before {
 
   /* Scrollbar styling for tab overflow */
   .katalog-tabs-scroll {
+    position: relative;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
   .katalog-tabs-scroll::-webkit-scrollbar {
     display: none;
+  }
+  .katalog-tabs-scroll::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, var(--swing-gold) 30%, var(--swing-gold) 70%, transparent 100%);
+    opacity: 0.6;
+    pointer-events: none;
   }
 }
 
