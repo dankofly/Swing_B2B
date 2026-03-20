@@ -27,7 +27,8 @@ export default async function AdminDashboard() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
   // Start admin name fetch early (parallel with dashboard queries)
-  const adminNamePromise = authClient.auth.getUser().then(async ({ data: { user } }) => {
+  const adminNamePromise = authClient.auth.getUser().then(async (res) => {
+    const user = res.data?.user;
     if (!user) return "Admin";
     const { data: profile } = await authClient
       .from("profiles")
@@ -35,7 +36,7 @@ export default async function AdminDashboard() {
       .eq("id", user.id)
       .single();
     return profile?.full_name || "Admin";
-  });
+  }).catch(() => "Admin");
 
   // Parallelize ALL dashboard queries in a single batch
   const [
