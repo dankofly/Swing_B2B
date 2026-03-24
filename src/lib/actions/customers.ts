@@ -180,24 +180,18 @@ export async function inviteCustomer(
   const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
     type: "recovery",
     email,
-    options: {
-      redirectTo: `${siteUrl}/auth/callback?type=recovery`,
-    },
   });
 
-  if (linkError || !linkData?.properties?.action_link) {
+  if (linkError || !linkData?.properties?.hashed_token) {
     console.error("[inviteCustomer] generateLink error:", linkError);
     return { success: false, error: "Einladungslink konnte nicht erstellt werden" };
   }
 
-  // Rewrite redirect_to in the action link to ensure it points to our callback
-  const actionLink = linkData.properties.action_link.replace(
-    /redirect_to=[^&]*/,
-    `redirect_to=${encodeURIComponent(`${siteUrl}/auth/callback?type=recovery`)}`
-  );
+  // Build custom verify URL (bypasses Supabase redirect allowlist)
+  const verifyUrl = `${siteUrl}/auth/verify?token_hash=${encodeURIComponent(linkData.properties.hashed_token)}&type=recovery`;
 
   // Send branded invitation email via Resend
-  const html = buildInvitationEmail(company.name, fullName, actionLink);
+  const html = buildInvitationEmail(company.name, fullName, verifyUrl);
   const sent = await sendEmail(email, `Einladung zum SWING B2B Portal`, html);
 
   if (!sent) {

@@ -280,26 +280,20 @@ export async function inviteUser(email: string, role: string, fullName: string) 
   const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
     type: "recovery",
     email,
-    options: {
-      redirectTo: `${siteUrl}/auth/callback?type=recovery`,
-    },
   });
 
-  if (linkError || !linkData?.properties?.action_link) {
+  if (linkError || !linkData?.properties?.hashed_token) {
     console.error("Failed to generate invite link:", linkError?.message);
     // User is created but link failed — return success with warning
     revalidatePath("/admin/profil");
     return { success: true, warning: "Benutzer erstellt, aber Einladungs-Email konnte nicht gesendet werden" };
   }
 
-  // Rewrite redirect_to in the action link to ensure it points to our callback
-  const actionLink = linkData.properties.action_link.replace(
-    /redirect_to=[^&]*/,
-    `redirect_to=${encodeURIComponent(`${siteUrl}/auth/callback?type=recovery`)}`
-  );
+  // Build custom verify URL (bypasses Supabase redirect allowlist)
+  const verifyUrl = `${siteUrl}/auth/verify?token_hash=${encodeURIComponent(linkData.properties.hashed_token)}&type=recovery`;
 
   // Send branded invitation email
-  const html = buildInvitationEmail(null, fullName, actionLink);
+  const html = buildInvitationEmail(null, fullName, verifyUrl);
   const sent = await sendEmail(email, "Einladung zum SWING B2B Portal", html);
 
   if (!sent) {

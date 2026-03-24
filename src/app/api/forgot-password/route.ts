@@ -13,27 +13,26 @@ export async function POST(request: Request) {
     const supabase = createAdminClient();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://swingparagliders.pro";
 
-    // Generate recovery link server-side (bypasses redirect allowlist)
+    // Generate recovery link server-side
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "recovery",
       email,
     });
 
-    if (linkError || !linkData?.properties?.action_link) {
+    if (linkError || !linkData?.properties?.hashed_token) {
       // Don't reveal whether the email exists — always return success
       console.error("[forgot-password] generateLink error:", linkError?.message);
       return NextResponse.json({ success: true });
     }
 
-    // Rewrite the redirect_to in the action link to point to our auth callback
-    const actionLink = linkData.properties.action_link.replace(
-      /redirect_to=[^&]*/,
-      `redirect_to=${encodeURIComponent(`${siteUrl}/auth/callback?type=recovery`)}`
-    );
+    // Build a custom verification URL that goes directly to our app
+    // This bypasses Supabase's redirect URL allowlist entirely
+    const token = linkData.properties.hashed_token;
+    const verifyUrl = `${siteUrl}/auth/verify?token_hash=${encodeURIComponent(token)}&type=recovery`;
 
     // Send branded password reset email via Resend
-    const html = buildPasswordResetEmail(actionLink);
-    await sendEmail(email, "Passwort zurücksetzen — SWING B2B Portal", html);
+    const html = buildPasswordResetEmail(verifyUrl);
+    await sendEmail(email, "Passwort zurücksetzen \u2014 SWING B2B Portal", html);
 
     // Always return success (don't reveal whether email exists)
     return NextResponse.json({ success: true });
