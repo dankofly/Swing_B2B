@@ -1,10 +1,12 @@
-import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function GET(request: NextRequest) {
   // Auth guard: any logged-in user
-  const authClient = await createClient();
-  const { data: { user } } = await authClient.auth.getUser();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
@@ -16,8 +18,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ products: [] });
   }
 
-  const supabase = createAdminClient();
-
   let query = supabase
     .from("products")
     .select("id, name, slug")
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     .order("name")
     .limit(10);
 
-  if (exclude) {
+  if (exclude && UUID_RE.test(exclude)) {
     query = query.neq("id", exclude);
   }
 

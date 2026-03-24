@@ -10,13 +10,15 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/katalog";
+
+  // Validate `next` to prevent open redirect attacks
+  const rawNext = searchParams.get("next") ?? "/katalog";
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/katalog";
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // For password reset, redirect to the reset-password page
       const type = searchParams.get("type");
       if (type === "recovery") {
         return NextResponse.redirect(`${origin}/reset-password`);
@@ -25,6 +27,5 @@ export async function GET(request: Request) {
     }
   }
 
-  // If code exchange fails, redirect to login with error
   return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
 }

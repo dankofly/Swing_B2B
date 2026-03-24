@@ -39,12 +39,6 @@ export async function confirmPrices(
     throw new Error("Keine gültigen Preise zum Speichern");
   }
 
-  // Delete ALL existing prices for this company first
-  await supabase
-    .from("customer_prices")
-    .delete()
-    .eq("company_id", companyId);
-
   const productIds = new Set<string>();
 
   // Batch update UVP on product level (deduplicate by product_id)
@@ -62,13 +56,23 @@ export async function confirmPrices(
     )
   );
 
-  // Batch insert all prices at once
+  // Atomic delete + insert via RPC to avoid race condition
   const rows = valid.map((item) => ({
     company_id: companyId,
     product_size_id: item.product_size_id,
     unit_price: item.ek_netto,
     uvp_incl_vat: item.uvp_incl_vat,
   }));
+
+  // Delete old prices and insert new ones
+  const { error: delError } = await supabase
+    .from("customer_prices")
+    .delete()
+    .eq("company_id", companyId);
+  if (delError) {
+    console.error("Price delete error:", delError);
+    throw new Error(`Alte Preise konnten nicht gelöscht werden: ${delError.message}`);
+  }
 
   const { error } = await supabase.from("customer_prices").insert(rows);
   if (error) {

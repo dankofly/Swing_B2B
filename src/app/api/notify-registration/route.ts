@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "info@swing.de";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "vertrieb@swing.de";
+
+function esc(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 3;
@@ -60,6 +64,7 @@ function buildHtml(data: RegistrationData): string {
     data.addressCountry,
   ]
     .filter(Boolean)
+    .map(esc)
     .join("<br>");
 
   return `
@@ -114,7 +119,7 @@ function buildHtml(data: RegistrationData): string {
                       <tr>
                         <td style="padding:4px 0;">
                           <span style="color:rgba(23,48,69,0.4); font-size:11px; font-weight:600;">Firma:</span>
-                          <span style="color:#173045; font-size:14px; font-weight:700; margin-left:8px;">${data.companyName}</span>
+                          <span style="color:#173045; font-size:14px; font-weight:700; margin-left:8px;">${esc(data.companyName)}</span>
                         </td>
                       </tr>
                       <tr>
@@ -123,7 +128,7 @@ function buildHtml(data: RegistrationData): string {
                           <span style="color:#173045; font-size:13px; margin-left:8px;">${companyTypeLabel(data.companyType)}</span>
                         </td>
                       </tr>
-                      ${data.vatId ? `<tr><td style="padding:4px 0;"><span style="color:rgba(23,48,69,0.4); font-size:11px; font-weight:600;">USt-ID:</span><span style="color:#173045; font-size:13px; margin-left:8px; font-family:monospace;">${data.vatId}</span></td></tr>` : ""}
+                      ${data.vatId ? `<tr><td style="padding:4px 0;"><span style="color:rgba(23,48,69,0.4); font-size:11px; font-weight:600;">USt-ID:</span><span style="color:#173045; font-size:13px; margin-left:8px; font-family:monospace;">${esc(data.vatId)}</span></td></tr>` : ""}
                       ${categories ? `<tr><td style="padding:4px 0;"><span style="color:rgba(23,48,69,0.4); font-size:11px; font-weight:600;">Kategorien:</span><span style="color:#173045; font-size:13px; margin-left:8px;">${categories}</span></td></tr>` : ""}
                     </table>
                   </td>
@@ -147,16 +152,16 @@ function buildHtml(data: RegistrationData): string {
                       <tr>
                         <td style="padding:4px 0;">
                           <span style="color:rgba(23,48,69,0.4); font-size:11px; font-weight:600;">Ansprechpartner:</span>
-                          <span style="color:#173045; font-size:14px; font-weight:700; margin-left:8px;">${data.fullName}</span>
+                          <span style="color:#173045; font-size:14px; font-weight:700; margin-left:8px;">${esc(data.fullName)}</span>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding:4px 0;">
                           <span style="color:rgba(23,48,69,0.4); font-size:11px; font-weight:600;">E-Mail:</span>
-                          <a href="mailto:${data.email}" style="color:#173045; font-size:13px; margin-left:8px; text-decoration:none;">${data.email}</a>
+                          <a href="mailto:${esc(data.email)}" style="color:#173045; font-size:13px; margin-left:8px; text-decoration:none;">${esc(data.email)}</a>
                         </td>
                       </tr>
-                      ${data.phone ? `<tr><td style="padding:4px 0;"><span style="color:rgba(23,48,69,0.4); font-size:11px; font-weight:600;">Telefon:</span><a href="tel:${data.phone}" style="color:#173045; font-size:13px; margin-left:8px; text-decoration:none;">${data.phone}</a>${data.phoneWhatsapp ? ' <span style="color:#25D366; font-size:11px; font-weight:600;">WhatsApp</span>' : ""}</td></tr>` : ""}
+                      ${data.phone ? `<tr><td style="padding:4px 0;"><span style="color:rgba(23,48,69,0.4); font-size:11px; font-weight:600;">Telefon:</span><a href="tel:${esc(data.phone)}" style="color:#173045; font-size:13px; margin-left:8px; text-decoration:none;">${esc(data.phone)}</a>${data.phoneWhatsapp ? ' <span style="color:#25D366; font-size:11px; font-weight:600;">WhatsApp</span>' : ""}</td></tr>` : ""}
                     </table>
                   </td>
                 </tr>
@@ -225,7 +230,7 @@ export async function POST(request: NextRequest) {
 
     const sent = await sendEmail(
       ADMIN_EMAIL,
-      `Anfrage für den Zugang zu dem SWING B2B Portal — ${data.companyName}`,
+      `Anfrage für den Zugang zu dem SWING B2B Portal — ${data.companyName.replace(/[\r\n]/g, "")}`,
       buildHtml(data),
     );
 

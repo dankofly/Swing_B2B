@@ -62,6 +62,7 @@ export async function updateCompany(id: string, formData: FormData) {
 }
 
 export async function updateCompanyNotes(id: string, notes: string) {
+  if (!isValidUUID(id)) return { success: false, error: "Ungültige ID" };
   await guardAdmin();
   const supabase = createAdminClient();
 

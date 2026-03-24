@@ -3,6 +3,11 @@ import { Resend } from "resend";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://swingparagliders.pro";
 const FROM_EMAIL = process.env.EMAIL_FROM || "SWING B2B Portal <sales@swingparagliders.pro>";
 
+/** Escape user input for safe HTML embedding */
+function esc(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 // Lazy-init Resend client
 let resendClient: Resend | null = null;
 
@@ -150,14 +155,14 @@ export function buildInvitationEmail(
   const isDealer = !!companyName;
 
   const introText = isDealer
-    ? `Sie wurden als H&auml;ndler f&uuml;r <strong>&bdquo;${companyName}&ldquo;</strong> zum SWING B2B H&auml;ndlerportal eingeladen.
+    ? `Sie wurden als H&auml;ndler f&uuml;r <strong>&bdquo;${esc(companyName!)}&ldquo;</strong> zum SWING B2B H&auml;ndlerportal eingeladen.
       &Uuml;ber das Portal k&ouml;nnen Sie unseren aktuellen Katalog einsehen, Ihre individuellen Preise abrufen und Bestellanfragen direkt an uns senden.`
     : `Sie wurden zum SWING B2B H&auml;ndlerportal eingeladen.
       &Uuml;ber das Portal verwalten Sie Produkte, Bestellungen und Kunden.`;
 
   const accessCard = isDealer
     ? infoCard("Ihr Zugang", `
-        ${infoRow("Firma", `<strong>${companyName}</strong>`)}
+        ${infoRow("Firma", `<strong>${esc(companyName!)}</strong>`)}
         ${infoRow("Status", '<span style="color:#16a34a; font-weight:700;">Freigeschaltet</span>')}
       `)
     : infoCard("Ihr Zugang", `
@@ -175,7 +180,7 @@ export function buildInvitationEmail(
 
   const body = `
     <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">
-      Hallo${contactName ? ` ${contactName}` : ""},
+      Hallo${contactName ? ` ${esc(contactName)}` : ""},
     </p>
     <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">
       ${introText}
@@ -223,13 +228,13 @@ export function buildPasswordResetEmail(resetUrl: string): string {
 
 export function buildApprovalEmail(companyName: string): string {
   const body = infoCard("Ihr Zugang", `
-    ${infoRow("Firma", `<strong>${companyName}</strong>`)}
+    ${infoRow("Firma", `<strong>${esc(companyName!)}</strong>`)}
     ${infoRow("Status", '<span style="color:#16a34a; font-weight:700;">Freigeschaltet</span>')}
   `);
 
   return emailWrapper(
     "Ihr Zugang wurde freigeschaltet",
-    `Willkommen im SWING B2B H&auml;ndlerportal! Ihr Account f&uuml;r &bdquo;${companyName}&ldquo; wurde genehmigt.`,
+    `Willkommen im SWING B2B H&auml;ndlerportal! Ihr Account f&uuml;r &bdquo;${esc(companyName!)}&ldquo; wurde genehmigt.`,
     body,
     { label: "Zum Katalog &rarr;", href: `${SITE_URL}/katalog` }
   );
@@ -306,9 +311,9 @@ export function buildNewInquiryEmail(
       (item, idx) => `
     <tr style="border-bottom:1px solid #f0f0f0;">
       <td style="padding:8px 10px; font-size:12px; color:#414142;">${idx + 1}</td>
-      <td style="padding:8px 10px; font-size:12px; color:#173045; font-weight:600;">${item.productName}</td>
-      <td style="padding:8px 10px; font-size:12px; color:#414142;">${item.sizeLabel}</td>
-      <td style="padding:8px 10px; font-size:12px; color:#414142;">${item.colorName}</td>
+      <td style="padding:8px 10px; font-size:12px; color:#173045; font-weight:600;">${esc(item.productName)}</td>
+      <td style="padding:8px 10px; font-size:12px; color:#414142;">${esc(item.sizeLabel)}</td>
+      <td style="padding:8px 10px; font-size:12px; color:#414142;">${esc(item.colorName)}</td>
       <td style="padding:8px 10px; font-size:12px; color:#414142; text-align:center; font-weight:600;">${item.quantity}</td>
       <td style="padding:8px 10px; font-size:12px; color:#414142; text-align:right; font-family:monospace;">${item.unitPrice > 0 ? item.unitPrice.toFixed(2).replace(".", ",") + " &euro;" : "&mdash;"}</td>
     </tr>`
@@ -335,9 +340,9 @@ export function buildNewInquiryEmail(
 
   const body = `
     ${infoCard("H&auml;ndler", `
-      ${infoRow("Firma", `<strong>${companyName}</strong>`)}
-      ${infoRow("Kontakt", contactName || "&mdash;")}
-      ${infoRow("E-Mail", contactEmail || "&mdash;")}
+      ${infoRow("Firma", `<strong>${esc(companyName!)}</strong>`)}
+      ${infoRow("Kontakt", contactName ? esc(contactName) : "&mdash;")}
+      ${infoRow("E-Mail", contactEmail ? esc(contactEmail) : "&mdash;")}
       ${infoRow("Datum", date)}
       ${infoRow("Anfrage-Nr.", `<code style="font-family:monospace; background:#f0f0f0; padding:2px 6px; border-radius:2px;">${inquiryId.slice(0, 8)}</code>`)}
     `)}
@@ -351,13 +356,13 @@ export function buildNewInquiryEmail(
     <div style="margin-top:16px;">
       <p style="margin:0 0 4px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:rgba(23,48,69,0.35);">Anmerkungen</p>
       <div style="background:#fafafa; border:1px solid #e8e8e8; border-radius:2px; padding:12px 16px;">
-        <p style="margin:0; font-size:13px; color:#414142; line-height:1.6; white-space:pre-line;">${notes}</p>
+        <p style="margin:0; font-size:13px; color:#414142; line-height:1.6; white-space:pre-line;">${esc(notes)}</p>
       </div>
     </div>` : ""}
   `;
 
   return emailWrapper(
-    `Neue Bestellanfrage von ${companyName}`,
+    `Neue Bestellanfrage von ${esc(companyName)}`,
     `${items.length} Position${items.length !== 1 ? "en" : ""}, ${totalQty} St&uuml;ck gesamt`,
     body,
     { label: "Anfrage im Portal &ouml;ffnen &rarr;", href: `${SITE_URL}/admin/kunden/${companyId}` }

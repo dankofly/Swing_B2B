@@ -2,8 +2,10 @@
 
 import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { isValidUUID } from "@/lib/rate-limit";
 
 export async function uploadPriceList(companyId: string, formData: FormData, category: string = "general") {
+  if (!isValidUUID(companyId)) return { success: false, error: "Ungültige ID" };
   await guardAdmin();
   const supabase = createAdminClient();
   const file = formData.get("file") as File;
@@ -50,6 +52,7 @@ export async function uploadPriceList(companyId: string, formData: FormData, cat
 }
 
 export async function getCompanyPriceUploads(companyId: string) {
+  if (!isValidUUID(companyId)) return [];
   const supabase = createAdminClient();
 
   const { data } = await supabase
@@ -62,6 +65,7 @@ export async function getCompanyPriceUploads(companyId: string) {
 }
 
 export async function deletePriceUpload(id: string, companyId: string) {
+  if (!isValidUUID(id) || !isValidUUID(companyId)) return { success: false, error: "Ungültige ID" };
   try {
     await guardAdmin();
   } catch (err) {
@@ -110,6 +114,7 @@ export async function deletePriceUpload(id: string, companyId: string) {
  * the associated customer_prices so the dealer sees no stale prices.
  */
 export async function deleteAllCategoryUploads(companyId: string, category: string) {
+  if (!isValidUUID(companyId)) return { success: false, error: "Ungültige ID" };
   try {
     await guardAdmin();
   } catch (err) {
