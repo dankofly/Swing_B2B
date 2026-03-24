@@ -16,7 +16,7 @@ const de: Dictionary = {
       loggedInAs: "Angemeldet als",
       zumKatalog: "Zum Katalog",
       adminBereich: "Admin-Bereich",
-      news: "Neuigkeiten",
+      news: "News",
     },
     status: {
       new: "Eingang",
