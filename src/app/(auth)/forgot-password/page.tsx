@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
         <div className="mb-10 text-center">
           <Link href="/" className="group inline-block">
             <span className="text-3xl font-extrabold italic tracking-[4px] text-white transition-colors group-hover:text-swing-gold">
-              SWING
+              SWING PARAGLIDERS
             </span>
             <span className="ml-2.5 inline-block rounded-lg bg-swing-gold px-2.5 py-1 text-[10px] font-extrabold tracking-[3px] text-swing-navy">
               B2B

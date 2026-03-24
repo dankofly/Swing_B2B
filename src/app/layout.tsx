@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
     appleWebApp: {
       capable: true,
       statusBarStyle: "black-translucent",
-      title: "SWING B2B",
+      title: "SWING PARAGLIDERS B2B",
     },
     icons: {
       icon: [

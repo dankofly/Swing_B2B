@@ -70,32 +70,45 @@ function emailWrapper(title: string, subtitle: string, body: string, cta?: { lab
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--[if mso]><style>body,table,td{font-family:Arial,sans-serif !important;}</style><![endif]-->
 </head>
-<body style="margin:0; padding:0; background-color:#f6f6f6; font-family:'Montserrat',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f6f6f6; padding:40px 20px;">
+<body style="margin:0; padding:0; background-color:#f0f1f3; font-family:'Montserrat','Helvetica Neue',Arial,sans-serif; -webkit-font-smoothing:antialiased;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f1f3; padding:40px 20px;">
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
 
-          <!-- Header -->
+          <!-- Header with SWING branding -->
           <tr>
-            <td style="background: linear-gradient(135deg, #173045 0%, #1F2A55 100%); padding:30px 40px; border-radius:2px 2px 0 0;">
-              <h1 style="margin:0; color:#FCB923; font-size:18px; font-weight:800; letter-spacing:2px; text-transform:uppercase; font-style:italic;">
-                SWING PARAGLIDERS
-              </h1>
-              <p style="margin:6px 0 0; color:rgba(255,255,255,0.4); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; font-weight:600;">
-                B2B H&auml;ndlerportal
-              </p>
+            <td style="background-color:#173045; padding:28px 40px 24px; border-radius:4px 4px 0 0;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="font-size:20px; font-weight:900; letter-spacing:3px; color:#FFFFFF; font-style:italic; text-transform:uppercase;">SWING PARAGLIDERS</span>
+                    <span style="display:inline-block; margin-left:10px; background-color:#FCB923; color:#173045; font-size:9px; font-weight:800; letter-spacing:3px; padding:4px 10px; border-radius:3px; vertical-align:middle; text-transform:uppercase;">B2B</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:6px;">
+                    <span style="font-size:10px; font-weight:600; letter-spacing:2px; color:rgba(255,255,255,0.35); text-transform:uppercase;">H&auml;ndlerportal</span>
+                  </td>
+                </tr>
+              </table>
             </td>
+          </tr>
+
+          <!-- Gold accent line -->
+          <tr>
+            <td style="background-color:#FCB923; height:3px; font-size:0; line-height:0;">&nbsp;</td>
           </tr>
 
           <!-- Title -->
           <tr>
-            <td style="background-color:#ffffff; padding:30px 40px 20px;">
-              <h2 style="margin:0; color:#173045; font-size:16px; font-weight:800;">
+            <td style="background-color:#ffffff; padding:32px 40px 20px;">
+              <h2 style="margin:0; color:#173045; font-size:17px; font-weight:800; letter-spacing:-0.2px;">
                 ${title}
               </h2>
-              <p style="margin:8px 0 0; color:#414142; font-size:13px; opacity:0.6;">
+              <p style="margin:8px 0 0; color:#6b7280; font-size:13px; line-height:1.5;">
                 ${subtitle}
               </p>
             </td>
@@ -103,7 +116,7 @@ function emailWrapper(title: string, subtitle: string, body: string, cta?: { lab
 
           <!-- Body -->
           <tr>
-            <td style="background-color:#ffffff; padding:0 40px 20px;">
+            <td style="background-color:#ffffff; padding:0 40px 24px;">
               ${body}
             </td>
           </tr>
@@ -111,20 +124,41 @@ function emailWrapper(title: string, subtitle: string, body: string, cta?: { lab
           ${cta ? `
           <!-- CTA -->
           <tr>
-            <td style="background-color:#ffffff; padding:10px 40px 30px; text-align:center;">
+            <td style="background-color:#ffffff; padding:8px 40px 36px; text-align:center;">
               <a href="${cta.href}"
-                 style="display:inline-block; background-color:#FCB923; color:#173045; padding:12px 32px; font-size:13px; font-weight:700; text-decoration:none; border-radius:2px; letter-spacing:0.5px;">
+                 style="display:inline-block; background-color:#FCB923; color:#173045; padding:14px 36px; font-size:13px; font-weight:700; text-decoration:none; border-radius:4px; letter-spacing:0.5px; box-shadow:0 2px 8px rgba(252,185,35,0.3);">
                 ${cta.label}
               </a>
             </td>
           </tr>
           ` : ""}
 
+          <!-- Bottom border -->
+          <tr>
+            <td style="background-color:#ffffff; height:1px; font-size:0; line-height:0; border-bottom:1px solid #e5e7eb;">&nbsp;</td>
+          </tr>
+
           <!-- Footer -->
           <tr>
-            <td style="padding:20px 40px; text-align:center;">
-              <p style="margin:0; color:rgba(65,65,66,0.3); font-size:11px;">
-                Diese E-Mail wurde automatisch vom SWING B2B H&auml;ndlerportal versendet.
+            <td style="padding:24px 40px 12px; text-align:center;">
+              <p style="margin:0; color:#173045; font-size:13px; font-weight:800; letter-spacing:2px; font-style:italic;">SWING PARAGLIDERS</p>
+              <p style="margin:4px 0 0; color:#9ca3af; font-size:11px; line-height:1.6;">
+                SWING Flugsportger&auml;te GmbH
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 8px; text-align:center;">
+              <a href="https://swing.de" style="color:#9ca3af; font-size:10px; text-decoration:none; letter-spacing:0.5px;">swing.de</a>
+              <span style="color:#d1d5db; font-size:10px;"> &nbsp;&bull;&nbsp; </span>
+              <a href="${SITE_URL}" style="color:#9ca3af; font-size:10px; text-decoration:none; letter-spacing:0.5px;">swingparagliders.pro</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 40px 24px; text-align:center;">
+              <p style="margin:0; color:#d1d5db; font-size:10px; line-height:1.5;">
+                Diese E-Mail wurde automatisch vom SWING B2B H&auml;ndlerportal versendet.<br>
+                &copy; ${new Date().getFullYear()} SWING Flugsportger&auml;te GmbH &middot; Alle Rechte vorbehalten.
               </p>
             </td>
           </tr>
@@ -147,10 +181,10 @@ function infoRow(label: string, value: string): string {
 }
 
 function infoCard(heading: string, rows: string): string {
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e8e8; border-radius:2px;">
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb; border-radius:4px; overflow:hidden;">
     <tr>
-      <td style="padding:16px 20px; border-bottom:1px solid #f0f0f0; background-color:#fafafa;">
-        <p style="margin:0; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:rgba(23,48,69,0.35);">${heading}</p>
+      <td style="padding:14px 20px; border-bottom:1px solid #f0f0f0; background-color:#f9fafb;">
+        <p style="margin:0; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:rgba(23,48,69,0.4);">${heading}</p>
       </td>
     </tr>
     <tr>
