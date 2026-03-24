@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const token = linkData.properties.hashed_token;
     const verifyUrl = `${siteUrl}/auth/verify?token_hash=${encodeURIComponent(token)}&type=recovery`;
 
-    // Send branded password reset email via Resend
+    // Send branded password reset email via SMTP
     const html = buildPasswordResetEmail(verifyUrl);
     console.log(`[forgot-password] Attempting to send reset email to ${email}, verifyUrl: ${verifyUrl.slice(0, 80)}...`);
     const sent = await sendEmail(email, "Passwort zurücksetzen \u2014 SWING B2B Portal", html);
