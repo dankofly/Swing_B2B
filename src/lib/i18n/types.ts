@@ -475,6 +475,7 @@ export interface Dictionary {
         saveChanges: string;
         createCustomer: string;
         editCustomer: string;
+        language: string;
         saveError: string;
       };
     };

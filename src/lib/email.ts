@@ -197,57 +197,96 @@ function infoCard(heading: string, rows: string): string {
 
 // ─── 0. Customer Invitation ──────────────────────────────────────────────────
 
+const invitationI18n = {
+  de: {
+    greeting: (name: string) => `Hallo${name ? ` ${esc(name)}` : ""},`,
+    introDealer: (company: string) =>
+      `Sie wurden als H&auml;ndler f&uuml;r <strong>&bdquo;${esc(company)}&ldquo;</strong> zum SWING B2B H&auml;ndlerportal eingeladen. &Uuml;ber das Portal k&ouml;nnen Sie unseren aktuellen Katalog einsehen, Ihre individuellen Preise abrufen und Bestellanfragen direkt an uns senden.`,
+    introAdmin: `Sie wurden zum SWING B2B H&auml;ndlerportal eingeladen. &Uuml;ber das Portal verwalten Sie Produkte, Bestellungen und Kunden.`,
+    accessHeading: "Ihr Zugang",
+    company: "Firma",
+    role: "Rolle",
+    teamMember: "Teammitglied",
+    status: "Status",
+    activated: "Freigeschaltet",
+    adminGuide: `<strong>Wichtig:</strong> Bitte lesen Sie vor dem ersten Login die <a href="${SITE_URL}/admin-anleitung" style="color:#173045; font-weight:700; text-decoration:underline;">Admin-Anleitung</a>, um sich mit allen Funktionen des Portals vertraut zu machen.`,
+    cta: `Klicken Sie auf den Button unten, um Ihr Passwort festzulegen und sich anzumelden. Der Link ist <strong>24 Stunden</strong> g&uuml;ltig.`,
+    title: "Einladung zum SWING B2B Portal",
+    subtitle: `Sie wurden zum SWING B2B H&auml;ndlerportal eingeladen.`,
+    button: "Passwort festlegen &rarr;",
+    subject: "Einladung zum SWING B2B Portal",
+  },
+  en: {
+    greeting: (name: string) => `Hello${name ? ` ${esc(name)}` : ""},`,
+    introDealer: (company: string) =>
+      `You have been invited as a dealer for <strong>&ldquo;${esc(company)}&rdquo;</strong> to the SWING B2B Dealer Portal. Through the portal you can browse our current catalogue, view your individual prices and send order inquiries directly to us.`,
+    introAdmin: `You have been invited to the SWING B2B Dealer Portal. Through the portal you can manage products, orders and customers.`,
+    accessHeading: "Your Access",
+    company: "Company",
+    role: "Role",
+    teamMember: "Team Member",
+    status: "Status",
+    activated: "Activated",
+    adminGuide: `<strong>Important:</strong> Please read the <a href="${SITE_URL}/admin-anleitung" style="color:#173045; font-weight:700; text-decoration:underline;">Admin Guide</a> before your first login to familiarise yourself with all portal features.`,
+    cta: `Click the button below to set your password and log in. The link is valid for <strong>24 hours</strong>.`,
+    title: "Invitation to SWING B2B Portal",
+    subtitle: `You have been invited to the SWING B2B Dealer Portal.`,
+    button: "Set Password &rarr;",
+    subject: "Invitation to SWING B2B Portal",
+  },
+  fr: {
+    greeting: (name: string) => `Bonjour${name ? ` ${esc(name)}` : ""},`,
+    introDealer: (company: string) =>
+      `Vous avez &eacute;t&eacute; invit&eacute;(e) en tant que revendeur pour <strong>&laquo;&nbsp;${esc(company)}&nbsp;&raquo;</strong> sur le portail B2B SWING. Via le portail, vous pouvez consulter notre catalogue actuel, voir vos prix individuels et envoyer des demandes de commande directement.`,
+    introAdmin: `Vous avez &eacute;t&eacute; invit&eacute;(e) sur le portail B2B SWING. Via le portail, vous g&eacute;rez les produits, commandes et clients.`,
+    accessHeading: "Votre acc&egrave;s",
+    company: "Entreprise",
+    role: "R&ocirc;le",
+    teamMember: "Membre de l&rsquo;&eacute;quipe",
+    status: "Statut",
+    activated: "Activ&eacute;",
+    adminGuide: `<strong>Important :</strong> Veuillez lire le <a href="${SITE_URL}/admin-anleitung" style="color:#173045; font-weight:700; text-decoration:underline;">Guide Admin</a> avant votre premi&egrave;re connexion pour vous familiariser avec toutes les fonctionnalit&eacute;s du portail.`,
+    cta: `Cliquez sur le bouton ci-dessous pour d&eacute;finir votre mot de passe et vous connecter. Le lien est valide pendant <strong>24 heures</strong>.`,
+    title: "Invitation au portail B2B SWING",
+    subtitle: `Vous avez &eacute;t&eacute; invit&eacute;(e) sur le portail B2B SWING.`,
+    button: "D&eacute;finir le mot de passe &rarr;",
+    subject: "Invitation au portail B2B SWING",
+  },
+};
+
 export function buildInvitationEmail(
   companyName: string | null,
   contactName: string,
   passwordSetupUrl: string,
+  locale: "de" | "en" | "fr" = "de",
 ): string {
+  const t = invitationI18n[locale] || invitationI18n.de;
   const isDealer = !!companyName;
 
-  const introText = isDealer
-    ? `Sie wurden als H&auml;ndler f&uuml;r <strong>&bdquo;${esc(companyName!)}&ldquo;</strong> zum SWING B2B H&auml;ndlerportal eingeladen.
-      &Uuml;ber das Portal k&ouml;nnen Sie unseren aktuellen Katalog einsehen, Ihre individuellen Preise abrufen und Bestellanfragen direkt an uns senden.`
-    : `Sie wurden zum SWING B2B H&auml;ndlerportal eingeladen.
-      &Uuml;ber das Portal verwalten Sie Produkte, Bestellungen und Kunden.`;
+  const introText = isDealer ? t.introDealer(companyName!) : t.introAdmin;
 
   const accessCard = isDealer
-    ? infoCard("Ihr Zugang", `
-        ${infoRow("Firma", `<strong>${esc(companyName!)}</strong>`)}
-        ${infoRow("Status", '<span style="color:#16a34a; font-weight:700;">Freigeschaltet</span>')}
+    ? infoCard(t.accessHeading, `
+        ${infoRow(t.company, `<strong>${esc(companyName!)}</strong>`)}
+        ${infoRow(t.status, `<span style="color:#16a34a; font-weight:700;">${t.activated}</span>`)}
       `)
-    : infoCard("Ihr Zugang", `
-        ${infoRow("Rolle", '<span style="color:#16a34a; font-weight:700;">Teammitglied</span>')}
-        ${infoRow("Status", '<span style="color:#16a34a; font-weight:700;">Freigeschaltet</span>')}
+    : infoCard(t.accessHeading, `
+        ${infoRow(t.role, `<span style="color:#16a34a; font-weight:700;">${t.teamMember}</span>`)}
+        ${infoRow(t.status, `<span style="color:#16a34a; font-weight:700;">${t.activated}</span>`)}
       `);
 
   const adminGuideBlock = !isDealer
-    ? `<p style="color:#414142; font-size:13px; line-height:1.7; margin:16px 0 0; padding:14px 18px; background-color:#f8f9fa; border-left:3px solid #FCB923; border-radius:2px;">
-        <strong>Wichtig:</strong> Bitte lesen Sie vor dem ersten Login die
-        <a href="${SITE_URL}/admin-anleitung" style="color:#173045; font-weight:700; text-decoration:underline;">Admin-Anleitung</a>,
-        um sich mit allen Funktionen des Portals vertraut zu machen.
-      </p>`
+    ? `<p style="color:#414142; font-size:13px; line-height:1.7; margin:16px 0 0; padding:14px 18px; background-color:#f8f9fa; border-left:3px solid #FCB923; border-radius:2px;">${t.adminGuide}</p>`
     : "";
 
   const body = `
-    <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">
-      Hallo${contactName ? ` ${esc(contactName)}` : ""},
-    </p>
-    <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">
-      ${introText}
-    </p>
+    <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">${t.greeting(contactName)}</p>
+    <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">${introText}</p>
     ${accessCard}
     ${adminGuideBlock}
-    <p style="color:#414142; font-size:13px; line-height:1.7; margin:16px 0 0;">
-      Klicken Sie auf den Button unten, um Ihr Passwort festzulegen und sich anzumelden.
-      Der Link ist <strong>24 Stunden</strong> g&uuml;ltig.
-    </p>`;
+    <p style="color:#414142; font-size:13px; line-height:1.7; margin:16px 0 0;">${t.cta}</p>`;
 
-  return emailWrapper(
-    "Einladung zum SWING B2B Portal",
-    `Sie wurden zum SWING B2B H&auml;ndlerportal eingeladen.`,
-    body,
-    { label: "Passwort festlegen &rarr;", href: passwordSetupUrl }
-  );
+  return emailWrapper(t.title, t.subtitle, body, { label: t.button, href: passwordSetupUrl });
 }
 
 // ─── 0b. Password Reset ─────────────────────────────────────────────────────

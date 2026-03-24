@@ -50,12 +50,20 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=token_expired`);
   }
 
+  // Set locale from invitation link if provided
+  const locale = searchParams.get("locale");
+
   // Build redirect and attach session cookies
   const redirectUrl = type === "recovery" ? `${origin}/reset-password` : `${origin}/katalog`;
   const response = NextResponse.redirect(redirectUrl);
 
   for (const { name, value, options } of pendingCookies) {
     response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2]);
+  }
+
+  // Set locale cookie so the portal renders in the correct language
+  if (locale && ["de", "en", "fr"].includes(locale)) {
+    response.cookies.set("locale", locale, { path: "/", maxAge: 365 * 24 * 60 * 60 });
   }
 
   return response;

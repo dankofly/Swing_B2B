@@ -499,6 +499,7 @@ const en: Dictionary = {
         saveChanges: "Save changes",
         createCustomer: "Create customer",
         editCustomer: "Edit customer",
+        language: "Language (emails & portal)",
         saveError: "Error saving",
       },
     },

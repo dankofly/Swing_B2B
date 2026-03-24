@@ -499,6 +499,7 @@ const fr: Dictionary = {
         saveChanges: "Enregistrer les modifications",
         createCustomer: "Créer un client",
         editCustomer: "Modifier le client",
+        language: "Langue (e-mails & portail)",
         saveError: "Erreur lors de l'enregistrement",
       },
     },

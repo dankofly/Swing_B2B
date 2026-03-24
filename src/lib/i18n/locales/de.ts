@@ -499,6 +499,7 @@ const de: Dictionary = {
         saveChanges: "Änderungen speichern",
         createCustomer: "Kunden anlegen",
         editCustomer: "Kunde bearbeiten",
+        language: "Sprache (E-Mails & Portal)",
         saveError: "Fehler beim Speichern",
       },
     },

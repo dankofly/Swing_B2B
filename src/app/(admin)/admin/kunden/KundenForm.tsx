@@ -9,6 +9,7 @@ import {
   Building2,
   MapPin,
   Mail,
+  Globe,
 } from "lucide-react";
 import { useDict } from "@/lib/i18n/context";
 
@@ -16,6 +17,7 @@ interface Company {
   id: string;
   name: string;
   contact_email: string;
+  locale: string | null;
   phone: string | null;
   phone_whatsapp: boolean;
   address_street: string | null;
@@ -112,6 +114,24 @@ export default function KundenForm({ company }: { company?: Company }) {
               className={inputClass}
               placeholder="z.B. ATU12345678"
             />
+          </div>
+
+          <div>
+            <label className={labelClass}>
+              <span className="inline-flex items-center gap-1.5">
+                <Globe size={11} className="text-swing-navy/30" />
+                {tf.language}
+              </span>
+            </label>
+            <select
+              name="locale"
+              defaultValue={company?.locale ?? "de"}
+              className={inputClass}
+            >
+              <option value="de">Deutsch</option>
+              <option value="en">English</option>
+              <option value="fr">Fran&ccedil;ais</option>
+            </select>
           </div>
 
           <div className="sm:col-span-2">

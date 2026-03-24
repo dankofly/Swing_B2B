@@ -21,6 +21,7 @@ function extractCompanyFields(formData: FormData) {
     sells_paragliders: formData.get("sells_paragliders") === "on",
     sells_miniwings: formData.get("sells_miniwings") === "on",
     sells_parakites: formData.get("sells_parakites") === "on",
+    locale: (formData.get("locale") as string) || "de",
   };
 }
 
@@ -125,7 +126,7 @@ export async function inviteCustomer(
   // Check company exists
   const { data: company } = await supabase
     .from("companies")
-    .select("id, name, is_approved")
+    .select("id, name, is_approved, locale")
     .eq("id", companyId)
     .single();
 
@@ -187,12 +188,14 @@ export async function inviteCustomer(
     return { success: false, error: "Einladungslink konnte nicht erstellt werden" };
   }
 
-  // Build custom verify URL (bypasses Supabase redirect allowlist)
-  const verifyUrl = `${siteUrl}/auth/verify?token_hash=${encodeURIComponent(linkData.properties.hashed_token)}&type=recovery`;
+  // Build custom verify URL with locale (bypasses Supabase redirect allowlist)
+  const locale = (company.locale as "de" | "en" | "fr") || "de";
+  const verifyUrl = `${siteUrl}/auth/verify?token_hash=${encodeURIComponent(linkData.properties.hashed_token)}&type=recovery&locale=${locale}`;
 
-  // Send branded invitation email via Resend
-  const html = buildInvitationEmail(company.name, fullName, verifyUrl);
-  const sent = await sendEmail(email, `Einladung zum SWING B2B Portal`, html);
+  // Send branded invitation email via SMTP
+  const html = buildInvitationEmail(company.name, fullName, verifyUrl, locale);
+  const i18nSubjects = { de: "Einladung zum SWING B2B Portal", en: "Invitation to SWING B2B Portal", fr: "Invitation au portail B2B SWING" };
+  const sent = await sendEmail(email, i18nSubjects[locale] || i18nSubjects.de, html);
 
   if (!sent) {
     return { success: false, error: "E-Mail konnte nicht gesendet werden" };
