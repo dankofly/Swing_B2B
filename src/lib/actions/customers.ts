@@ -189,8 +189,14 @@ export async function inviteCustomer(
     return { success: false, error: "Einladungslink konnte nicht erstellt werden" };
   }
 
+  // Rewrite redirect_to in the action link to ensure it points to our callback
+  const actionLink = linkData.properties.action_link.replace(
+    /redirect_to=[^&]*/,
+    `redirect_to=${encodeURIComponent(`${siteUrl}/auth/callback?type=recovery`)}`
+  );
+
   // Send branded invitation email via Resend
-  const html = buildInvitationEmail(company.name, fullName, linkData.properties.action_link);
+  const html = buildInvitationEmail(company.name, fullName, actionLink);
   const sent = await sendEmail(email, `Einladung zum SWING B2B Portal`, html);
 
   if (!sent) {

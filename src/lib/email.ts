@@ -195,6 +195,30 @@ export function buildInvitationEmail(
   );
 }
 
+// ─── 0b. Password Reset ─────────────────────────────────────────────────────
+
+export function buildPasswordResetEmail(resetUrl: string): string {
+  const body = `
+    <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">
+      Sie haben eine Anfrage zum Zur&uuml;cksetzen Ihres Passworts gestellt.
+    </p>
+    <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">
+      Klicken Sie auf den Button unten, um ein neues Passwort festzulegen.
+      Der Link ist <strong>24 Stunden</strong> g&uuml;ltig.
+    </p>
+    <p style="color:rgba(65,65,66,0.5); font-size:12px; line-height:1.6; margin:16px 0 0;">
+      Falls Sie diese Anfrage nicht gestellt haben, k&ouml;nnen Sie diese E-Mail ignorieren.
+      Ihr Passwort wird nicht ge&auml;ndert.
+    </p>`;
+
+  return emailWrapper(
+    "Passwort zur\u00fccksetzen",
+    "Setzen Sie Ihr Passwort f\u00fcr das SWING B2B Portal zur\u00fcck.",
+    body,
+    { label: "Neues Passwort festlegen &rarr;", href: resetUrl }
+  );
+}
+
 // ─── 1. Account Approval ────────────────────────────────────────────────────
 
 export function buildApprovalEmail(companyName: string): string {

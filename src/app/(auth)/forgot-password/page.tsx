@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Mail } from "lucide-react";
 import { useDict } from "@/lib/i18n/context";
@@ -18,12 +17,19 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError("");
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
-    });
+    try {
+      const res = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
-    if (error) {
+      if (!res.ok) {
+        setError(dict.auth.forgotPassword.errorGeneric);
+        setLoading(false);
+        return;
+      }
+    } catch {
       setError(dict.auth.forgotPassword.errorGeneric);
       setLoading(false);
       return;

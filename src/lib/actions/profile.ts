@@ -292,8 +292,14 @@ export async function inviteUser(email: string, role: string, fullName: string) 
     return { success: true, warning: "Benutzer erstellt, aber Einladungs-Email konnte nicht gesendet werden" };
   }
 
+  // Rewrite redirect_to in the action link to ensure it points to our callback
+  const actionLink = linkData.properties.action_link.replace(
+    /redirect_to=[^&]*/,
+    `redirect_to=${encodeURIComponent(`${siteUrl}/auth/callback?type=recovery`)}`
+  );
+
   // Send branded invitation email
-  const html = buildInvitationEmail(null, fullName, linkData.properties.action_link);
+  const html = buildInvitationEmail(null, fullName, actionLink);
   const sent = await sendEmail(email, "Einladung zum SWING B2B Portal", html);
 
   if (!sent) {
