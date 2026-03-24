@@ -107,7 +107,9 @@ export default function RegisterPage() {
         sellsMiniwings: formData.sellsMiniwings,
         sellsParakites: formData.sellsParakites,
       }),
-    }).catch(() => {}); // silent fail — registration still succeeds
+    }).catch((err) => {
+      console.error("[register] Failed to send admin notification:", err);
+    });
 
     setSuccess(true);
     setLoading(false);

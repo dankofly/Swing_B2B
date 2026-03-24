@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useCallback, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { Dictionary } from "./types";
 import type { Locale } from "./shared";
 
@@ -24,6 +25,7 @@ export function I18nProvider({
   const [locale, setLocaleState] = useState(initialLocale);
   const [dict, setDict] = useState(initialDict);
   const [, startTransition] = useTransition();
+  const router = useRouter();
 
   const setLocale = useCallback(
     (newLocale: Locale) => {
@@ -35,10 +37,10 @@ export function I18nProvider({
         setDict(mod.default);
       });
 
-      // Reload to update server components
-      window.location.reload();
+      // Refresh server components without full page reload
+      router.refresh();
     },
-    []
+    [router]
   );
 
   return (

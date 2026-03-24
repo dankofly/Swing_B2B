@@ -54,13 +54,11 @@ function incrementVisitCount(): number {
 
 export default function AdminBriefing({ adminName, locale, stats }: AdminBriefingProps) {
   const [data, setData] = useState<BriefingData | null>(null);
-  const [isFullGreeting, setIsFullGreeting] = useState(false);
+  const [isFullGreeting] = useState(() => incrementVisitCount() <= 2);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const visitCount = incrementVisitCount();
-    const showFull = visitCount <= 2;
-    setIsFullGreeting(showFull);
+    let cancelled = false;
 
     fetch("/api/admin-briefing", {
       method: "POST",
@@ -69,16 +67,18 @@ export default function AdminBriefing({ adminName, locale, stats }: AdminBriefin
         adminName,
         stats,
         locale,
-        isFullGreeting: showFull,
+        isFullGreeting,
       }),
     })
       .then((r) => r.json())
-      .then((d) => setData(d))
-      .catch(() =>
-        setData({ briefing: ["Dashboard bereit."], emoji: "📊" })
-      )
-      .finally(() => setLoading(false));
-  }, [adminName, stats, locale]);
+      .then((d) => { if (!cancelled) setData(d); })
+      .catch(() => {
+        if (!cancelled) setData({ briefing: ["Dashboard bereit."], emoji: "📊" });
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [adminName, stats, locale, isFullGreeting]);
 
   if (loading) {
     return (

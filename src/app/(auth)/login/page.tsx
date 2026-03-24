@@ -16,8 +16,15 @@ export default function LoginPage() {
   const dict = useDict();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect");
+  const urlError = searchParams.get("error");
 
   const LOGIN_REQUIRED_MSG = dict.auth.login.redirectMessage;
+
+  const errorMessages: Record<string, string> = {
+    token_expired: "Der Link ist abgelaufen. Bitte fordern Sie einen neuen an.",
+    invalid_token: "Ungültiger Link. Bitte fordern Sie einen neuen an.",
+    session_expired: "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+  };
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -75,7 +82,13 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
-            {redirectPath && (
+            {urlError && errorMessages[urlError] && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+                {errorMessages[urlError]}
+              </div>
+            )}
+
+            {redirectPath && !urlError && (
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
                 {LOGIN_REQUIRED_MSG}
               </div>

@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { isValidUUID } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   // Auth guard: any logged-in user
@@ -25,7 +24,7 @@ export async function GET(request: NextRequest) {
     .order("name")
     .limit(10);
 
-  if (exclude && UUID_RE.test(exclude)) {
+  if (exclude && isValidUUID(exclude)) {
     query = query.neq("id", exclude);
   }
 

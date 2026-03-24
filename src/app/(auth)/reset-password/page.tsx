@@ -4,8 +4,36 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, KeyRound, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowRight, KeyRound, CheckCircle, Loader2, Eye, EyeOff, Sparkles } from "lucide-react";
 import { useDict } from "@/lib/i18n/context";
+
+function generateSecurePassword(): string {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghjkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "!@#$%&*?";
+  const all = upper + lower + digits + symbols;
+
+  // Guarantee at least one of each type
+  const parts = [
+    upper[Math.floor(Math.random() * upper.length)],
+    lower[Math.floor(Math.random() * lower.length)],
+    digits[Math.floor(Math.random() * digits.length)],
+    symbols[Math.floor(Math.random() * symbols.length)],
+  ];
+
+  for (let i = parts.length; i < 16; i++) {
+    parts.push(all[Math.floor(Math.random() * all.length)]);
+  }
+
+  // Shuffle
+  for (let i = parts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [parts[i], parts[j]] = [parts[j], parts[i]];
+  }
+
+  return parts.join("");
+}
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -13,6 +41,8 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
   const dict = useDict();
 
@@ -109,16 +139,26 @@ export default function ResetPasswordPage() {
                   >
                     {dict.auth.resetPassword.newPassword}
                   </label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm transition-all duration-150 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
-                    placeholder={dict.auth.resetPassword.passwordMin}
-                  />
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 pr-10 text-sm transition-all duration-150 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
+                      placeholder={dict.auth.resetPassword.passwordMin}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-swing-navy/30 transition-colors hover:text-swing-navy/60"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -128,16 +168,41 @@ export default function ResetPasswordPage() {
                   >
                     {dict.auth.resetPassword.confirmPassword}
                   </label>
-                  <input
-                    id="passwordConfirm"
-                    type="password"
-                    value={passwordConfirm}
-                    onChange={(e) => setPasswordConfirm(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm transition-all duration-150 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
-                    placeholder={dict.auth.resetPassword.passwordRepeat}
-                  />
+                  <div className="relative">
+                    <input
+                      id="passwordConfirm"
+                      type={showConfirm ? "text" : "password"}
+                      value={passwordConfirm}
+                      onChange={(e) => setPasswordConfirm(e.target.value)}
+                      required
+                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 pr-10 text-sm transition-all duration-150 focus:border-swing-gold focus:outline-none focus:ring-2 focus:ring-swing-gold/20"
+                      placeholder={dict.auth.resetPassword.passwordRepeat}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-swing-navy/30 transition-colors hover:text-swing-navy/60"
+                      tabIndex={-1}
+                    >
+                      {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const pw = generateSecurePassword();
+                    setPassword(pw);
+                    setPasswordConfirm(pw);
+                    setShowPassword(true);
+                    setShowConfirm(true);
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 py-2.5 text-xs font-semibold text-swing-navy/50 transition-all hover:border-swing-gold/50 hover:text-swing-navy/80"
+                >
+                  <Sparkles size={14} />
+                  Sicheres Passwort generieren
+                </button>
 
                 <button
                   type="submit"

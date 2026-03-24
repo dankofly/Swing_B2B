@@ -14,20 +14,26 @@ export default function CartHeaderWrapper() {
 
   useEffect(() => {
     if (isViewingAsCustomer) return;
+    let cancelled = false;
     async function checkRole() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      if (profile?.role === "admin" || profile?.role === "superadmin") {
-        setShowAdminLink(true);
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        if (!cancelled && (profile?.role === "admin" || profile?.role === "superadmin")) {
+          setShowAdminLink(true);
+        }
+      } catch {
+        // Session expired or network error — silently keep buyer view
       }
     }
     checkRole();
+    return () => { cancelled = true; };
   }, [isViewingAsCustomer]);
 
   return <Header cartCount={itemCount} showAdminLink={showAdminLink} />;

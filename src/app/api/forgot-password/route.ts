@@ -1,9 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
+import { createRateLimiter } from "@/lib/rate-limit";
 
-export async function POST(request: Request) {
+const isRateLimited = createRateLimiter("forgot-password", 3, 300_000); // 3 requests per 5 min
+
+export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (isRateLimited(ip)) {
+      // Still return success to not reveal anything
+      return NextResponse.json({ success: true });
+    }
+
     const { email } = await request.json();
 
     if (!email || typeof email !== "string") {
@@ -26,18 +35,23 @@ export async function POST(request: Request) {
     }
 
     // Build a custom verification URL that goes directly to our app
-    // This bypasses Supabase's redirect URL allowlist entirely
     const token = linkData.properties.hashed_token;
     const verifyUrl = `${siteUrl}/auth/verify?token_hash=${encodeURIComponent(token)}&type=recovery`;
 
     // Send branded password reset email via Resend
     const html = buildPasswordResetEmail(verifyUrl);
-    await sendEmail(email, "Passwort zurücksetzen \u2014 SWING B2B Portal", html);
+    console.log(`[forgot-password] Attempting to send reset email to ${email}, verifyUrl: ${verifyUrl.slice(0, 80)}...`);
+    const sent = await sendEmail(email, "Passwort zurücksetzen \u2014 SWING B2B Portal", html);
 
-    // Always return success (don't reveal whether email exists)
+    if (!sent) {
+      console.error(`[forgot-password] Email send FAILED for ${email}`);
+      return NextResponse.json({ success: false, error: "email_failed" });
+    }
+
+    console.log(`[forgot-password] Email sent successfully to ${email}`);
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[forgot-password] Unexpected error:", err);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: false, error: "server_error" });
   }
 }

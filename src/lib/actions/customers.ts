@@ -3,9 +3,7 @@
 import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendEmail, buildApprovalEmail, buildInvitationEmail } from "@/lib/email";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-function isValidUUID(id: string): boolean { return UUID_RE.test(id); }
+import { isValidUUID } from "@/lib/rate-limit";
 
 function extractCompanyFields(formData: FormData) {
   return {
@@ -102,7 +100,9 @@ export async function toggleCompanyApproval(id: string, approved: boolean) {
         company.contact_email,
         `Ihr SWING B2B Zugang wurde freigeschaltet`,
         buildApprovalEmail(company.name)
-      ).catch(() => {}); // fire-and-forget
+      ).catch((err) => {
+        console.error(`[approval-email] Failed for ${company.contact_email}:`, err);
+      });
     }
   }
 

@@ -298,6 +298,8 @@ export async function inviteUser(email: string, role: string, fullName: string) 
 
   if (!sent) {
     console.error("Failed to send invitation email to:", email);
+    revalidatePath("/admin/profil");
+    return { success: false, error: "Benutzer erstellt, aber Einladungs-E-Mail konnte nicht gesendet werden. Bitte erneut einladen." };
   }
 
   revalidatePath("/admin/profil");

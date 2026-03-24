@@ -2,9 +2,7 @@
 
 import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-function isValidUUID(id: string): boolean { return UUID_RE.test(id); }
+import { isValidUUID } from "@/lib/rate-limit";
 
 /** A single matched price row ready to be saved (one per product_size). */
 export interface MatchedPriceItem {

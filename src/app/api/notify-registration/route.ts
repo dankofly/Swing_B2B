@@ -1,26 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, esc } from "@/lib/email";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "vertrieb@swing.de";
 
-function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 3;
-const WINDOW_MS = 60_000;
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return false;
-  }
-  entry.count++;
-  return entry.count > RATE_LIMIT;
-}
+const isRateLimited = createRateLimiter("notify-registration", 3, 60_000);
 
 interface RegistrationData {
   companyName: string;
@@ -234,7 +218,15 @@ export async function POST(request: NextRequest) {
       buildHtml(data),
     );
 
-    return NextResponse.json({ success: true, skipped: !sent });
+    if (!sent) {
+      console.error(`[notify-registration] Email to ${ADMIN_EMAIL} failed for company "${data.companyName}"`);
+      return NextResponse.json(
+        { success: false, error: "Registrierung gespeichert, aber E-Mail-Benachrichtigung fehlgeschlagen" },
+        { status: 207 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[notify-registration] Error:", err);
     return NextResponse.json({ success: false, error: "E-Mail-Versand fehlgeschlagen" }, { status: 500 });

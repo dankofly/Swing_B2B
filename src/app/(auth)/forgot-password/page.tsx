@@ -24,8 +24,14 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
 
-      if (!res.ok) {
-        setError(dict.auth.forgotPassword.errorGeneric);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        if (data.error === "email_failed") {
+          setError("E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es später erneut oder kontaktieren Sie den Support.");
+        } else {
+          setError(dict.auth.forgotPassword.errorGeneric);
+        }
         setLoading(false);
         return;
       }

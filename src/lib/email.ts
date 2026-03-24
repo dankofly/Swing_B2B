@@ -1,49 +1,65 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://swingparagliders.pro";
 const FROM_EMAIL = process.env.EMAIL_FROM || "SWING B2B Portal <sales@swingparagliders.pro>";
 
 /** Escape user input for safe HTML embedding */
-function esc(s: string): string {
+export function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// Lazy-init Resend client
-let resendClient: Resend | null = null;
+// Lazy-init SMTP transport (Brevo)
+let transport: nodemailer.Transporter | null = null;
+let smtpWarned = false;
 
-function getResend(): Resend | null {
-  if (!resendClient && process.env.RESEND_API_KEY) {
-    resendClient = new Resend(process.env.RESEND_API_KEY);
+function getTransport(): nodemailer.Transporter | null {
+  if (transport) return transport;
+
+  const host = process.env.SMTP_HOST || "smtp-relay.brevo.com";
+  const port = parseInt(process.env.SMTP_PORT || "587", 10);
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  if (!user || !pass) {
+    if (!smtpWarned) {
+      console.error(`[email] ⚠️ SMTP_USER / SMTP_PASS not set — ALL emails will be skipped!`);
+      smtpWarned = true;
+    }
+    return null;
   }
-  return resendClient;
+
+  transport = nodemailer.createTransport({ host, port, auth: { user, pass } });
+  return transport;
 }
 
+const MAX_RETRIES = 2;
+const RETRY_DELAYS = [2000, 5000]; // ms
+
 export async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
-  const resend = getResend();
-  if (!resend) {
-    console.log(`[email] Resend not configured (RESEND_API_KEY missing), skipping: "${subject}" → ${to}`);
+  const smtp = getTransport();
+  if (!smtp) {
+    console.error(`[email] SKIPPED (no SMTP credentials): "${subject}" → ${to}`);
     return false;
   }
 
-  try {
-    const { error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to,
-      subject,
-      html,
-    });
-
-    if (error) {
-      console.error(`[email] Resend error for "${subject}" to ${to}:`, error);
-      return false;
+  let lastError = "";
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      await smtp.sendMail({ from: FROM_EMAIL, to, subject, html });
+      console.log(`[email] ✓ Sent: "${subject}" → ${to}${attempt > 0 ? ` (attempt ${attempt + 1})` : ""}`);
+      return true;
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
     }
 
-    console.log(`[email] Sent: "${subject}" → ${to}`);
-    return true;
-  } catch (err) {
-    console.error(`[email] Failed to send "${subject}" to ${to}:`, err);
-    return false;
+    if (attempt < MAX_RETRIES) {
+      console.warn(`[email] Attempt ${attempt + 1} failed for "${subject}" → ${to}: ${lastError}. Retrying in ${RETRY_DELAYS[attempt]}ms...`);
+      await new Promise((r) => setTimeout(r, RETRY_DELAYS[attempt]));
+    }
   }
+
+  console.error(`[email] ✗ FAILED after ${MAX_RETRIES + 1} attempts: "${subject}" → ${to} — ${lastError}`);
+  return false;
 }
 
 // ─── Shared HTML wrapper ────────────────────────────────────────────────────

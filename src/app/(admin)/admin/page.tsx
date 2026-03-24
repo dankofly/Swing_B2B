@@ -38,23 +38,8 @@ export default async function AdminDashboard() {
     return profile?.full_name || "Admin";
   }).catch(() => "Admin");
 
-  // Parallelize ALL dashboard queries in a single batch
-  const [
-    { count: activeProducts },
-    { count: comingSoonProducts },
-    { count: preorderProducts },
-    { count: inStockSizes },
-    { count: lowStockSizes },
-    { count: noStockSizes },
-    { count: newInquiries },
-    { count: inProgressInquiries },
-    { count: shippedInquiries },
-    { count: completedMonthly },
-    { count: dealerCount },
-    { count: importerCount },
-    { count: importerNetworkCount },
-    { data: recentInquiries },
-  ] = await Promise.all([
+  // Parallelize ALL dashboard queries — use allSettled so one failure doesn't crash the page
+  const results = await Promise.allSettled([
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_coming_soon", true),
     supabase.from("products").select("*", { count: "exact", head: true }).eq("is_preorder", true),
@@ -78,6 +63,22 @@ export default async function AdminDashboard() {
       inquiry_items(quantity, unit_price)
     `).order("created_at", { ascending: false }).limit(6),
   ]);
+
+  const val = (i: number) => results[i].status === "fulfilled" ? results[i].value : { count: null, data: null };
+  const activeProducts = val(0).count;
+  const comingSoonProducts = val(1).count;
+  const preorderProducts = val(2).count;
+  const inStockSizes = val(3).count;
+  const lowStockSizes = val(4).count;
+  const noStockSizes = val(5).count;
+  const newInquiries = val(6).count;
+  const inProgressInquiries = val(7).count;
+  const shippedInquiries = val(8).count;
+  const completedMonthly = val(9).count;
+  const dealerCount = val(10).count;
+  const importerCount = val(11).count;
+  const importerNetworkCount = val(12).count;
+  const recentInquiries = val(13).data;
 
   const adminName = await adminNamePromise;
 

@@ -4,9 +4,7 @@ import { createClient, createAdminClient, guardAdmin } from "@/lib/supabase/serv
 import { revalidatePath } from "next/cache";
 import { sendEmail, buildInquiryStatusEmail, buildTrackingEmail, buildNewInquiryEmail } from "@/lib/email";
 import type { InquiryEmailItem } from "@/lib/email";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-function isValidUUID(id: string): boolean { return UUID_RE.test(id); }
+import { isValidUUID } from "@/lib/rate-limit";
 
 export interface InquiryItem {
   sizeId: string;
@@ -106,10 +104,10 @@ export async function submitInquiry(items: InquiryItem[], notes: string) {
         profile.company_id,
       );
 
-      const adminEmail = process.env.ADMIN_EMAIL || "info@swing.de";
+      const adminEmail = process.env.ADMIN_EMAIL || "vertrieb@swing.de";
       await sendEmail(adminEmail, `Neue Bestellanfrage von ${company.name}`, html);
     } catch (err) {
-      console.error("[inquiry-email] Failed to send notification:", err);
+      console.error(`[inquiry-email] Failed to notify admin for inquiry ${inquiry.id}:`, err);
     }
   })();
 
@@ -245,14 +243,16 @@ export async function updateInquiryStatus(
 
   if (error) throw new Error("Status konnte nicht aktualisiert werden");
 
-  // Notify customer about status change (fire-and-forget)
+  // Notify customer about status change
   const company = current?.company as unknown as { name: string; contact_email: string } | null;
   if (company?.contact_email) {
     sendEmail(
       company.contact_email,
       `SWING Anfrage ${inquiryId.slice(0, 8)} — Status: ${status}`,
       buildInquiryStatusEmail(company.name, inquiryId, status, current?.created_at ?? new Date().toISOString())
-    ).catch(() => {});
+    ).catch((err) => {
+      console.error(`[status-email] Failed for inquiry ${inquiryId} → ${company.contact_email}:`, err);
+    });
   }
 
   revalidatePath("/admin/anfragen");
@@ -305,14 +305,16 @@ export async function updateInquiryTracking(
 
   if (error) throw new Error("Trackingnummer konnte nicht gespeichert werden");
 
-  // Notify customer with tracking info (fire-and-forget)
+  // Notify customer with tracking info
   const company = current?.company as unknown as { name: string; contact_email: string } | null;
   if (company?.contact_email) {
     sendEmail(
       company.contact_email,
       `SWING Bestellung versendet — Tracking: ${trackingNumber}`,
       buildTrackingEmail(company.name, inquiryId, carrier, trackingNumber)
-    ).catch(() => {});
+    ).catch((err) => {
+      console.error(`[tracking-email] Failed for inquiry ${inquiryId} → ${company.contact_email}:`, err);
+    });
   }
 
   revalidatePath("/admin/kunden");

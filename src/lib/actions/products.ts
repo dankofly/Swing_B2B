@@ -2,12 +2,7 @@
 
 import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function isValidUUID(id: string): boolean {
-  return UUID_RE.test(id);
-}
+import { isValidUUID } from "@/lib/rate-limit";
 
 function safeJsonParse<T>(json: string | null, fallback: T): T {
   if (!json) return fallback;
@@ -29,16 +24,9 @@ function generateSlug(name: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export async function createProduct(formData: FormData): Promise<{ error?: string }> {
-  try {
-    await guardAdmin();
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Keine Berechtigung" };
-  }
-  const supabase = createAdminClient();
-
+/** Extract shared product fields from FormData (used by create + update). */
+function parseProductFormData(formData: FormData) {
   const name = (formData.get("name") as string || "").slice(0, 200);
-  if (!name.trim()) return { error: "Produktname ist erforderlich" };
   const description = formData.get("description") as string;
   const category_id = formData.get("category_id") as string;
   const is_active = formData.get("is_active") === "on";
@@ -55,8 +43,6 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
   const use_case = formData.get("use_case") as string;
   const website_url = formData.get("website_url") as string;
   const images = safeJsonParse<string[]>(formData.get("images") as string, []);
-
-  // i18n translation fields
   const name_en = formData.get("name_en") as string;
   const name_fr = formData.get("name_fr") as string;
   const description_en = formData.get("description_en") as string;
@@ -70,42 +56,69 @@ export async function createProduct(formData: FormData): Promise<{ error?: strin
   const uvpRaw = formData.get("uvp_brutto") as string;
   const uvp_brutto = uvpRaw ? parseFloat(uvpRaw.replace(",", ".")) : null;
 
-  if (category_id && !isValidUUID(category_id)) return { error: "Ungültige Kategorie-ID" };
+  return {
+    name, description, category_id,
+    is_active, is_coming_soon, is_preorder, is_fade_out, is_action,
+    action_text, action_start, action_end,
+    en_class, en_class_custom, classification, use_case, website_url,
+    images, uvp_brutto,
+    name_en, name_fr, description_en, description_fr,
+    use_case_en, use_case_fr, action_text_en, action_text_fr,
+    website_url_en, website_url_fr,
+  };
+}
+
+/** Build the DB row object from parsed form data. */
+function buildProductRow(fields: ReturnType<typeof parseProductFormData>) {
+  return {
+    name: fields.name,
+    slug: generateSlug(fields.name),
+    description: fields.description || null,
+    category_id: fields.category_id || null,
+    is_active: fields.is_active,
+    is_coming_soon: fields.is_coming_soon,
+    is_preorder: fields.is_preorder,
+    is_fade_out: fields.is_fade_out,
+    is_action: fields.is_action,
+    action_text: fields.action_text || null,
+    action_start: fields.action_start || null,
+    action_end: fields.action_end || null,
+    en_class: fields.en_class || null,
+    en_class_custom: fields.en_class_custom || null,
+    tech_specs: {},
+    classification: fields.classification || null,
+    use_case: fields.use_case || null,
+    website_url: fields.website_url || null,
+    images: fields.images,
+    uvp_brutto: fields.uvp_brutto && !isNaN(fields.uvp_brutto) ? fields.uvp_brutto : null,
+    name_en: fields.name_en || null,
+    name_fr: fields.name_fr || null,
+    description_en: fields.description_en || null,
+    description_fr: fields.description_fr || null,
+    use_case_en: fields.use_case_en || null,
+    use_case_fr: fields.use_case_fr || null,
+    action_text_en: fields.action_text_en || null,
+    action_text_fr: fields.action_text_fr || null,
+    website_url_en: fields.website_url_en || null,
+    website_url_fr: fields.website_url_fr || null,
+  };
+}
+
+export async function createProduct(formData: FormData): Promise<{ error?: string }> {
+  try {
+    await guardAdmin();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Keine Berechtigung" };
+  }
+  const supabase = createAdminClient();
+
+  const fields = parseProductFormData(formData);
+  if (!fields.name.trim()) return { error: "Produktname ist erforderlich" };
+  if (fields.category_id && !isValidUUID(fields.category_id)) return { error: "Ungültige Kategorie-ID" };
 
   const { data: product, error } = await supabase
     .from("products")
-    .insert({
-      name,
-      slug: generateSlug(name),
-      description: description || null,
-      category_id: category_id || null,
-      is_active,
-      is_coming_soon,
-      is_preorder,
-      is_fade_out,
-      is_action,
-      action_text: action_text || null,
-      action_start: action_start || null,
-      action_end: action_end || null,
-      en_class: en_class || null,
-      en_class_custom: en_class_custom || null,
-      tech_specs: {},
-      classification: classification || null,
-      use_case: use_case || null,
-      website_url: website_url || null,
-      images,
-      uvp_brutto: uvp_brutto && !isNaN(uvp_brutto) ? uvp_brutto : null,
-      name_en: name_en || null,
-      name_fr: name_fr || null,
-      description_en: description_en || null,
-      description_fr: description_fr || null,
-      use_case_en: use_case_en || null,
-      use_case_fr: use_case_fr || null,
-      action_text_en: action_text_en || null,
-      action_text_fr: action_text_fr || null,
-      website_url_en: website_url_en || null,
-      website_url_fr: website_url_fr || null,
-    })
+    .insert(buildProductRow(fields))
     .select()
     .single();
 
@@ -187,74 +200,13 @@ export async function updateProduct(productId: string, formData: FormData): Prom
   }
   const supabase = createAdminClient();
 
-  const name = (formData.get("name") as string || "").slice(0, 200);
-  if (!name.trim()) return { error: "Produktname ist erforderlich" };
-  const description = formData.get("description") as string;
-  const category_id = formData.get("category_id") as string;
-  if (category_id && !isValidUUID(category_id)) return { error: "Ungültige Kategorie-ID" };
-  const is_active = formData.get("is_active") === "on";
-  const is_coming_soon = formData.get("is_coming_soon") === "on";
-  const is_preorder = formData.get("is_preorder") === "on";
-  const is_fade_out = formData.get("is_fade_out") === "on";
-  const is_action = formData.get("is_action") === "on";
-  const action_text = formData.get("action_text") as string;
-  const action_start = formData.get("action_start") as string;
-  const action_end = formData.get("action_end") as string;
-  const en_class = formData.get("en_class") as string;
-  const en_class_custom = formData.get("en_class_custom") as string;
-  const classification = formData.get("classification") as string;
-  const use_case = formData.get("use_case") as string;
-  const website_url = formData.get("website_url") as string;
-  const images = safeJsonParse<string[]>(formData.get("images") as string, []);
-
-  // i18n translation fields
-  const name_en = formData.get("name_en") as string;
-  const name_fr = formData.get("name_fr") as string;
-  const description_en = formData.get("description_en") as string;
-  const description_fr = formData.get("description_fr") as string;
-  const use_case_en = formData.get("use_case_en") as string;
-  const use_case_fr = formData.get("use_case_fr") as string;
-  const action_text_en = formData.get("action_text_en") as string;
-  const action_text_fr = formData.get("action_text_fr") as string;
-  const website_url_en = formData.get("website_url_en") as string;
-  const website_url_fr = formData.get("website_url_fr") as string;
-  const uvpRaw = formData.get("uvp_brutto") as string;
-  const uvp_brutto = uvpRaw ? parseFloat(uvpRaw.replace(",", ".")) : null;
+  const fields = parseProductFormData(formData);
+  if (!fields.name.trim()) return { error: "Produktname ist erforderlich" };
+  if (fields.category_id && !isValidUUID(fields.category_id)) return { error: "Ungültige Kategorie-ID" };
 
   const { error } = await supabase
     .from("products")
-    .update({
-      name,
-      slug: generateSlug(name),
-      description: description || null,
-      category_id: category_id || null,
-      is_active,
-      is_coming_soon,
-      is_preorder,
-      is_fade_out,
-      is_action,
-      action_text: action_text || null,
-      action_start: action_start || null,
-      action_end: action_end || null,
-      en_class: en_class || null,
-      en_class_custom: en_class_custom || null,
-      tech_specs: {},
-      classification: classification || null,
-      use_case: use_case || null,
-      website_url: website_url || null,
-      images,
-      uvp_brutto: uvp_brutto && !isNaN(uvp_brutto) ? uvp_brutto : null,
-      name_en: name_en || null,
-      name_fr: name_fr || null,
-      description_en: description_en || null,
-      description_fr: description_fr || null,
-      use_case_en: use_case_en || null,
-      use_case_fr: use_case_fr || null,
-      action_text_en: action_text_en || null,
-      action_text_fr: action_text_fr || null,
-      website_url_en: website_url_en || null,
-      website_url_fr: website_url_fr || null,
-    })
+    .update(buildProductRow(fields))
     .eq("id", productId);
 
   if (error) return { error: error.message };
