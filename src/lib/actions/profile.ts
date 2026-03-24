@@ -281,7 +281,7 @@ export async function inviteUser(email: string, role: string, fullName: string) 
     type: "recovery",
     email,
     options: {
-      redirectTo: `${siteUrl}/reset-password`,
+      redirectTo: `${siteUrl}/auth/callback?type=recovery`,
     },
   });
 

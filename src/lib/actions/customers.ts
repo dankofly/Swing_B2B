@@ -180,7 +180,7 @@ export async function inviteCustomer(
     type: "recovery",
     email,
     options: {
-      redirectTo: `${siteUrl}/reset-password`,
+      redirectTo: `${siteUrl}/auth/callback?type=recovery`,
     },
   });
 

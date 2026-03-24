@@ -38,6 +38,7 @@ export async function updateSession(request: NextRequest) {
     isAuthRoute ||
     pathname === "/" ||
     pathname.startsWith("/api/") ||
+    pathname.startsWith("/auth/callback") ||
     pathname.startsWith("/impressum") ||
     pathname.startsWith("/datenschutz") ||
     pathname.startsWith("/anleitung") ||
