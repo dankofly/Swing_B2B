@@ -42,14 +42,18 @@ function getVisitCount(): number {
 }
 
 function incrementVisitCount(): number {
-  const today = new Date().toISOString().slice(0, 10);
-  const current = getVisitCount();
-  const newCount = current + 1;
-  localStorage.setItem(
-    "swing_admin_visits",
-    JSON.stringify({ date: today, count: newCount })
-  );
-  return newCount;
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const current = getVisitCount();
+    const newCount = current + 1;
+    localStorage.setItem(
+      "swing_admin_visits",
+      JSON.stringify({ date: today, count: newCount })
+    );
+    return newCount;
+  } catch {
+    return 1;
+  }
 }
 
 export default function AdminBriefing({ adminName, locale, stats }: AdminBriefingProps) {
