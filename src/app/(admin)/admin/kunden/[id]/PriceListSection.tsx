@@ -105,73 +105,57 @@ export default function PriceListSection({
           return;
         }
 
-        // Step 2: Send text to API (Gemini extraction + canonical key matching + save)
-        // The API returns an NDJSON stream to avoid Netlify timeout
+        // Step 2: Send text to Gemini for extraction (separate API call to stay within Netlify timeout)
         setStep("matching");
-        const res = await fetch("/api/parse-pricelist", {
+        const extractRes = await fetch("/api/parse-pricelist", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ company_id: companyId, pdf_text: pdfText }),
+          body: JSON.stringify({ pdf_text: pdfText }),
         });
 
-        if (!res.body) {
-          setError("Server-Fehler: Keine Antwort erhalten");
+        let extractData;
+        try {
+          extractData = await extractRes.json();
+        } catch {
+          setError(`Server-Fehler (${extractRes.status}): Antwort konnte nicht gelesen werden`);
           setStep(null);
           setUploadingCategory(null);
           e.target.value = "";
           return;
         }
 
-        // Read NDJSON stream
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let lastResult: Record<string, unknown> | null = null;
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          // Process complete lines
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-
-          for (const line of lines) {
-            if (!line.trim()) continue;
-            try {
-              const data = JSON.parse(line);
-              lastResult = data;
-
-              // Update step indicator based on stream progress
-              if (data.step === "extracting") setStep("extracting");
-              else if (data.step === "matching" || data.step === "fallback") setStep("matching");
-              else if (data.step === "saving") setStep("saving");
-
-              // Handle error in stream
-              if (data.error) {
-                setError(data.error);
-                setStep(null);
-                setUploadingCategory(null);
-                e.target.value = "";
-                return;
-              }
-            } catch {
-              // Skip malformed lines
-            }
-          }
-        }
-
-        if (lastResult?.success) {
+        if (!extractRes.ok || !extractData.extracted) {
+          setError(extractData.error || `Fehler ${extractRes.status}`);
           setStep(null);
           setUploadingCategory(null);
           e.target.value = "";
-          router.push(`/admin/kunden/${companyId}/preise`);
           return;
         }
 
-        if (!lastResult || lastResult.error) {
-          setError((lastResult?.error as string) || "Unbekannter Fehler bei der Verarbeitung");
+        // Step 3: Match and save prices (separate API call)
+        setStep("saving");
+        const saveRes = await fetch("/api/save-prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            company_id: companyId,
+            extracted: extractData.extracted,
+          }),
+        });
+
+        let saveData;
+        try {
+          saveData = await saveRes.json();
+        } catch {
+          setError(`Server-Fehler (${saveRes.status}): Antwort konnte nicht gelesen werden`);
+          setStep(null);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
+        }
+
+        if (!saveRes.ok) {
+          setError(saveData.error || `Fehler ${saveRes.status}`);
           setStep(null);
           setUploadingCategory(null);
           e.target.value = "";
