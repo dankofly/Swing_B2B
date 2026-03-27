@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AiInfoTooltip from "@/components/ui/AiInfoTooltip";
-import { uploadPriceList, deleteAllCategoryUploads } from "@/lib/actions/price-uploads";
+import { savePriceUploadRecord, deleteAllCategoryUploads } from "@/lib/actions/price-uploads";
 import { extractPdfText } from "@/lib/pdf-extract";
 import {
   Upload,
@@ -62,27 +62,57 @@ export default function PriceListSection({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext !== "pdf" && ext !== "csv") {
+      setError("Nur PDF und CSV Dateien erlaubt");
+      return;
+    }
+
     setUploadingCategory(category);
     setError(null);
     setStep("uploading");
 
-    // Upload file to storage
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      // Upload directly from browser to Supabase Storage (no Netlify timeout)
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
 
-    const result = await uploadPriceList(companyId, formData, category);
-    if (!result.success) {
-      setError(result.error || tp.uploadFailed);
-      setUploadingCategory(null);
-      setStep(null);
-      e.target.value = "";
-      return;
-    }
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const storagePath = `${companyId}/${Date.now()}-${safeName}`;
 
-    const ext = file.name.split(".").pop()?.toLowerCase();
+      const { error: uploadError } = await supabase.storage
+        .from("price-lists")
+        .upload(storagePath, file);
 
-    if (ext === "pdf") {
-      try {
+      if (uploadError) {
+        setError(uploadError.message);
+        setStep(null);
+        setUploadingCategory(null);
+        e.target.value = "";
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("price-lists")
+        .getPublicUrl(storagePath);
+
+      // Save DB record via server action (fast, no file transfer)
+      const result = await savePriceUploadRecord(
+        companyId,
+        urlData.publicUrl,
+        file.name,
+        ext,
+        category
+      );
+      if (!result.success) {
+        setError(result.error || tp.uploadFailed);
+        setStep(null);
+        setUploadingCategory(null);
+        e.target.value = "";
+        return;
+      }
+
+      if (ext === "pdf") {
         // Step 1: Extract text from PDF in the browser (pdf.js)
         setStep("extracting");
         let pdfText: string;
@@ -106,8 +136,6 @@ export default function PriceListSection({
 
         // Step 2: Send to Supabase Edge Function (150s timeout — handles Gemini + matching + saving)
         setStep("matching");
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
 
         // Force token refresh to get a fresh access_token
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
@@ -158,18 +186,18 @@ export default function PriceListSection({
         e.target.value = "";
         router.push(`/admin/kunden/${companyId}/preise`);
         return;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : tp.networkError);
-        setStep(null);
       }
-    }
 
-    setUploadingCategory(null);
-    setStep(null);
-    e.target.value = "";
-
-    if (ext !== "pdf") {
+      // Non-PDF: just reload
+      setUploadingCategory(null);
+      setStep(null);
+      e.target.value = "";
       window.location.reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tp.networkError);
+      setStep(null);
+      setUploadingCategory(null);
+      e.target.value = "";
     }
   }
 

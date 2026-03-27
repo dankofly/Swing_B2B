@@ -4,6 +4,10 @@ import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isValidUUID } from "@/lib/rate-limit";
 
+/**
+ * Legacy server-action upload (sends file through Netlify → slow, 10s timeout).
+ * Kept for non-PDF/CSV fallback but the primary path now uses direct browser upload.
+ */
 export async function uploadPriceList(companyId: string, formData: FormData, category: string = "general") {
   if (!isValidUUID(companyId)) return { success: false, error: "Ungültige ID" };
   await guardAdmin();
@@ -39,6 +43,38 @@ export async function uploadPriceList(companyId: string, formData: FormData, cat
     file_url: urlData.publicUrl,
     file_name: file.name,
     file_type: ext,
+    category,
+    status: "completed",
+  });
+
+  if (dbError) {
+    return { success: false, error: dbError.message };
+  }
+
+  revalidatePath(`/admin/kunden/${companyId}`);
+  return { success: true };
+}
+
+/**
+ * Save a price_uploads DB record after the browser has already uploaded
+ * the file directly to Supabase Storage (no file transfer through Netlify).
+ */
+export async function savePriceUploadRecord(
+  companyId: string,
+  fileUrl: string,
+  fileName: string,
+  fileType: string,
+  category: string = "general"
+) {
+  if (!isValidUUID(companyId)) return { success: false, error: "Ungültige ID" };
+  await guardAdmin();
+  const supabase = createAdminClient();
+
+  const { error: dbError } = await supabase.from("price_uploads").insert({
+    company_id: companyId,
+    file_url: fileUrl,
+    file_name: fileName,
+    file_type: fileType,
     category,
     status: "completed",
   });
