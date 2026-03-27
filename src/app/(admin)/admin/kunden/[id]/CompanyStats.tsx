@@ -1,18 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { LogIn, ShoppingCart, Euro, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useDict, useLocale } from "@/lib/i18n/context";
 import { getDateLocale } from "@/lib/i18n/shared";
-
-// Dummy data per period — will be replaced with real Supabase queries
-const DUMMY: Record<string, { logins: number; loginsTrend: number; inquiries: number; inquiriesTrend: number; revenue: number; revenueTrend: number; sparkline: number[] }> = {
-  "7d": { logins: 4, loginsTrend: 12, inquiries: 1, inquiriesTrend: -50, revenue: 2450, revenueTrend: -20, sparkline: [1, 0, 2, 0, 0, 1, 0] },
-  "30d": { logins: 18, loginsTrend: 8, inquiries: 5, inquiriesTrend: 25, revenue: 12800, revenueTrend: 15, sparkline: [2, 3, 1, 4, 2, 5, 3, 4, 6, 3] },
-  "90d": { logins: 47, loginsTrend: 5, inquiries: 14, inquiriesTrend: 40, revenue: 38500, revenueTrend: 22, sparkline: [8, 12, 10, 15, 11, 18, 14, 20, 16, 22] },
-  "1y": { logins: 156, loginsTrend: 3, inquiries: 42, inquiriesTrend: 18, revenue: 145200, revenueTrend: 12, sparkline: [10, 12, 9, 14, 16, 13, 18, 15, 20, 22, 18, 25] },
-  all: { logins: 312, loginsTrend: 0, inquiries: 87, inquiriesTrend: 0, revenue: 298400, revenueTrend: 0, sparkline: [5, 8, 12, 15, 18, 22, 20, 25, 28, 30, 32, 35] },
-};
+import { getCompanyStats, type CompanyStatsData } from "@/lib/actions/company-stats";
 
 function MiniSparkline({ data, color, height = 28 }: { data: number[]; color: string; height?: number }) {
   if (data.length < 2) return null;
@@ -77,7 +69,6 @@ function AnimatedNumber({ value, locale, prefix = "", suffix = "" }: { value: nu
     function animate(now: number) {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.round(start + (end - start) * eased);
       setDisplay(current);
@@ -128,7 +119,16 @@ function TrendBadge({ value }: { value: number }) {
   );
 }
 
-export default function CompanyStats({ lastSignInAt }: { lastSignInAt?: string | null }) {
+const EMPTY_STATS: CompanyStatsData = {
+  logins: 0,
+  loginsTrend: 0,
+  inquiries: 0,
+  inquiriesTrend: 0,
+  revenue: 0,
+  revenueTrend: 0,
+};
+
+export default function CompanyStats({ companyId, lastSignInAt }: { companyId: string; lastSignInAt?: string | null }) {
   const dict = useDict();
   const locale = useLocale();
   const dl = getDateLocale(locale);
@@ -143,23 +143,35 @@ export default function CompanyStats({ lastSignInAt }: { lastSignInAt?: string |
   ];
 
   const [period, setPeriod] = useState("30d");
-  const [transitioning, setTransitioning] = useState(false);
-  const data = DUMMY[period];
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<CompanyStatsData>(EMPTY_STATS);
+
+  const fetchStats = useCallback(async (p: string) => {
+    setLoading(true);
+    try {
+      const result = await getCompanyStats(companyId, p);
+      setData(result);
+    } catch {
+      setData(EMPTY_STATS);
+    } finally {
+      setLoading(false);
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    fetchStats(period);
+  }, [period, fetchStats]);
+
+  function switchPeriod(key: string) {
+    if (key === period) return;
+    setPeriod(key);
+  }
 
   function formatCurrency(value: number) {
     if (value >= 1000) {
       return new Intl.NumberFormat(dl, { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
     }
     return new Intl.NumberFormat(dl, { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(value);
-  }
-
-  function switchPeriod(key: string) {
-    if (key === period) return;
-    setTransitioning(true);
-    setTimeout(() => {
-      setPeriod(key);
-      setTransitioning(false);
-    }, 150);
   }
 
   const stats = [
@@ -200,7 +212,7 @@ export default function CompanyStats({ lastSignInAt }: { lastSignInAt?: string |
 
   return (
     <div className="flex h-full flex-col">
-      {/* Period selector — pill style */}
+      {/* Period selector */}
       <div className="flex rounded-lg bg-swing-navy/[0.03] p-0.5">
         {PERIODS.map((p) => (
           <button
@@ -220,7 +232,7 @@ export default function CompanyStats({ lastSignInAt }: { lastSignInAt?: string |
       {/* Stats rows */}
       <div
         className={`mt-4 flex flex-1 flex-col gap-1 transition-opacity duration-150 ${
-          transitioning ? "opacity-0" : "opacity-100"
+          loading ? "opacity-50" : "opacity-100"
         }`}
       >
         {stats.map((s, i) => (
@@ -248,7 +260,7 @@ export default function CompanyStats({ lastSignInAt }: { lastSignInAt?: string |
               <TrendBadge value={s.trend} />
             </div>
 
-            {/* Bottom row: value + sparkline */}
+            {/* Bottom row: value */}
             <div className="flex items-end justify-between pl-8">
               <span className="kpi-value text-xl font-extrabold leading-none text-swing-navy">
                 {s.formatted ? (
@@ -257,13 +269,17 @@ export default function CompanyStats({ lastSignInAt }: { lastSignInAt?: string |
                   <AnimatedNumber value={s.value} locale={dl} />
                 )}
               </span>
-              <div className="opacity-60 transition-opacity duration-200 group-hover:opacity-100">
-                <MiniSparkline data={data.sparkline} color={s.accent} />
-              </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Empty state hint */}
+      {!loading && data.inquiries === 0 && data.revenue === 0 && data.logins === 0 && (
+        <p className="mt-2 text-center text-[10px] italic text-swing-navy/20">
+          {ts.noData ?? "Noch keine Aktivität in diesem Zeitraum"}
+        </p>
+      )}
     </div>
   );
 }

@@ -725,6 +725,7 @@ const de: Dictionary = {
       period90d: "90T",
       period1y: "1J",
       periodAll: "Alle",
+      noData: "Noch keine Aktivität in diesem Zeitraum",
     },
   },
 

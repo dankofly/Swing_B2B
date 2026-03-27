@@ -303,7 +303,7 @@ export default async function KundenDetailPage({
             <h3 className="text-sm font-bold text-swing-navy">{td.statistics}</h3>
           </div>
           <div className="p-5">
-            <CompanyStats lastSignInAt={
+            <CompanyStats companyId={id} lastSignInAt={
               profilesWithLogin
                 .map((p) => p.last_sign_in_at)
                 .filter(Boolean)

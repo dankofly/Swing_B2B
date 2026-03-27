@@ -701,6 +701,7 @@ export interface Dictionary {
       period90d: string;
       period1y: string;
       periodAll: string;
+      noData: string;
     };
   };
 
