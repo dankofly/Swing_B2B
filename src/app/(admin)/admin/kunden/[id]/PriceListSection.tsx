@@ -106,6 +106,7 @@ export default function PriceListSection({
         }
 
         // Step 2: Send text to API (Gemini extraction + canonical key matching + save)
+        // The API returns an NDJSON stream to avoid Netlify timeout
         setStep("matching");
         const res = await fetch("/api/parse-pricelist", {
           method: "POST",
@@ -113,19 +114,64 @@ export default function PriceListSection({
           body: JSON.stringify({ company_id: companyId, pdf_text: pdfText }),
         });
 
-        let data;
-        try {
-          data = await res.json();
-        } catch {
-          setError(`Server-Fehler (${res.status}): Antwort konnte nicht gelesen werden`);
+        if (!res.body) {
+          setError("Server-Fehler: Keine Antwort erhalten");
           setStep(null);
           setUploadingCategory(null);
           e.target.value = "";
           return;
         }
 
-        if (!res.ok) {
-          setError(data.error || `Fehler ${res.status}`);
+        // Read NDJSON stream
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let lastResult: Record<string, unknown> | null = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process complete lines
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const data = JSON.parse(line);
+              lastResult = data;
+
+              // Update step indicator based on stream progress
+              if (data.step === "extracting") setStep("extracting");
+              else if (data.step === "matching" || data.step === "fallback") setStep("matching");
+              else if (data.step === "saving") setStep("saving");
+
+              // Handle error in stream
+              if (data.error) {
+                setError(data.error);
+                setStep(null);
+                setUploadingCategory(null);
+                e.target.value = "";
+                return;
+              }
+            } catch {
+              // Skip malformed lines
+            }
+          }
+        }
+
+        if (lastResult?.success) {
+          setStep(null);
+          setUploadingCategory(null);
+          e.target.value = "";
+          router.push(`/admin/kunden/${companyId}/preise`);
+          return;
+        }
+
+        if (!lastResult || lastResult.error) {
+          setError((lastResult?.error as string) || "Unbekannter Fehler bei der Verarbeitung");
           setStep(null);
           setUploadingCategory(null);
           e.target.value = "";
