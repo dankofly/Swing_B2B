@@ -29,13 +29,12 @@ interface CategoryConfig {
   label: string;
 }
 
-type ParseStep = "uploading" | "extracting" | "matching" | "saving" | null;
+type ParseStep = "uploading" | "extracting" | "matching" | null;
 
 const STEP_LABELS: Record<Exclude<ParseStep, null>, string> = {
   uploading: "Datei wird hochgeladen...",
   extracting: "PDF wird analysiert...",
-  matching: "Preise werden zugeordnet...",
-  saving: "Preise werden gespeichert...",
+  matching: "Preise werden per KI zugeordnet und gespeichert...",
 };
 
 export default function PriceListSection({
@@ -105,57 +104,49 @@ export default function PriceListSection({
           return;
         }
 
-        // Step 2: Send text to Gemini for extraction (separate API call to stay within Netlify timeout)
+        // Step 2: Send to Supabase Edge Function (150s timeout — handles Gemini + matching + saving)
         setStep("matching");
-        const extractRes = await fetch("/api/parse-pricelist", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pdf_text: pdfText }),
-        });
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
 
-        let extractData;
+        // Force token refresh to avoid 401 with stale session
+        await supabase.auth.refreshSession();
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          setError("Sitzung abgelaufen — bitte Seite neu laden und erneut einloggen.");
+          setStep(null);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
+        }
+
+        const edgeRes = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/parse-pricelist`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session.access_token}`,
+              "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            },
+            body: JSON.stringify({ pdf_text: pdfText, company_id: companyId }),
+          }
+        );
+
+        let edgeData;
         try {
-          extractData = await extractRes.json();
+          edgeData = await edgeRes.json();
         } catch {
-          setError(`Server-Fehler (${extractRes.status}): Antwort konnte nicht gelesen werden`);
+          setError(`Server-Fehler (${edgeRes.status}): Antwort konnte nicht gelesen werden`);
           setStep(null);
           setUploadingCategory(null);
           e.target.value = "";
           return;
         }
 
-        if (!extractRes.ok || !extractData.extracted) {
-          setError(extractData.error || `Fehler ${extractRes.status}`);
-          setStep(null);
-          setUploadingCategory(null);
-          e.target.value = "";
-          return;
-        }
-
-        // Step 3: Match and save prices (separate API call)
-        setStep("saving");
-        const saveRes = await fetch("/api/save-prices", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            company_id: companyId,
-            extracted: extractData.extracted,
-          }),
-        });
-
-        let saveData;
-        try {
-          saveData = await saveRes.json();
-        } catch {
-          setError(`Server-Fehler (${saveRes.status}): Antwort konnte nicht gelesen werden`);
-          setStep(null);
-          setUploadingCategory(null);
-          e.target.value = "";
-          return;
-        }
-
-        if (!saveRes.ok) {
-          setError(saveData.error || `Fehler ${saveRes.status}`);
+        if (!edgeRes.ok) {
+          setError(edgeData.error || `Fehler ${edgeRes.status}`);
           setStep(null);
           setUploadingCategory(null);
           e.target.value = "";

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Copy, Trash2 } from "lucide-react";
-import { deleteProduct, duplicateProduct, toggleProductActive } from "@/lib/actions/products";
+import { duplicateProduct, toggleProductActive } from "@/lib/actions/products";
 import { useState } from "react";
 import { useDict } from "@/lib/i18n/context";
 import { useToast } from "@/components/ui/Toast";
@@ -111,7 +111,16 @@ export function DeleteProductButton({
     }
     setLoading(true);
     try {
-      await deleteProduct(productId);
+      const res = await fetch("/api/delete-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast(data.error || "Fehler beim Löschen", "error");
+        return;
+      }
       toast(`"${productName}" gelöscht`, "success");
       router.refresh();
     } catch (e) {
