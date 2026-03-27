@@ -109,11 +109,11 @@ export default function PriceListSection({
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
 
-        // Force token refresh to avoid 401 with stale session
-        await supabase.auth.refreshSession();
+        // Force token refresh to get a fresh access_token
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        const accessToken = refreshData?.session?.access_token;
 
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) {
+        if (refreshError || !accessToken) {
           setError("Sitzung abgelaufen — bitte Seite neu laden und erneut einloggen.");
           setStep(null);
           setUploadingCategory(null);
@@ -127,7 +127,7 @@ export default function PriceListSection({
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${session.access_token}`,
+              "Authorization": `Bearer ${accessToken}`,
               "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
             },
             body: JSON.stringify({ pdf_text: pdfText, company_id: companyId }),
