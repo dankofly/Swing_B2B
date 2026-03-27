@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Save, Loader2, Check, AlertTriangle, Search } from "lucide-react";
-import { saveCustomerPrices } from "@/lib/actions/prices";
+import { Save, Loader2, Check, AlertTriangle, Search, Trash2 } from "lucide-react";
+import { saveCustomerPrices, deleteAllCustomerPrices } from "@/lib/actions/prices";
+import { useRouter } from "next/navigation";
 
 interface SizeData {
   id: string;
@@ -44,7 +45,9 @@ export default function PriceEditor({
     return initial;
   });
 
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -133,6 +136,29 @@ export default function PriceEditor({
     }
   }
 
+  async function handleDeleteAll() {
+    if (!confirm("Alle Preise für diesen Kunden wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.")) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteAllCustomerPrices(companyId);
+      setPrices((prev) => {
+        const cleared: typeof prev = {};
+        for (const key of Object.keys(prev)) {
+          cleared[key] = { ek: "", uvp: "" };
+        }
+        return cleared;
+      });
+      setDirty(false);
+      setSaved(false);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Fehler beim Löschen");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const totalSizes = products.reduce((sum, p) => sum + p.sizes.length, 0);
   const filledCount = totalSizes - missingCount;
 
@@ -180,6 +206,19 @@ export default function PriceEditor({
                 Gespeichert
               </span>
             )}
+
+            <button
+              onClick={handleDeleteAll}
+              disabled={deleting || saving}
+              className="flex cursor-pointer items-center gap-1.5 rounded border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-40"
+            >
+              {deleting ? (
+                <Loader2 size={13} className="animate-spin" />
+              ) : (
+                <Trash2 size={13} />
+              )}
+              Alle Preise löschen
+            </button>
 
             <button
               onClick={handleSave}

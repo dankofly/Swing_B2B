@@ -162,3 +162,19 @@ export async function getCompanyPrices(companyId: string) {
 
   return data ?? [];
 }
+
+export async function deleteAllCustomerPrices(companyId: string) {
+  if (!isValidUUID(companyId)) throw new Error("Ungültige ID");
+  await guardAdmin();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("customer_prices")
+    .delete()
+    .eq("company_id", companyId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/admin/kunden/${companyId}/preise`);
+  revalidatePath(`/admin/kunden/${companyId}`);
+}
