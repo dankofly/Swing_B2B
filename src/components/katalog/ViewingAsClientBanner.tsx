@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, X } from "lucide-react";
+import { Eye, ArrowLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -40,11 +40,6 @@ export default function ViewingAsClientBanner() {
 
   if (!als || !isAdmin || !companyName) return null;
 
-  // Build close URL: current path without "als" param
-  const closeParams = new URLSearchParams(searchParams.toString());
-  closeParams.delete("als");
-  const closeHref = `/katalog${closeParams.toString() ? `?${closeParams.toString()}` : ""}`;
-
   return (
     <div className="mx-auto mb-0 max-w-7xl px-4 pt-6 sm:px-6">
       <div className="flex items-center justify-between gap-3 rounded-lg border border-swing-gold/30 bg-swing-gold/10 px-4 py-3 sm:px-5">
@@ -63,10 +58,10 @@ export default function ViewingAsClientBanner() {
           </p>
         </div>
         <Link
-          href={closeHref}
-          className="flex items-center gap-1.5 rounded bg-swing-navy/10 px-3 py-1.5 text-xs font-bold text-swing-navy transition-colors hover:bg-swing-navy/20"
+          href={`/admin/kunden/${als}`}
+          className="flex items-center gap-1.5 rounded bg-swing-navy px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-swing-navy-light"
         >
-          <X size={12} />
+          <ArrowLeft size={12} />
           {dict.katalog.viewingAsClose}
         </Link>
       </div>
