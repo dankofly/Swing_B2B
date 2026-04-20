@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-16"?>
+<!--
+  Windows Scheduled Task: daily WinLine → SWING B2B stock sync
+
+  Import:
+    1. Open Taskplaner (taskschd.msc)
+    2. Aktion → Aufgabe importieren... → diese XML wählen
+    3. Reiter "Allgemein": Benutzer setzen (mit passenden Rechten), "Ob angemeldet oder nicht" aktivieren
+    4. Reiter "Trigger": Zeit anpassen (Default: täglich 04:15)
+    5. Reiter "Aktionen": Pfad zu Sync-Stock.ps1 anpassen falls nicht C:\WinLine-Exports\
+
+  Before first run: ensure environment variable SWING_STOCK_SYNC_TOKEN is set
+  for the task's user. Either via System Properties → Environment Variables,
+  or hardcode the token via -SyncToken argument (less secure).
+-->
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Tägliche Übertragung der WinLine-Bestandsliste an das SWING B2B Portal.</Description>
+    <URI>\SWING\StockSync</URI>
+  </RegistrationInfo>
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>2026-04-21T04:15:00</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByDay>
+        <DaysInterval>1</DaysInterval>
+      </ScheduleByDay>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-21-CHANGE-TO-YOUR-USER-SID</UserId>
+      <LogonType>S4U</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>true</RunOnlyIfNetworkAvailable>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT15M</ExecutionTimeLimit>
+    <Priority>7</Priority>
+    <RestartOnFailure>
+      <Interval>PT10M</Interval>
+      <Count>2</Count>
+    </RestartOnFailure>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-NoProfile -ExecutionPolicy Bypass -File "C:\WinLine-Exports\Sync-Stock.ps1"</Arguments>
+      <WorkingDirectory>C:\WinLine-Exports</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>
