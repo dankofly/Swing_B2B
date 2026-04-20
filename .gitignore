@@ -51,3 +51,8 @@ next-env.d.ts
 !/public/**/*.jpg
 !/public/**/*.jpeg
 
+.gstack/
+
+# Playwright test screenshots
+/tests/screenshots/
+

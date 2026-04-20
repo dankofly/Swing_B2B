@@ -34,21 +34,15 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/forgot-password") ||
     pathname.startsWith("/reset-password");
 
-  const isPublicRoute =
-    isAuthRoute ||
-    pathname === "/" ||
-    pathname.startsWith("/api/") ||
-    pathname.startsWith("/auth/") ||
-    pathname.startsWith("/impressum") ||
-    pathname.startsWith("/datenschutz") ||
-    pathname.startsWith("/anleitung") ||
-    pathname.startsWith("/admin-anleitung");
+  // Only these prefixes require auth — unknown routes fall through to not-found.tsx
+  const isProtectedRoute =
+    pathname.startsWith("/katalog") || pathname.startsWith("/admin");
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && !isPublicRoute) {
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", pathname);
