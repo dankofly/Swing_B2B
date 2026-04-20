@@ -134,47 +134,54 @@ export default function PriceListSection({
           return;
         }
 
-        // Step 2: Send to Supabase Edge Function (150s timeout — handles Gemini + matching + saving)
+        // Step 2a: Extract structured items via Next.js API (Gemini)
         setStep("matching");
 
-        // Force token refresh to get a fresh access_token
-        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-        const accessToken = refreshData?.session?.access_token;
+        const parseRes = await fetch("/api/parse-pricelist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pdf_text: pdfText }),
+        });
 
-        if (refreshError || !accessToken) {
-          setError("Sitzung abgelaufen — bitte Seite neu laden und erneut einloggen.");
-          setStep(null);
-          setUploadingCategory(null);
-          e.target.value = "";
-          return;
-        }
-
-        const edgeRes = await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/parse-pricelist`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${accessToken}`,
-              "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            },
-            body: JSON.stringify({ pdf_text: pdfText, company_id: companyId }),
-          }
-        );
-
-        let edgeData;
+        let parseData;
         try {
-          edgeData = await edgeRes.json();
+          parseData = await parseRes.json();
         } catch {
-          setError(`Server-Fehler (${edgeRes.status}): Antwort konnte nicht gelesen werden`);
+          setError(`Server-Fehler (${parseRes.status}): Antwort konnte nicht gelesen werden`);
           setStep(null);
           setUploadingCategory(null);
           e.target.value = "";
           return;
         }
 
-        if (!edgeRes.ok) {
-          setError(edgeData.error || `Fehler ${edgeRes.status}`);
+        if (!parseRes.ok) {
+          setError(parseData.error || `Fehler ${parseRes.status}`);
+          setStep(null);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
+        }
+
+        // Step 2b: Match extracted items against catalog and save customer prices
+        const saveRes = await fetch("/api/save-prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ company_id: companyId, extracted: parseData.extracted }),
+        });
+
+        let saveData;
+        try {
+          saveData = await saveRes.json();
+        } catch {
+          setError(`Server-Fehler (${saveRes.status}): Antwort konnte nicht gelesen werden`);
+          setStep(null);
+          setUploadingCategory(null);
+          e.target.value = "";
+          return;
+        }
+
+        if (!saveRes.ok) {
+          setError(saveData.error || `Fehler ${saveRes.status}`);
           setStep(null);
           setUploadingCategory(null);
           e.target.value = "";
