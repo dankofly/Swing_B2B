@@ -137,9 +137,11 @@ try {
     }
     $payload | ConvertTo-Json -Depth 8 | Set-Content -Path $logFile -Encoding UTF8
 
-    Write-Host "OK — synced=$($response.synced), unmatched=$($response.unmatched), rows=$($response.csv_rows), took=$($response.duration_ms)ms"
-    if ($response.unmatched -gt 0) {
-        Write-Warning "$($response.unmatched) items could not be matched. See $logFile for details."
+    Write-Host ("OK — portal: {0} updated / {1} unchanged / {2} untouched-in-portal | {3} items-not-in-portal | {4} rows | took={5}ms" -f `
+        $response.portal_updated, $response.portal_unchanged, $response.portal_untouched, `
+        $response.items_not_in_portal, $response.csv_rows, $response.duration_ms)
+    if ($response.items_not_in_portal -gt 0) {
+        Write-Warning "$($response.items_not_in_portal) WinLine items are not in the B2B portal — ignored. See $logFile for details."
     }
     exit 0
 }

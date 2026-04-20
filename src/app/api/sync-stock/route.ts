@@ -14,8 +14,18 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
  * Used by a scheduled task on the WinLine machine to push the daily
  * Bestandsliste CSV without needing a human in the loop. Token auth only —
  * no cookies, no Supabase user context. Deterministic matching (no Gemini
- * fallback); items that don't match exactly are returned in `unmatched` for
- * the next manual review instead of silently dropped.
+ * fallback); items that don't match exactly are returned in
+ * `items_not_in_portal` for the next manual review instead of silently dropped.
+ *
+ * ─── INVARIANTS ────────────────────────────────────────────────────────
+ * 1. Portal-only: only product_sizes rows that already exist in the B2B
+ *    portal are ever touched. WinLine items with no matching portal product
+ *    are collected into `items_not_in_portal` and reported — no INSERT,
+ *    no new-product creation, no schema changes.
+ * 2. Idempotent: re-running with the same CSV produces zero updates.
+ * 3. No cascade: `products`, `product_colors`, `customer_prices`, etc. are
+ *    never modified by this route.
+ * ──────────────────────────────────────────────────────────────────────
  *
  * Auth: `Authorization: Bearer ${STOCK_SYNC_TOKEN}` header.
  * Body: multipart/form-data with `file` field (CSV) OR raw text/csv body.
@@ -81,11 +91,13 @@ export async function POST(request: NextRequest) {
     if (aggregated.length === 0) {
       return NextResponse.json({
         success: true,
-        synced: 0,
-        unmatched: 0,
+        portal_updated: 0,
+        portal_unchanged: 0,
+        portal_untouched: 0,
+        items_not_in_portal: 0,
         csv_rows: csvRowCount,
         filtered_items: filteredCount,
-        unmatched_items: [],
+        items_not_in_portal_sample: [],
         duration_ms: Date.now() - started,
       });
     }
@@ -155,8 +167,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ─── Match + collect updates (deduplicate by size_id) ─────────────
-    interface UnmatchedItem {
+    // ─── Match CSV items against portal products ──────────────────────
+    // By construction `byFullKey` and `byModelSize` contain ONLY portal
+    // product_sizes — a CSV item can therefore only resolve to a
+    // size_id that already exists in the B2B portal.
+    interface ItemNotInPortal {
       model: string;
       design: string | null;
       size: string;
@@ -164,18 +179,17 @@ export async function POST(request: NextRequest) {
       match_key: string;
     }
 
+    const portalSizeIds = new Set<string>((sizes ?? []).map((s) => s.id));
     const updateBySizeId = new Map<string, number>();
-    const unmatched: UnmatchedItem[] = [];
+    const itemsNotInPortal: ItemNotInPortal[] = [];
 
     for (const item of aggregated) {
-      // Try exact (model+design+size) first, then model+size fallback
       const hit = byFullKey.get(item.match_key) ?? byModelSize.get(item.model_size_key);
       if (hit) {
-        // Aggregate across rows that resolve to the same size
         const prev = updateBySizeId.get(hit.size_id) ?? 0;
         updateBySizeId.set(hit.size_id, prev + item.stock_total);
       } else {
-        unmatched.push({
+        itemsNotInPortal.push({
           model: item.model_raw,
           design: item.design_raw,
           size: item.size_raw,
@@ -186,18 +200,24 @@ export async function POST(request: NextRequest) {
     }
 
     // ─── Bulk update stock_quantity ────────────────────────────────────
-    // Only update rows whose value actually changed — cheaper and safer.
+    // Only portal-known size_ids + only rows whose value actually changed.
     const currentBySizeId = new Map<string, number>(
       (sizes ?? []).map((s) => [s.id, s.stock_quantity ?? 0]),
     );
 
     const updates: Array<{ size_id: string; new_stock: number; old_stock: number }> = [];
     for (const [sizeId, newStock] of updateBySizeId) {
+      // Defensive guard: invariant #1 — reject anything that somehow
+      // slipped through without being a known portal size_id.
+      if (!portalSizeIds.has(sizeId)) continue;
       const oldStock = currentBySizeId.get(sizeId) ?? 0;
       if (oldStock !== newStock) {
         updates.push({ size_id: sizeId, new_stock: newStock, old_stock: oldStock });
       }
     }
+
+    const touchedSizeIds = new Set(updateBySizeId.keys());
+    const portalUntouchedCount = portalSizeIds.size - touchedSizeIds.size;
 
     // Execute updates in parallel (bounded)
     const BATCH_SIZE = 10;
@@ -217,13 +237,17 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      synced: updates.length,
-      unchanged: updateBySizeId.size - updates.length,
-      unmatched: unmatched.length,
+      // Portal-only accounting — only products that exist in the B2B portal:
+      portal_total: portalSizeIds.size,
+      portal_updated: updates.length,
+      portal_unchanged: updateBySizeId.size - updates.length,
+      portal_untouched: portalUntouchedCount, // in portal but missing from CSV
+      // CSV items that have no corresponding portal product — NOT updated:
+      items_not_in_portal: itemsNotInPortal.length,
+      items_not_in_portal_sample: itemsNotInPortal.slice(0, 50),
       update_errors: updateErrors,
       csv_rows: csvRowCount,
       filtered_items: filteredCount,
-      unmatched_items: unmatched.slice(0, 50), // cap response size
       duration_ms: Date.now() - started,
     });
   } catch (err) {

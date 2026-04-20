@@ -90,7 +90,23 @@ Zwei Varianten (abhängig von Lizenz):
 
 4. Test: Aufgabe manuell ausführen („Ausführen" rechtsklick) → Log unter `C:\WinLine-Exports\sync-logs\` prüfen
 
-### 3. Monitoring
+### 3. Was passiert mit Artikeln die NICHT im B2B-Portal angelegt sind?
+
+**Sie werden komplett ignoriert.** Garantie — im Code dokumentiert als Invariante #1 ([sync-stock/route.ts](../../src/app/api/sync-stock/route.ts)):
+
+> Only product_sizes rows that already exist in the B2B portal are ever touched. WinLine items with no matching portal product are collected into `items_not_in_portal` and reported — no INSERT, no new-product creation, no schema changes.
+
+Die Response zeigt das explizit in vier Kategorien:
+
+| Feld | Bedeutung |
+|---|---|
+| `portal_total` | Wie viele `product_sizes` existieren im B2B-Portal |
+| `portal_updated` | Portal-Produkte deren Bestand aktualisiert wurde (alter ≠ neuer Wert) |
+| `portal_unchanged` | Portal-Produkte im CSV gefunden, Bestand war bereits korrekt |
+| `portal_untouched` | Portal-Produkte die im CSV **fehlen** — Bestand bleibt wie er war |
+| `items_not_in_portal` | WinLine-Zeilen ohne passendes Portal-Produkt — ignoriert |
+
+### 4. Monitoring
 
 Der Task schreibt pro Lauf eine JSON-Datei nach `sync-logs\YYYY-MM-DD_HHMMSS.json`:
 
@@ -102,21 +118,25 @@ Der Task schreibt pro Lauf eine JSON-Datei nach `sync-logs\YYYY-MM-DD_HHMMSS.jso
   "file_size": 123456,
   "response": {
     "success": true,
-    "synced": 142,
-    "unchanged": 38,
-    "unmatched": 3,
+    "portal_total": 180,
+    "portal_updated": 142,
+    "portal_unchanged": 35,
+    "portal_untouched": 3,
+    "items_not_in_portal": 8,
+    "items_not_in_portal_sample": [
+      { "model": "NewProductNotInPortalYet", "design": null, "size": "M", "stock": 5, "match_key": "..." }
+    ],
     "update_errors": 0,
     "csv_rows": 387,
     "filtered_items": 183,
-    "unmatched_items": [
-      { "model": "MirageNEW", "design": null, "size": "XL", "stock": 2, "match_key": "...|null|xl" }
-    ],
     "duration_ms": 1240
   }
 }
 ```
 
-**Empfohlener wöchentlicher Check:** `unmatched_items` durchsehen. Wenn dort immer dieselben Modelle auftauchen → entweder fehlt das Produkt im B2B-Katalog, oder der Modellname weicht zu stark ab.
+**Empfohlener wöchentlicher Check:**
+- `items_not_in_portal_sample` durchsehen → WinLine-Artikel die noch nicht im B2B-Portal sind. Entscheiden: im Portal anlegen oder bewusst draußen lassen.
+- `portal_untouched` > 0 → Portal-Produkte die im CSV fehlen. Entweder WinLine-Export filtert sie raus (Kategorie-Filter?) oder sie existieren in WinLine nicht mehr → prüfen ob sie im Portal deaktiviert werden sollen.
 
 **Alert-Empfehlung:** Netlify-Deploy-Notification einrichten die eine Mail schickt wenn `/api/sync-stock` einen 5xx zurückgibt. Alternativ: nach `"ok": false` in den sync-logs greppen (Log-Shipping zu z. B. BetterStack).
 
@@ -129,7 +149,7 @@ Der Task schreibt pro Lauf eine JSON-Datei nach `sync-logs\YYYY-MM-DD_HHMMSS.jso
 | `413 file too large` | CSV > 50 MB | unrealistisch für B2B-Bestand, WinLine-Filter prüfen |
 | `400 empty or too short CSV` | Datei leer oder < 20 Bytes | WinLine-Export funktioniert nicht, Pfad / Vorlage prüfen |
 | `500` im Response | Serverseitiger Fehler | Netlify Logs prüfen (Dashboard → Deploys → Function Logs) |
-| Task läuft aber `unmatched=total` | Produkt-Namen in WinLine anders als im Portal | canonical-keys in [src/lib/canonical-keys.ts](../../src/lib/canonical-keys.ts) prüfen / erweitern |
+| `items_not_in_portal` == `csv_rows` | Produkt-Namen in WinLine weichen komplett vom Portal ab | canonical-keys in [src/lib/canonical-keys.ts](../../src/lib/canonical-keys.ts) prüfen / erweitern |
 
 ## Sicherheits-Hinweise
 
