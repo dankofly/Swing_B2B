@@ -12,11 +12,11 @@ export default function KatalogLayout({
   return (
     <CartProvider>
       <div className="min-h-screen bg-swing-gray-light">
-        <Suspense>
+        <Suspense fallback={<div className="h-16 bg-swing-navy" />}>
           <CartHeaderWrapper />
           <ViewingAsClientBanner />
         </Suspense>
-        <Suspense>
+        <Suspense fallback={null}>
           <NewsTickerWrapper />
         </Suspense>
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 fade-in-up">{children}</main>

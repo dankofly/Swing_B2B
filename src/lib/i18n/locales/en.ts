@@ -817,6 +817,8 @@ const en: Dictionary = {
     phone: "Phone",
     registeredAt: "Registered on",
     viewFullProfile: "View full profile →",
+    approveError: "Error approving company",
+    rejectError: "Error rejecting company",
   },
 
   stockImport: {

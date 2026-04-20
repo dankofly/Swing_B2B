@@ -15,6 +15,16 @@ import { getDictionary, getLocale, getDateLocale } from "@/lib/i18n";
 import AdminBriefing from "@/components/admin/AdminBriefing";
 
 
+interface DashboardInquiry {
+  id: string;
+  status: string;
+  created_at: string;
+  company_id: string;
+  company: { name: string } | null;
+  user: { full_name: string | null; email: string } | null;
+  inquiry_items: Array<{ quantity: number; unit_price: number | string }>;
+}
+
 export default async function AdminDashboard() {
   const supabase = createAdminClient();
   const [dict, locale, authClient] = await Promise.all([getDictionary(), getLocale(), createClient()]);
@@ -78,7 +88,7 @@ export default async function AdminDashboard() {
   const dealerCount = val(10).count;
   const importerCount = val(11).count;
   const importerNetworkCount = val(12).count;
-  const recentInquiries = val(13).data;
+  const recentInquiries = val(13).data as DashboardInquiry[] | null;
 
   const adminName = await adminNamePromise;
 
@@ -273,13 +283,13 @@ export default async function AdminDashboard() {
           </div>
         ) : (
           <div className="space-y-1 border-t border-gray-100 p-2">
-            {[...recentInquiries].sort((a: any, b: any) => (a.status === "new" ? -1 : b.status === "new" ? 1 : 0)).map((inquiry: any) => {
+            {[...recentInquiries].sort((a, b) => (a.status === "new" ? -1 : b.status === "new" ? 1 : 0)).map((inquiry) => {
               const isNew = inquiry.status === "new";
               const status = statusConfig[inquiry.status] ?? statusConfig.new;
               const items = inquiry.inquiry_items ?? [];
               const itemCount = items.length;
-              const totalValue = items.reduce((sum: number, it: any) => sum + ((it.quantity ?? 0) * (parseFloat(it.unit_price) || 0)), 0);
-              const companyName = (inquiry as any).company?.name ?? "—";
+              const totalValue = items.reduce((sum, it) => sum + ((it.quantity ?? 0) * (parseFloat(String(it.unit_price)) || 0)), 0);
+              const companyName = inquiry.company?.name ?? "—";
 
               return (
                 <Link

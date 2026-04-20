@@ -793,6 +793,8 @@ export interface Dictionary {
     phone: string;
     registeredAt: string;
     viewFullProfile: string;
+    approveError: string;
+    rejectError: string;
   };
 
   stockImport: {

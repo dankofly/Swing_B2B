@@ -117,6 +117,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Datei ist erforderlich" }, { status: 400 });
     }
 
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "Datei zu groß (max. 50 MB)" }, { status: 413 });
+    }
+
     const csvText = await file.text();
 
     // ── Phases 1-5: Deterministic CSV parsing ──

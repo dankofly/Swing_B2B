@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     const { email } = await request.json();
 
-    if (!email || typeof email !== "string") {
+    if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: "Email required" }, { status: 400 });
     }
 

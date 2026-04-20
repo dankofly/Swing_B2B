@@ -817,6 +817,8 @@ const fr: Dictionary = {
     phone: "Téléphone",
     registeredAt: "Inscrit le",
     viewFullProfile: "Voir le profil complet →",
+    approveError: "Erreur lors de l'approbation",
+    rejectError: "Erreur lors du rejet",
   },
 
   stockImport: {

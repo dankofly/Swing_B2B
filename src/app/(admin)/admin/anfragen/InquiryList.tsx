@@ -77,14 +77,27 @@ export default function InquiryList({ inquiries }: { inquiries: Inquiry[] }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  const [inquiryList, setInquiryList] = useState(inquiries);
+
   async function handleStatusChange(inquiryId: string, status: string) {
+    const previousStatus = inquiryList.find((i) => i.id === inquiryId)?.status;
     setUpdating(inquiryId);
+    // Optimistic update
+    setInquiryList((prev) =>
+      prev.map((i) => (i.id === inquiryId ? { ...i, status } : i))
+    );
     try {
       await updateInquiryStatus(
         inquiryId,
         status as "new" | "in_progress" | "shipped" | "completed"
       );
-    } catch (e) {
+    } catch {
+      // Rollback on error
+      if (previousStatus) {
+        setInquiryList((prev) =>
+          prev.map((i) => (i.id === inquiryId ? { ...i, status: previousStatus } : i))
+        );
+      }
       toast(ti.statusError, "error");
     } finally {
       setUpdating(null);
@@ -109,14 +122,14 @@ export default function InquiryList({ inquiries }: { inquiries: Inquiry[] }) {
   }
 
   // Filter inquiries
-  const filtered = inquiries.filter((inq) => {
+  const filtered = inquiryList.filter((inq) => {
     const companyName = (inq.company?.name ?? "").toLowerCase();
     const matchesSearch = !search || companyName.includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || inq.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  if (inquiries.length === 0) {
+  if (inquiryList.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50">
@@ -164,7 +177,7 @@ export default function InquiryList({ inquiries }: { inquiries: Inquiry[] }) {
 
       {/* Results count */}
       <p className="text-xs text-swing-navy/30">
-        {ti.countOf.replace("{filtered}", String(filtered.length)).replace("{total}", String(inquiries.length))}
+        {ti.countOf.replace("{filtered}", String(filtered.length)).replace("{total}", String(inquiryList.length))}
       </p>
 
       {filtered.length === 0 && search && (

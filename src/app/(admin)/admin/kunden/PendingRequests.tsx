@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -18,6 +17,8 @@ import {
 } from "lucide-react";
 import { useDict, useLocale } from "@/lib/i18n/context";
 import { getDateLocale } from "@/lib/i18n/shared";
+import { toggleCompanyApproval, deleteCompany } from "@/lib/actions/customers";
+import { useToast } from "@/components/ui/Toast";
 
 interface PendingCompany {
   id: string;
@@ -48,6 +49,7 @@ export default function PendingRequests({
   const locale = useLocale();
   const dl = getDateLocale(locale);
   const router = useRouter();
+  const { toast } = useToast();
   const [updating, setUpdating] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(
     new Set(requests.length <= 3 ? requests.map((r) => r.id) : [])
@@ -62,23 +64,32 @@ export default function PendingRequests({
 
   async function handleApprove(companyId: string) {
     setUpdating(companyId);
-    const supabase = createClient();
-    await supabase
-      .from("companies")
-      .update({ is_approved: true })
-      .eq("id", companyId);
-    setUpdating(null);
-    router.refresh();
+    try {
+      const result = await toggleCompanyApproval(companyId, true);
+      if (!result.success) {
+        toast(result.error || t.approveError, "error");
+      }
+    } catch {
+      toast(t.approveError, "error");
+    } finally {
+      setUpdating(null);
+      router.refresh();
+    }
   }
 
   async function handleReject(companyId: string) {
     setUpdating(companyId);
-    const supabase = createClient();
-    // Delete profiles + company
-    await supabase.from("profiles").delete().eq("company_id", companyId);
-    await supabase.from("companies").delete().eq("id", companyId);
-    setUpdating(null);
-    router.refresh();
+    try {
+      const result = await deleteCompany(companyId);
+      if (!result.success) {
+        toast(result.error || t.rejectError, "error");
+      }
+    } catch {
+      toast(t.rejectError, "error");
+    } finally {
+      setUpdating(null);
+      router.refresh();
+    }
   }
 
   function toggleExpand(id: string) {

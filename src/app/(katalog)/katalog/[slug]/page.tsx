@@ -92,7 +92,7 @@ export default async function ProduktDetailPage({
         .select("id, name, name_en, name_fr, slug, description, description_en, description_fr, category:categories(name, name_en, name_fr), en_class, en_class_custom, classification, use_case, use_case_en, use_case_fr, is_action")
         .in("id", relatedIds)
         .eq("is_active", true)
-    : Promise.resolve({ data: [] as any[] });
+    : Promise.resolve({ data: [] as Record<string, unknown>[] });
 
   const [{ data: profile }, { data: relatedRaw }] = await Promise.all([
     profilePromise,

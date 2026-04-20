@@ -42,3 +42,12 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# Debug screenshots / dev artifacts
+/*.png
+/*.jpg
+/*.jpeg
+!/public/**/*.png
+!/public/**/*.jpg
+!/public/**/*.jpeg
+
