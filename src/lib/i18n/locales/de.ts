@@ -282,7 +282,7 @@ const de: Dictionary = {
     },
     badges: {
       comingSoon: "Coming Soon",
-      preorder: "Jetzt vorbestellen",
+      preorder: "Preorder Now",
       fadeOut: "Fade Out",
       action: "Aktion",
       limited: "Limited",
