@@ -19,6 +19,10 @@ const csp = [
   `img-src 'self' data: blob: https://${supabaseHost}`,
   `connect-src 'self' https://${supabaseHost} https://generativelanguage.googleapis.com`,
   "font-src 'self' https://fonts.gstatic.com",
+  // Google Maps embed on the admin customer page (no API key, just the
+  // `?output=embed` iframe URL). Both google.com and maps.google.com redirect
+  // targets must be allowed; www-prefixed hosts covered by *.google.com.
+  "frame-src 'self' https://www.google.com https://maps.google.com",
   "frame-ancestors 'none'",
 ].join("; ");
 
