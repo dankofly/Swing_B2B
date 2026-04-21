@@ -181,9 +181,9 @@ export default function WarenkorbPage() {
           </div>
           <Link
             href="/katalog"
-            className="hidden items-center gap-1.5 text-sm text-white/40 transition-colors hover:text-white sm:inline-flex"
+            className="group hidden items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition-all duration-200 hover:border-swing-gold hover:bg-white/10 sm:inline-flex"
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft size={16} className="text-swing-gold transition-transform duration-200 group-hover:-translate-x-0.5" />
             {tc.backToCatalog}
           </Link>
         </div>

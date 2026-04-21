@@ -156,9 +156,9 @@ export default async function ProduktDetailPage({
     <div className="space-y-6">
       <Link
         href={backHref}
-        className="inline-flex min-h-11 items-center gap-1.5 text-sm text-swing-navy/40 transition-colors duration-200 hover:text-swing-navy"
+        className="group inline-flex min-h-11 items-center gap-2 rounded-lg border border-swing-navy/10 bg-white px-4 py-2.5 text-sm font-semibold text-swing-navy shadow-sm transition-all duration-200 hover:border-swing-gold hover:bg-swing-gold/5 hover:shadow-md"
       >
-        <ArrowLeft size={14} />
+        <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5 text-swing-gold" />
         {dict.katalog.detail.backToCatalog}
       </Link>
 
