@@ -18,35 +18,37 @@ export default function NewsTicker({ items }: NewsTickerProps) {
   const tickerText = items.map((i) => i.message).join(separator);
 
   return (
-    <div
-      className="relative overflow-hidden bg-swing-navy text-white"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      {/* Gold top accent */}
-      <div className="h-[1px] bg-swing-gold/40" />
+    <div className="mx-auto mt-3 max-w-7xl px-4 sm:px-6">
+      <div
+        className="relative overflow-hidden rounded-lg bg-swing-navy text-white shadow-sm"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+      >
+        {/* Gold top accent */}
+        <div className="h-[1px] bg-swing-gold/40" />
 
-      <div className="mx-auto max-w-7xl px-4 py-1.5 sm:px-6">
-        <div className="relative overflow-hidden" ref={scrollRef}>
-          <div
-            className={`flex whitespace-nowrap ${paused ? "[animation-play-state:paused]" : ""}`}
-            style={{
-              animation: `ticker ${Math.max(items.length * 4, 8)}s linear infinite`,
-            }}
-          >
-            <span className="inline-block text-[12px] font-medium tracking-wide text-white/80 sm:text-[13px]">
-              {tickerText}
-              {separator}
-              {tickerText}
-              {separator}
-            </span>
+        <div className="px-4 py-1.5 sm:px-6">
+          <div className="relative overflow-hidden" ref={scrollRef}>
+            <div
+              className={`flex whitespace-nowrap ${paused ? "[animation-play-state:paused]" : ""}`}
+              style={{
+                animation: `ticker ${Math.max(items.length * 4, 8)}s linear infinite`,
+              }}
+            >
+              <span className="inline-block text-[12px] font-medium tracking-wide text-white/80 sm:text-[13px]">
+                {tickerText}
+                {separator}
+                {tickerText}
+                {separator}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Fade edges */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-swing-navy to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-swing-navy to-transparent" />
+        {/* Fade edges */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-8 rounded-l-lg bg-gradient-to-r from-swing-navy to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 rounded-r-lg bg-gradient-to-l from-swing-navy to-transparent" />
+      </div>
     </div>
   );
 }
