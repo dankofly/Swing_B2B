@@ -218,8 +218,12 @@ export default function ProductDetailClient({
                   {sizes.map((size) => {
                     const ekNetto = priceMap[size.id];
                     const rabatt = discountMap[size.id] ?? 0;
+                    // Strict per-color/size stock: no fallback to size aggregate.
+                    // If color_size_stock has no entry for this (color, size), stock is 0.
+                    // Previous "?? size.stock_quantity" fallback silently inflated empty colors
+                    // with the size-wide total (e.g. ML Gold=2 was also shown as ML Lime=2).
                     const stockKey = `${selectedColorName}::${size.size_label}`;
-                    const stock = stockKey in stockMap ? stockMap[stockKey] : size.stock_quantity;
+                    const stock = stockMap[stockKey] ?? 0;
                     const qty = quantities[size.id] ?? 0;
                     return (
                       <tr key={size.id} className={`transition-colors duration-150 hover:bg-swing-gold/4 ${qty > 0 ? "bg-swing-gold/3" : ""}`}>
@@ -264,7 +268,7 @@ export default function ProductDetailClient({
                 const ekNetto = priceMap[size.id];
                 const rabatt = discountMap[size.id] ?? 0;
                 const stockKey = `${selectedColorName}::${size.size_label}`;
-                const stock = stockKey in stockMap ? stockMap[stockKey] : size.stock_quantity;
+                const stock = stockMap[stockKey] ?? 0;
                 const qty = quantities[size.id] ?? 0;
                 return (
                   <div key={size.id} className={`px-5 py-4 ${qty > 0 ? "bg-swing-gold/3" : ""}`}>
