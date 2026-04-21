@@ -178,14 +178,18 @@ function shouldExclude(bezeichnung: string): boolean {
  * Cuts off freetext comments that WinLine operators append to the article
  * description. Observed patterns in real exports:
  *   - `Model Size Color; free text`               → split on ";"
- *   - `Model Size Color, free text`               → split on ","
+ *   - `Model Size Color, free text`               → cut on ",<space>" only
  *   - `Model Size Color - Stückprüfung 21.5.2025` → strip "- …prüfung …"
  *   - `Model Size Color ** internal note`         → strip "** …"
- * Colors in the SWING catalogue never contain `,` or `;`, so cutting on
- * them is safe (verified against real WinLine exports, 260+ rows).
+ *
+ * The comma cut deliberately requires whitespace after the comma so German
+ * decimal separators (e.g. "9,5" in "Mirage 2 RS 9,5 Flash") are preserved.
+ * Freetext comments always have whitespace after the comma; decimal commas
+ * never do.
  */
 function cleanBezeichnung(raw: string): string {
-  let cleaned = raw.split(";")[0].split(",")[0].trim();
+  let cleaned = raw.split(";")[0].trim();
+  cleaned = cleaned.replace(/,\s+.*$/, "").trim();
   cleaned = cleaned.replace(/\*{2,}.*$/, "").trim();
   cleaned = cleaned.replace(/\s*-\s*\w+pr[uü]fung.*$/i, "").trim();
   cleaned = cleaned.replace(/\s*-\s*St[uü]ckpr[uü]fung.*$/i, "").trim();

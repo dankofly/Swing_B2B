@@ -461,6 +461,24 @@ describe("parseStockCSV", () => {
     });
   });
 
+  test("preserves German decimal comma in size (Mirage 2 RS 9,5 Flash)", () => {
+    // Regression: the comma-cut must not swallow decimal commas like "9,5".
+    // Before fix: Bezeichnung cut to "Mirage 2 RS 9", design lost (became null).
+    const csv = `Artikel;Artikel Bezeichnung;AUG 2;AUG 3;Lagerstand
+105 18-BG-S-NL-53609;Mirage 2 RS 9,5 Flash;Mirage 2 RS;Mirage 2 RS 9,5;1,00
+105 20-BR-S-NL-53413;Spitfire 3.9,5 Blue;Spitfire 3;Spitfire 3.9,5;1,00`;
+
+    const result = parseStockCSV(csv);
+
+    expect(result.aggregated).toHaveLength(2);
+    const mirage = result.aggregated.find((v) => v.model_normalized === "mirage2rs");
+    const spitfire = result.aggregated.find((v) => v.model_normalized === "spitfire3");
+    expect(mirage?.size_raw).toBe("9,5");
+    expect(mirage?.design_raw).toBe("Flash");
+    expect(spitfire?.size_raw).toBe("9,5");
+    expect(spitfire?.design_raw).toBe("Blue");
+  });
+
   test("aggregates multiple serial rows into a single (model,color,size) total", () => {
     // Each row in a WinLine Bestandsliste = 1 physical unit with a serial suffix.
     // Two rows with same model+color+size should sum to 2 stück.

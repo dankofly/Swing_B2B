@@ -276,7 +276,22 @@ export async function POST(request: NextRequest) {
         continue;
       }
       if (exactMatches && exactMatches.length > 1) {
-        // Ambiguous exact match — multiple portal variants with same key
+        // Ambiguous canonical key — multiple portal variants share the same
+        // canonical form (e.g. both "Blau" and "Blue" normalize to "blue").
+        // Try verbatim case-insensitive match: if the CSV design matches
+        // EXACTLY one portal color name as a string (ignoring case), prefer
+        // that one. This disambiguates duplicates without forcing manual
+        // review and without deleting either portal entry.
+        const csvDesignLower = (csv.design_raw ?? "").trim().toLowerCase();
+        const verbatim = csvDesignLower
+          ? exactMatches.filter((pv) => (pv.color_name ?? "").trim().toLowerCase() === csvDesignLower)
+          : [];
+        if (verbatim.length === 1) {
+          const pv = verbatim[0];
+          matchedItems.push(buildMatchedItem(csv, pv, "verbatim_tiebreak"));
+          matchedPortalKeys.add(`${pv.product_id}||${pv.size_label}||${pv.color_name ?? ""}`);
+          continue;
+        }
         reviewItems.push({
           bezeichnung: csv.bezeichnung,
           model_raw: csv.model_raw,
