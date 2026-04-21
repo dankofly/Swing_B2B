@@ -75,7 +75,19 @@ export default function AdminBriefing({ adminName, locale, stats }: AdminBriefin
       }),
     })
       .then((r) => r.json())
-      .then((d) => { if (!cancelled) setData(d); })
+      .then((d) => {
+        if (cancelled) return;
+        // Defensive: Gemini sometimes returns JSON with missing keys or a
+        // non-array briefing. Normalise to a safe shape before setState so
+        // downstream .map() can never receive undefined.
+        setData({
+          greeting: typeof d?.greeting === "string" ? d.greeting : undefined,
+          briefing: Array.isArray(d?.briefing) && d.briefing.length > 0
+            ? d.briefing.filter((x: unknown) => typeof x === "string")
+            : ["Dashboard bereit."],
+          emoji: typeof d?.emoji === "string" ? d.emoji : "📊",
+        });
+      })
       .catch(() => {
         if (!cancelled) setData({ briefing: ["Dashboard bereit."], emoji: "📊" });
       })
