@@ -14,7 +14,9 @@ const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: https://${supabaseHost}`,
+  // `blob:` is required so the admin product form can preview uploaded color pictograms
+  // via URL.createObjectURL before they are resized and sent to Supabase Storage.
+  `img-src 'self' data: blob: https://${supabaseHost}`,
   `connect-src 'self' https://${supabaseHost} https://generativelanguage.googleapis.com`,
   "font-src 'self' https://fonts.gstatic.com",
   "frame-ancestors 'none'",
