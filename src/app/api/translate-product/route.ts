@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdminUser } from "@/lib/auth-api";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { generateWithRetry, GeminiRateLimitError } from "@/lib/gemini";
 
@@ -11,16 +11,9 @@ const checkLimit = createRateLimiter("gemini", 10, 60_000);
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth guard: admin only
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
-    }
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-    if (!profile || !["superadmin", "admin"].includes(profile.role)) {
-      return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
-    }
+    const guard = await requireAdminUser();
+    if ("response" in guard) return guard.response;
+    const { user } = guard;
 
     if (checkLimit(user.id)) return NextResponse.json({ error: "Zu viele Anfragen. Bitte warten Sie eine Minute." }, { status: 429 });
 

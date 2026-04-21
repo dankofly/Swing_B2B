@@ -1,25 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdminUser } from "@/lib/auth-api";
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-
-  // Check auth
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
-  }
-
-  // Check admin role
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !["superadmin", "admin"].includes(profile.role)) {
-    return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
-  }
+  const guard = await requireAdminUser();
+  if ("response" in guard) return guard.response;
 
   try {
     const formData = await request.formData();

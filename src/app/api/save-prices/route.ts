@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createClient as createAuthClient } from "@/lib/supabase/server";
+import { requireAdminUser } from "@/lib/auth-api";
 import { canonicalKey } from "@/lib/canonical-keys";
 import { buildFallbackMatchingPrompt } from "@/lib/gemini-prompts";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -30,19 +30,8 @@ interface ProductSizeRow {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Auth guard
-    const authClient = await createAuthClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
-
-    const { data: profile } = await authClient
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    if (!profile || !["superadmin", "admin"].includes(profile.role)) {
-      return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
-    }
+    const guard = await requireAdminUser();
+    if ("response" in guard) return guard.response;
 
     const body = await request.json();
     const { company_id: companyId, extracted } = body;

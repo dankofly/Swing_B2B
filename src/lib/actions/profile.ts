@@ -4,6 +4,29 @@ import { createClient, createAdminClient, guardAdmin } from "@/lib/supabase/serv
 import { revalidatePath } from "next/cache";
 import { buildInvitationEmail, sendEmail } from "@/lib/email";
 
+// ── Input sanitation helpers ──────────────────────────────────────────
+// Profile mutations were previously mass-assigning raw FormData strings
+// directly into the companies table. Any dealer could set contact_email
+// to arbitrary text (CRLF injection risk for the outbound email pipeline)
+// and run past any length caps. These helpers enforce:
+//   - CRLF stripping (prevents header/content injection in email templates)
+//   - length caps (DB-friendly, prevents oversized payloads)
+//   - null coercion for empty strings
+//   - email format check for the one field that flows back into SMTP recipients
+
+function cleanStr(v: unknown, max: number): string | null {
+  if (typeof v !== "string") return null;
+  const cleaned = v.replace(/[\r\n]/g, " ").trim();
+  if (cleaned.length === 0) return null;
+  return cleaned.slice(0, max);
+}
+function requireStr(v: unknown, max: number): string {
+  const c = cleanStr(v, max);
+  if (c === null) throw new Error("Pflichtfeld fehlt");
+  return c;
+}
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function updateMyProfile(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -21,21 +44,35 @@ export async function updateMyProfile(formData: FormData) {
   if (!profile?.company_id)
     return { success: false, error: "Kein Unternehmen zugeordnet" };
 
-  const admin = createAdminClient();
+  // Sanitize + validate every field before touching the DB.
+  // Required fields: name, contact_email (email format).
+  // Everything else is optional and gets null on empty/invalid.
+  let fields;
+  try {
+    const contactEmail = requireStr(formData.get("contact_email"), 200);
+    if (!EMAIL_RE.test(contactEmail)) {
+      return { success: false, error: "Ungültige E-Mail-Adresse" };
+    }
+    fields = {
+      name: requireStr(formData.get("name"), 200),
+      contact_email: contactEmail,
+      phone: cleanStr(formData.get("phone"), 50),
+      phone_whatsapp: formData.get("phone_whatsapp") === "on",
+      address_street: cleanStr(formData.get("address_street"), 200),
+      address_zip: cleanStr(formData.get("address_zip"), 20),
+      address_city: cleanStr(formData.get("address_city"), 100),
+      address_country: cleanStr(formData.get("address_country"), 100),
+      vat_id: cleanStr(formData.get("vat_id"), 50),
+      updated_at: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Ungültige Eingabe",
+    };
+  }
 
-  // Update company fields
-  const fields = {
-    name: formData.get("name") as string,
-    contact_email: formData.get("contact_email") as string,
-    phone: (formData.get("phone") as string) || null,
-    phone_whatsapp: formData.get("phone_whatsapp") === "on",
-    address_street: (formData.get("address_street") as string) || null,
-    address_zip: (formData.get("address_zip") as string) || null,
-    address_city: (formData.get("address_city") as string) || null,
-    address_country: (formData.get("address_country") as string) || null,
-    vat_id: (formData.get("vat_id") as string) || null,
-    updated_at: new Date().toISOString(),
-  };
+  const admin = createAdminClient();
 
   const { error: companyError } = await admin
     .from("companies")
@@ -45,8 +82,8 @@ export async function updateMyProfile(formData: FormData) {
   if (companyError)
     return { success: false, error: companyError.message };
 
-  // Update profile full_name
-  const fullName = formData.get("full_name") as string;
+  // Update profile full_name (optional, same sanitation)
+  const fullName = cleanStr(formData.get("full_name"), 200);
   if (fullName) {
     await admin
       .from("profiles")
@@ -185,15 +222,22 @@ export async function deleteUser(userId: string) {
     return { success: false, error: "Benutzer nicht gefunden" };
   }
 
-  // Delete profile first (FK constraint)
-  await admin.from("profiles").delete().eq("id", userId);
-
-  // Delete auth user
+  // Delete the auth user FIRST. The profiles.id FK uses ON DELETE CASCADE
+  // (see schema.sql:31), so the profile row is removed automatically as
+  // part of this call. Doing it in this order means: if the auth deletion
+  // fails, the profile survives and the user is still coherent. The
+  // previous order (profile first, then auth) left an orphaned auth user
+  // with no profile row when the second step errored, and the profile
+  // auto-create trigger would not rehydrate it.
   const { error: authError } = await admin.auth.admin.deleteUser(userId);
-
   if (authError) {
     return { success: false, error: authError.message };
   }
+
+  // Defensive: if for any reason the cascade didn't fire (trigger disabled,
+  // manual RLS change), clean up the profile row explicitly. No-op if
+  // already gone.
+  await admin.from("profiles").delete().eq("id", userId);
 
   revalidatePath("/admin/profil");
   return { success: true };

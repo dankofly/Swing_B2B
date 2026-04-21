@@ -10,8 +10,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
 
-  const q = request.nextUrl.searchParams.get("q") || "";
+  const rawQ = request.nextUrl.searchParams.get("q") || "";
   const exclude = request.nextUrl.searchParams.get("exclude") || "";
+
+  // Defensive: cap length (DoS) + escape ILIKE wildcards so `%` and `_`
+  // in the user query match literally instead of expanding.
+  const q = rawQ.slice(0, 100).replace(/[%_\\]/g, (c) => `\\${c}`);
 
   if (q.length < 2) {
     return NextResponse.json({ products: [] });

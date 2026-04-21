@@ -203,6 +203,65 @@ function buildHtml(data: RegistrationData): string {
 </html>`;
 }
 
+// ── Input hardening helpers ───────────────────────────────────────────
+// This endpoint is intentionally unauthenticated (fired right after
+// supabase.auth.signUp, before the user's first /api/refresh cycle) so
+// we cannot rely on session. Everything else is locked down:
+//   - IP rate-limit (3/min, already in place)
+//   - Email rate-limit (3/10min per submitted email — harder to flood)
+//   - Every string field strictly validated: CRLF-stripped, length-capped
+//   - Required fields fail with 400, optional fields coerced to ""
+//   - Email must match a basic format regex
+//   - companyType must be from a known enum
+
+const perEmail = createRateLimiter("notify-registration-email", 3, 600_000);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const VALID_TYPES = new Set(["dealer", "importer", "importer_network", "customer"]);
+
+function sanitize(v: unknown, max: number): string {
+  if (typeof v !== "string") return "";
+  return v.replace(/[\r\n]/g, " ").trim().slice(0, max);
+}
+function boolish(v: unknown): boolean {
+  return v === true || v === "true" || v === "on";
+}
+
+function validate(raw: unknown): { data: RegistrationData } | { error: string } {
+  if (!raw || typeof raw !== "object") return { error: "Ungültige Anfrage" };
+  const b = raw as Record<string, unknown>;
+
+  const email = sanitize(b.email, 200).toLowerCase();
+  if (!EMAIL_RE.test(email)) return { error: "Ungültige E-Mail-Adresse" };
+
+  const companyName = sanitize(b.companyName, 200);
+  if (!companyName) return { error: "Firmenname fehlt" };
+
+  const fullName = sanitize(b.fullName, 200);
+  if (!fullName) return { error: "Ansprechpartner fehlt" };
+
+  const companyType = sanitize(b.companyType, 40);
+  if (!VALID_TYPES.has(companyType)) return { error: "Ungültiger Firmen-Typ" };
+
+  return {
+    data: {
+      companyName,
+      companyType,
+      fullName,
+      email,
+      phone: sanitize(b.phone, 50),
+      phoneWhatsapp: boolish(b.phoneWhatsapp),
+      addressStreet: sanitize(b.addressStreet, 200),
+      addressZip: sanitize(b.addressZip, 20),
+      addressCity: sanitize(b.addressCity, 100),
+      addressCountry: sanitize(b.addressCountry, 100),
+      vatId: sanitize(b.vatId, 50),
+      sellsParagliders: boolish(b.sellsParagliders),
+      sellsMiniwings: boolish(b.sellsMiniwings),
+      sellsParakites: boolish(b.sellsParakites),
+    },
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -210,11 +269,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Zu viele Anfragen" }, { status: 429 });
     }
 
-    const data: RegistrationData = await request.json();
+    // Reject oversized bodies early
+    const contentLength = parseInt(request.headers.get("content-length") ?? "0", 10);
+    if (contentLength > 20_000) {
+      return NextResponse.json({ error: "Anfrage zu groß" }, { status: 413 });
+    }
+
+    const raw = await request.json().catch(() => null);
+    const validated = validate(raw);
+    if ("error" in validated) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
+    }
+    const data = validated.data;
+
+    // Second rate-limit keyed by email — guards against IP rotation floods
+    if (perEmail(data.email)) {
+      return NextResponse.json({ error: "Zu viele Registrierungen für diese E-Mail" }, { status: 429 });
+    }
 
     const sent = await sendEmail(
       ADMIN_EMAIL,
-      `Anfrage für den Zugang zu dem SWING B2B Portal — ${data.companyName.replace(/[\r\n]/g, "")}`,
+      `Anfrage für den Zugang zu dem SWING B2B Portal — ${data.companyName}`,
       buildHtml(data),
     );
 
