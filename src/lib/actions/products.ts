@@ -53,8 +53,14 @@ function parseProductFormData(formData: FormData) {
   const action_text_fr = formData.get("action_text_fr") as string;
   const website_url_en = formData.get("website_url_en") as string;
   const website_url_fr = formData.get("website_url_fr") as string;
+  // German number format: strip thousand-dots first, then convert decimal comma.
+  // Handles "2.390,00" → 2390, "2390,00" → 2390, "2390" → 2390.
+  // A placeholder of "2.118,52" that gets replace(",", ".") alone would yield
+  // "2.118.52" and parseFloat stops at the second dot, silently saving 2.118.
   const uvpRaw = formData.get("uvp_brutto") as string;
-  const uvp_brutto = uvpRaw ? parseFloat(uvpRaw.replace(",", ".")) : null;
+  const uvp_brutto = uvpRaw
+    ? parseFloat(uvpRaw.trim().replace(/\./g, "").replace(",", "."))
+    : null;
 
   return {
     name, description, category_id,
