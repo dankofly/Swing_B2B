@@ -484,7 +484,7 @@ export default async function KatalogPage({
                   {/* Badges top-left */}
                   <div className="absolute left-3 top-2.5 flex flex-wrap gap-1">
                     {isComingSoon && (
-                      <span className="rounded bg-white/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-swing-navy">
+                      <span className="badge-coming-soon rounded px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
                         {dict.katalog.badges.comingSoon}
                       </span>
                     )}
