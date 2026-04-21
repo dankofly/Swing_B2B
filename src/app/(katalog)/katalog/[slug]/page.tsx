@@ -8,6 +8,7 @@ import ActionCountdown from "@/components/katalog/ActionCountdown";
 import RelatedProductCard from "@/components/katalog/RelatedProductCard";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { localized } from "@/lib/i18n/localized";
+import { getEffectiveCompanyId } from "@/lib/viewing-as";
 
 
 export default async function ProduktDetailPage({
@@ -120,7 +121,7 @@ export default async function ProduktDetailPage({
     }
   }
 
-  const viewingAsCompanyId = als && isAdmin ? als : undefined;
+  const viewingAsCompanyId = getEffectiveCompanyId(als, isAdmin);
 
   if (relatedIds.length > 0 && relatedRaw) {
     const relatedMap = new Map(relatedRaw.map((p: any) => [p.id, p]));

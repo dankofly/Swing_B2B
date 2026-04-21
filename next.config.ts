@@ -12,7 +12,11 @@ const supabaseHost = new URL(supabaseUrl).host;
 
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  // 'unsafe-eval' removed — not needed for production Next.js 16 builds.
+  // 'unsafe-inline' remains (required for Next.js flight manifest + inline
+  // bootstrap scripts); removing it requires a per-request nonce middleware
+  // which is tracked as a separate hardening task.
+  "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   // `blob:` is required so the admin product form can preview uploaded color pictograms
   // via URL.createObjectURL before they are resized and sent to Supabase Storage.

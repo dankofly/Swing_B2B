@@ -24,6 +24,7 @@ import WelcomeBanner from "@/components/katalog/WelcomeBanner";
 import { getDictionary, getLocale, getDateLocale } from "@/lib/i18n";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCompanyInquiriesForDashboard } from "@/lib/actions/inquiries";
+import { getEffectiveCompanyId } from "@/lib/viewing-as";
 
 
 const STATUS_COLORS: Record<string, { bg: string; bar: string }> = {
@@ -53,7 +54,7 @@ export default async function KundenDashboardPage({
     .single();
 
   const isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
-  const viewingAsCompanyId = als && isAdmin ? als : undefined;
+  const viewingAsCompanyId = getEffectiveCompanyId(als, isAdmin);
   const effectiveCompanyId = viewingAsCompanyId || profile?.company_id;
 
   if (!profile || !effectiveCompanyId) redirect("/katalog");

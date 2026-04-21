@@ -6,6 +6,7 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { localized } from "@/lib/i18n/localized";
 import AdminEditButton from "@/components/katalog/AdminEditButton";
 import CollapsibleFilters from "@/components/katalog/CollapsibleFilters";
+import { getEffectiveCompanyId } from "@/lib/viewing-as";
 
 export const revalidate = 60;
 
@@ -140,7 +141,7 @@ export default async function KatalogPage({
   const activeCount = [kategorie, en, gewicht].filter(Boolean).length;
 
   // Validate "als" param: only admins can use it
-  const viewingAsCompanyId = als && isAdmin ? als : undefined;
+  const viewingAsCompanyId = getEffectiveCompanyId(als, isAdmin);
   // Hide admin UI (gear icons etc.) when viewing as customer
   const showAdminUI = isAdmin && !viewingAsCompanyId;
 

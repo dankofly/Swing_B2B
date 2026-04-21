@@ -3,6 +3,7 @@ import { getMyInquiries, getCompanyInquiriesForDashboard } from "@/lib/actions/i
 import { FileText } from "lucide-react";
 import InquiryBoard from "@/components/katalog/InquiryBoard";
 import { getDictionary } from "@/lib/i18n";
+import { getEffectiveCompanyId } from "@/lib/viewing-as";
 
 
 export default async function MeineAnfragenPage({
@@ -22,7 +23,7 @@ export default async function MeineAnfragenPage({
       .single();
     isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
   }
-  const viewingAsCompanyId = als && isAdmin ? als : undefined;
+  const viewingAsCompanyId = getEffectiveCompanyId(als, isAdmin);
 
   const [inquiries, dict] = await Promise.all([
     viewingAsCompanyId

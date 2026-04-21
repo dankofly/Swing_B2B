@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { User } from "lucide-react";
 import ProfileForm from "./ProfileForm";
 import { getDictionary } from "@/lib/i18n";
+import { getEffectiveCompanyId } from "@/lib/viewing-as";
 
 
 export default async function ProfilPage({
@@ -25,7 +26,7 @@ export default async function ProfilPage({
     .single();
 
   const isAdmin = profile?.role === "admin" || profile?.role === "superadmin";
-  const viewingAsCompanyId = als && isAdmin ? als : undefined;
+  const viewingAsCompanyId = getEffectiveCompanyId(als, isAdmin);
   const effectiveCompanyId = viewingAsCompanyId || profile?.company_id;
 
   if (!profile || !effectiveCompanyId) redirect("/katalog");
