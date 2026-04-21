@@ -402,13 +402,16 @@ body::before {
     animation: badgeShimmer 3s ease-in-out infinite;
   }
 
-  /* ===== Coming Soon badge — minty gradient + glow pulse + shimmer ===== */
+  /* ===== Coming Soon badge — minty gradient + glow pulse + shimmer =====
+     Box-shadow glow is static (not animated) to keep paint cheap; only
+     transform/opacity animate (compositor-only). */
   .badge-coming-soon {
     position: relative;
     overflow: hidden;
     background: linear-gradient(135deg, #86efac 0%, #34d399 50%, #10b981 100%);
     color: #064e3b;
-    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6);
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+    will-change: transform;
     animation: comingSoonPulse 2.4s ease-in-out infinite;
   }
   .badge-coming-soon::before {
@@ -416,6 +419,7 @@ body::before {
     position: absolute;
     inset: 0;
     background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%);
+    will-change: transform;
     animation: comingSoonShine 3.5s ease-in-out infinite;
     pointer-events: none;
   }
@@ -426,7 +430,8 @@ body::before {
     overflow: hidden;
     background: linear-gradient(135deg, #fde68a 0%, #fcb923 50%, #b45309 100%);
     color: #1f2a55;
-    box-shadow: 0 0 0 0 rgba(252, 185, 35, 0.7);
+    box-shadow: 0 2px 6px rgba(180, 83, 9, 0.35);
+    will-change: transform;
     animation: preorderPulse 1.8s ease-in-out infinite;
   }
   .badge-preorder::before {
@@ -434,6 +439,7 @@ body::before {
     position: absolute;
     inset: 0;
     background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,0.6) 50%, transparent 65%);
+    will-change: transform;
     animation: comingSoonShine 2.8s ease-in-out infinite;
     pointer-events: none;
   }
@@ -444,7 +450,8 @@ body::before {
     overflow: hidden;
     background: linear-gradient(135deg, #fca5a5 0%, #ef4444 100%);
     color: #fff;
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+    will-change: transform, opacity;
     animation: fadeoutThrob 3.2s ease-in-out infinite;
   }
 
@@ -557,43 +564,42 @@ body::before {
   40% { transform: translateX(100%); }
 }
 
+/* Badge pulse animations are transform/opacity only (compositor-only, no paint).
+   Previous versions animated box-shadow which triggered paint every frame —
+   on a katalog grid with many badge-bearing cards this caused noticeable
+   UI lag on link clicks. */
 @keyframes comingSoonPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55), 0 2px 6px rgba(16, 185, 129, 0.25);
-  }
-  50% {
-    transform: scale(1.04);
-    box-shadow: 0 0 0 5px rgba(52, 211, 153, 0), 0 4px 10px rgba(16, 185, 129, 0.35);
-  }
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.04); }
 }
 
 @keyframes comingSoonShine {
   0%, 70%, 100% { transform: translateX(-120%); }
-  35% { transform: translateX(120%); }
+  35%           { transform: translateX(120%); }
 }
 
 @keyframes preorderPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(252, 185, 35, 0.65), 0 2px 6px rgba(180, 83, 9, 0.3);
-  }
-  50% {
-    transform: scale(1.06);
-    box-shadow: 0 0 0 6px rgba(252, 185, 35, 0), 0 5px 12px rgba(180, 83, 9, 0.45);
-  }
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.06); }
 }
 
 @keyframes fadeoutThrob {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
-    opacity: 0.92;
-  }
-  50% {
-    transform: scale(1.02);
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
-    opacity: 1;
+  0%, 100% { transform: scale(1);    opacity: 0.92; }
+  50%      { transform: scale(1.02); opacity: 1; }
+}
+
+/* Respect users who ask for less motion — disable non-essential animations */
+@media (prefers-reduced-motion: reduce) {
+  .badge-coming-soon,
+  .badge-preorder,
+  .badge-fadeout,
+  .badge-action,
+  .badge-shimmer,
+  .badge-coming-soon::before,
+  .badge-preorder::before,
+  .badge-action::after,
+  .badge-shimmer::after {
+    animation: none !important;
   }
 }
 
@@ -603,12 +609,15 @@ body::before {
   100% { box-shadow: 0 0 0 0 rgba(252, 185, 35, 0); }
 }
 
-/* ===== Aktion badge — animated eye-catcher ===== */
+/* ===== Aktion badge — animated eye-catcher =====
+   Box-shadow glow is static; only transform animates (compositor-only). */
 .badge-action {
   background: linear-gradient(135deg, #ff6b35, #ff3d00);
   color: #fff;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 2px 6px rgba(255, 61, 0, 0.3);
+  will-change: transform;
   animation: actionPulse 2s ease-in-out infinite;
 }
 
@@ -617,17 +626,18 @@ body::before {
   position: absolute;
   inset: 0;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  will-change: transform;
   animation: actionShine 3s ease-in-out infinite;
 }
 
 @keyframes actionPulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 61, 0, 0.4); }
-  50% { transform: scale(1.05); box-shadow: 0 0 8px 2px rgba(255, 61, 0, 0.25); }
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
 }
 
 @keyframes actionShine {
   0%, 70%, 100% { transform: translateX(-100%); }
-  35% { transform: translateX(100%); }
+  35%           { transform: translateX(100%); }
 }
 
 /* ===== Action banner — product detail promo ===== */
