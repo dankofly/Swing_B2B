@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@/lib/supabase/server";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { generateWithRetry, GeminiRateLimitError } from "@/lib/gemini";
 
 export const maxDuration = 30;
 
@@ -66,7 +67,7 @@ ${JSON.stringify(fieldsToTranslate, null, 2)}
 
 Return a JSON object with the same keys, translated to ${langName}.`;
 
-    const result = await model.generateContent(prompt);
+    const result = await generateWithRetry(model, prompt);
     const text = result.response.text();
 
     let translated: Record<string, string>;
@@ -79,6 +80,17 @@ Return a JSON object with the same keys, translated to ${langName}.`;
 
     return NextResponse.json({ translated });
   } catch (err) {
+    if (err instanceof GeminiRateLimitError) {
+      console.warn("Product translation rate-limited after retries:", err.message);
+      return NextResponse.json(
+        {
+          error:
+            "Google KI-Übersetzung ist gerade überlastet (Tages- oder Minuten-Kontingent ausgeschöpft). " +
+            "Bitte in ein paar Minuten nochmal versuchen.",
+        },
+        { status: 429 },
+      );
+    }
     console.error("Product translation error:", err);
     return NextResponse.json(
       {
