@@ -115,6 +115,19 @@ export default function PriceEditor({
     return map;
   }, [filtered]);
 
+  // Parse German-formatted price strings safely:
+  //   "2.590,00" → 2590      (thousand-dot stripped, comma → decimal-dot)
+  //   "2590,00"  → 2590
+  //   "2590"     → 2590
+  //   "" / junk  → null
+  // parseFloat alone on "2.590,00".replace(",", ".") yields 2.59 because
+  // parseFloat stops at the second dot — see git log for the incident.
+  function parseGermanPrice(raw: string): number | null {
+    if (!raw) return null;
+    const num = parseFloat(raw.trim().replace(/\./g, "").replace(",", "."));
+    return isNaN(num) || num <= 0 ? null : num;
+  }
+
   async function handleSave() {
     setSaving(true);
     setError(null);
@@ -122,8 +135,8 @@ export default function PriceEditor({
     try {
       const items = Object.entries(prices).map(([sizeId, vals]) => ({
         product_size_id: sizeId,
-        ek_netto: vals.ek && parseFloat(vals.ek) > 0 ? parseFloat(vals.ek) : null,
-        uvp_incl_vat: vals.uvp && parseFloat(vals.uvp) > 0 ? parseFloat(vals.uvp) : null,
+        ek_netto: parseGermanPrice(vals.ek),
+        uvp_incl_vat: parseGermanPrice(vals.uvp),
       }));
 
       await saveCustomerPrices(companyId, items);
