@@ -489,12 +489,12 @@ export default async function KatalogPage({
                       </span>
                     )}
                     {isPreorder && !isComingSoon && (
-                      <span className="rounded bg-swing-gold px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-swing-navy">
+                      <span className="badge-preorder rounded px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
                         {dict.katalog.badges.preorder}
                       </span>
                     )}
                     {isFadeOut && (
-                      <span className="rounded bg-red-500/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                      <span className="badge-fadeout rounded px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide">
                         {dict.katalog.badges.fadeOut}
                       </span>
                     )}
