@@ -16,8 +16,28 @@ export default function AdminError({
   const t = dict.errors.generic;
 
   useEffect(() => {
-    console.error("Admin error:", error);
+    // Best-effort server logging: fire-and-forget POST to a log endpoint.
+    // Safe to fail silently (no re-throw, no await, no user-facing impact).
+    const payload = {
+      message: error.message,
+      digest: error.digest,
+      stack: error.stack,
+      pathname: typeof window !== "undefined" ? window.location.pathname : "",
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+    };
+    console.error("[admin-error-boundary]", payload);
+    try {
+      fetch("/api/log-client-error", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(() => {});
+    } catch { /* noop */ }
   }, [error]);
+
+  const errorDetail = error.message || "Unbekannter Fehler";
+  const digest = error.digest;
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
@@ -31,6 +51,22 @@ export default function AdminError({
         </div>
         <h2 className="mb-2 text-xl font-bold text-swing-navy">{t.heading}</h2>
         <p className="mb-4 text-sm text-swing-gray-dark/70">{t.message}</p>
+
+        {/* Technical detail — admin-only page, safe to surface */}
+        <details className="mx-auto mb-5 max-w-sm rounded-lg border border-red-100 bg-red-50/60 px-4 py-3 text-left">
+          <summary className="cursor-pointer text-[11px] font-bold uppercase tracking-[0.12em] text-red-700/70">
+            Technische Details
+          </summary>
+          <p className="mt-2 break-all font-mono text-[11px] leading-relaxed text-red-900/80">
+            {errorDetail}
+          </p>
+          {digest && (
+            <p className="mt-2 font-mono text-[10px] text-red-700/60">
+              Error-ID: <code className="rounded bg-white/60 px-1.5 py-0.5">{digest}</code>
+            </p>
+          )}
+        </details>
+
         <div className="mx-auto mb-5 max-w-xs rounded-lg bg-gray-50 px-5 py-4 text-left">
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-swing-navy/40">{t.recoveryTitle}</p>
           <ul className="mt-2 space-y-1.5 text-xs text-swing-gray-dark/50">
