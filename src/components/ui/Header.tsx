@@ -96,16 +96,17 @@ export default function Header({
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6">
           {/* Left: Logo + Nav */}
           <div className="flex items-center gap-4 lg:gap-6">
-            {/* Logo */}
+            {/* Logo — entire pill is clickable, both words share the same hover color */}
             <Link
               href={isAdmin ? "/admin" : `/katalog${alsSuffix}`}
-              className="group flex items-center gap-2.5"
+              aria-label="SWING Paragliders — zum Dashboard"
+              className="group flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-swing-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-swing-navy"
             >
-              <div className="flex items-baseline gap-1">
-                <span className="text-lg font-bold italic tracking-[0.15em] text-white transition-colors duration-200 group-hover:text-swing-gold sm:text-xl">
+              <div className="flex items-baseline gap-1.5 text-lg font-bold italic tracking-[0.15em] sm:text-xl">
+                <span className="text-white transition-colors duration-200 group-hover:text-swing-gold">
                   SWING
                 </span>
-                <span className="hidden text-lg font-bold italic tracking-[0.15em] text-white/80 transition-colors duration-200 group-hover:text-white lg:inline">
+                <span className="hidden text-white/75 transition-colors duration-200 group-hover:text-swing-gold lg:inline">
                   PARAGLIDERS
                 </span>
               </div>
