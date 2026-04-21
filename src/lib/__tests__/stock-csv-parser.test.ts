@@ -41,6 +41,7 @@ describe("detectCSVFormat", () => {
     expect(format).toEqual({
       artikelCol: 0,
       bezeichnungCol: 1,
+      artikelgruppeCol: null,
       aug2Col: 2,
       aug3Col: 3,
       lagerstandCol: 4,
@@ -53,6 +54,7 @@ describe("detectCSVFormat", () => {
     expect(format).toEqual({
       artikelCol: 0,
       bezeichnungCol: 1,
+      artikelgruppeCol: null,
       aug2Col: null,
       aug3Col: null,
       lagerstandCol: 2,
@@ -65,9 +67,24 @@ describe("detectCSVFormat", () => {
     expect(format).toEqual({
       artikelCol: 1,
       bezeichnungCol: 2,
+      artikelgruppeCol: null,
       aug2Col: null,
       aug3Col: null,
       lagerstandCol: null,
+    });
+  });
+
+  test("detects Artikelgruppe + prefers 'Artikel Nummer' over 'Artikel' + first 'Lagerstand'", () => {
+    const header =
+      "Artikel;Artikel Nummer;Artikel Bezeichnung;Artikelgruppe;Colli Einkauf;Colli Verkauf;AUG 1;AUG 2;AUG 3;AUG 4;AUG 5;Lagerstand;Lagerstand 2;Lagerbewertung";
+    const format = detectCSVFormat(header);
+    expect(format).toEqual({
+      artikelCol: 1,           // "Artikel Nummer" (SKU), not "Artikel" (display text)
+      bezeichnungCol: 2,
+      artikelgruppeCol: 3,
+      aug2Col: 7,
+      aug3Col: 8,
+      lagerstandCol: 11,       // first "Lagerstand", not "Lagerstand 2"
     });
   });
 });
@@ -76,6 +93,7 @@ describe("filterRelevantRows", () => {
   const format: CSVFormat = {
     artikelCol: 0,
     bezeichnungCol: 1,
+    artikelgruppeCol: null,
     aug2Col: null,
     aug3Col: null,
     lagerstandCol: null,
@@ -130,6 +148,7 @@ describe("extractVariants", () => {
       {
         artikelNr: "123-NL-456",
         bezeichnung: "Mirage 2 RS S",
+        artikelgruppe: null,
         aug2: null,
         aug3: null,
         lagerstand: null,
@@ -152,6 +171,7 @@ describe("extractVariants", () => {
       {
         artikelNr: "123-NL-456",
         bezeichnung: "Gleitschirm Mirage 2 RS S Blue",
+        artikelgruppe: null,
         aug2: "Mirage 2 RS",
         aug3: "Mirage 2 RS S",
         lagerstand: 5,
@@ -174,6 +194,7 @@ describe("extractVariants", () => {
       {
         artikelNr: "123-NL-456",
         bezeichnung: "Escape 30",
+        artikelgruppe: null,
         aug2: null,
         aug3: null,
         lagerstand: null,
@@ -196,6 +217,7 @@ describe("extractVariants", () => {
       {
         artikelNr: "123-NL-456",
         bezeichnung: "Spitfire 3.9,5",
+        artikelgruppe: null,
         aug2: null,
         aug3: null,
         lagerstand: null,
@@ -210,6 +232,72 @@ describe("extractVariants", () => {
       size_raw: "9,5",
       design_raw: null,
     });
+  });
+
+  test("prefers parsed model over AUG 2 when parsed extends AUG 2 with a variant", () => {
+    // Real WinLine case: AUG 2 stored as "Wave RS" but actual model is "Wave RS D-Lite"
+    const rows = [
+      {
+        artikelNr: "106 11-LN-S-NE-74895",
+        bezeichnung: "Wave RS D-Lite 15 Lime",
+        artikelgruppe: "Parakite",
+        aug2: "Wave RS",
+        aug3: "Wave RS 15",
+        lagerstand: 1,
+      },
+    ];
+
+    const result = extractVariants(rows);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      model_raw: "Wave RS D-Lite", // NOT just "Wave RS" from AUG 2
+      size_raw: "15",
+      design_raw: "Lime",
+    });
+  });
+
+  test("falls back to parsed model when AUG 2 is an unrelated category label", () => {
+    // AUG 2 = "Zubehor" is a category label, not in Bezeichnung. pickModel should
+    // ignore it and keep the parsed "Airbag Brave". Size is extracted cleanly from
+    // AUG 3 so the row is NOT rejected by the size validator.
+    const rows = [
+      {
+        artikelNr: "191-NL-AD-21-0333",
+        bezeichnung: "Airbag Brave S",
+        artikelgruppe: null,
+        aug2: "Zubehor",
+        aug3: "Zubehor S",
+        lagerstand: 1,
+      },
+    ];
+
+    const result = extractVariants(rows);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      model_raw: "Airbag Brave", // NOT "Zubehor"
+      size_raw: "S",
+    });
+  });
+
+  test("skips rows whose extracted size is garbage (e.g. AUG 3 carries '(diverse)')", () => {
+    // Real case from WinLine: AUG 3 = "Gurtzeugzubehr (diverse)" — no real size
+    // encoded. isValidSize rejects "(diverse)" so the variant is dropped.
+    const rows = [
+      {
+        artikelNr: "191 885-NL-AD-21-0333",
+        bezeichnung: "Airbag Brave 4",
+        artikelgruppe: null,
+        aug2: "Gurtzeugzubehr",
+        aug3: "Gurtzeugzubehr (diverse)",
+        lagerstand: 1,
+      },
+    ];
+
+    const result = extractVariants(rows);
+
+    expect(result).toHaveLength(0);
   });
 });
 
@@ -353,5 +441,55 @@ describe("parseStockCSV", () => {
       csvRowCount: 0,
       filteredCount: 0,
     });
+  });
+
+  test("cuts freetext comments after comma in Bezeichnung", () => {
+    // Real WinLine sample: "Wave RS D-Lite 13 Red, Bremse nicht final, PM 12.11.2025"
+    // Before the fix, the color came out as "Red, Bremse nicht final, PM 12.11.2025".
+    const csv = `Artikel;Artikel Bezeichnung;AUG 2;AUG 3;Lagerstand
+106 11-RW-XS-NL-74989;Wave RS D-Lite 13 Red, Bremse nicht final, PM 12.11.2025;Wave RS;Wave RS 13;1,00`;
+
+    const result = parseStockCSV(csv);
+
+    expect(result.aggregated).toHaveLength(1);
+    expect(result.aggregated[0]).toMatchObject({
+      model_raw: "Wave RS D-Lite",
+      size_raw: "13",
+      design_raw: "Red",
+      design_normalized: "red",
+      stock_total: 1,
+    });
+  });
+
+  test("aggregates multiple serial rows into a single (model,color,size) total", () => {
+    // Each row in a WinLine Bestandsliste = 1 physical unit with a serial suffix.
+    // Two rows with same model+color+size should sum to 2 stück.
+    const csv = `Artikel;Artikel Bezeichnung;AUG 2;AUG 3;Lagerstand
+101 22-LR-S-NL-74805;Miura 2 RS S Spicy;Miura 2 RS;Miura 2 RS S;1,00
+101 22-LR-S-NL-75088;Miura 2 RS S Spicy;Miura 2 RS;Miura 2 RS S;1,00
+101 22-RL-S-NL-74808;Miura 2 RS S Chili;Miura 2 RS;Miura 2 RS S;1,00`;
+
+    const result = parseStockCSV(csv);
+
+    expect(result.aggregated).toHaveLength(2); // Spicy + Chili
+    const spicy = result.aggregated.find((v) => v.design_normalized === "spicy");
+    const chili = result.aggregated.find((v) => v.design_normalized === "chili");
+    expect(spicy?.stock_total).toBe(2);
+    expect(spicy?.source_count).toBe(2);
+    expect(chili?.stock_total).toBe(1);
+  });
+
+  test("filters rows by Artikelgruppe (spare parts, accessories, components)", () => {
+    const csv = `Artikel;Artikel Nummer;Artikel Bezeichnung;Artikelgruppe;AUG 2;AUG 3;Lagerstand
+A;101 22-LR-S-NL-74805;Miura 2 RS S Spicy;Gleitschirm;Miura 2 RS;Miura 2 RS S;1,00
+B;191 885-NL-AD-21-0333;Airbag Brave 4;Zubehr;Gurtzeugzubehr;Gurtzeugzubehr (diverse);1,00
+C;509 00-NL-0908008;LiIo Akku 14 Zellen;Motoren u. Zubehr;Akku;LiIo;1,00
+D;50A13010M02009-00-NL-XX;Airbag Luna NG Vorne;PASA;Landedmpfer;Landedmpfer (diverse);1,00`;
+
+    const result = parseStockCSV(csv);
+
+    // Only the Miura row (Artikelgruppe = Gleitschirm) should survive.
+    expect(result.aggregated).toHaveLength(1);
+    expect(result.aggregated[0].model_normalized).toBe("miura2rs");
   });
 });

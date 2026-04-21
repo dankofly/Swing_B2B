@@ -96,15 +96,20 @@ Zwei Varianten (abhängig von Lizenz):
 
 > Only product_sizes rows that already exist in the B2B portal are ever touched. WinLine items with no matching portal product are collected into `items_not_in_portal` and reported — no INSERT, no new-product creation, no schema changes.
 
-Die Response zeigt das explizit in vier Kategorien:
+Die Response zeigt das explizit in fünf Kategorien:
 
 | Feld | Bedeutung |
 |---|---|
 | `portal_total` | Wie viele `product_sizes` existieren im B2B-Portal |
 | `portal_updated` | Portal-Produkte deren Bestand aktualisiert wurde (alter ≠ neuer Wert) |
+| `portal_zeroed` | Subset von `portal_updated`: Portal-Produkte auf 0 gesetzt weil **Modellfamilie im CSV war, diese Größe aber fehlte** (ausverkauft) |
 | `portal_unchanged` | Portal-Produkte im CSV gefunden, Bestand war bereits korrekt |
-| `portal_untouched` | Portal-Produkte die im CSV **fehlen** — Bestand bleibt wie er war |
+| `portal_untouched` | Portal-Produkte deren **Modellfamilie komplett im CSV fehlt** — Bestand bleibt wie er war (schützt vor WinLine-Filter-Bugs) |
 | `items_not_in_portal` | WinLine-Zeilen ohne passendes Portal-Produkt — ignoriert |
+
+**Warum zwei Kategorien für „im Portal aber nicht aktualisiert"?**
+- `portal_zeroed` = WinLine hat das Modell exportiert, aber diese spezielle Größe/Farbe nicht mehr → echter Ausverkauf → Stock auf 0.
+- `portal_untouched` = WinLine hat das gesamte Modell nicht exportiert → wahrscheinlich Export-Filter-Bug → alter Stand bleibt, kein Massen-Zero-out.
 
 ### 4. Monitoring
 
@@ -120,6 +125,7 @@ Der Task schreibt pro Lauf eine JSON-Datei nach `sync-logs\YYYY-MM-DD_HHMMSS.jso
     "success": true,
     "portal_total": 180,
     "portal_updated": 142,
+    "portal_zeroed": 7,
     "portal_unchanged": 35,
     "portal_untouched": 3,
     "items_not_in_portal": 8,

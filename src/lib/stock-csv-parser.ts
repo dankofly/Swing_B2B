@@ -11,6 +11,7 @@ import {
   normalizeDesign,
   stockMatchKey,
   modelSizeKey,
+  isValidSize,
 } from "./canonical-keys";
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ import {
 export interface CSVFormat {
   artikelCol: number;       // "Artikel" or article number column
   bezeichnungCol: number;   // "Artikel Bezeichnung" column
+  artikelgruppeCol: number | null; // "Artikelgruppe" (category filter)
   aug2Col: number | null;   // "AUG 2" (model hint)
   aug3Col: number | null;   // "AUG 3" (size hint)
   lagerstandCol: number | null; // "Lagerstand" (stock quantity)
@@ -26,6 +28,7 @@ export interface CSVFormat {
 export interface CSVRow {
   artikelNr: string;
   bezeichnung: string;
+  artikelgruppe: string | null;
   aug2: string | null;
   aug3: string | null;
   lagerstand: number | null;
@@ -63,6 +66,21 @@ const EXCLUDE_PATTERNS = [
   /ACHTUNG/i,
   /Lasttest/i,
 ];
+
+/**
+ * Artikelgruppe values that indicate spare parts, components, or accessories
+ * that should NOT be synced into the B2B portal. Umlaut-stripped variants
+ * included because the WinLine export encoding is inconsistent (CP1252/UTF-8
+ * round-trips that lose non-ASCII characters).
+ */
+const SKIP_ARTIKELGRUPPE = new Set([
+  "zubehr", "zubehor", "zubehör",
+  "motoren u. zubehr", "motoren u. zubehor", "motoren u. zubehör",
+  "e-motor zubehr", "e-motor zubehor", "e-motor zubehör",
+  "landeschirm bauteil",
+  "pasa",
+  "versand",
+]);
 
 /** Known size labels — order matters (longer first to avoid partial matches). */
 const SIZE_LABELS = [
@@ -116,6 +134,7 @@ export function detectCSVFormat(headerLine: string): CSVFormat {
   // Find key columns by header name
   let artikelCol = -1;
   let bezeichnungCol = -1;
+  let artikelgruppeCol: number | null = null;
   let aug2Col: number | null = null;
   let aug3Col: number | null = null;
   let lagerstandCol: number | null = null;
@@ -123,15 +142,22 @@ export function detectCSVFormat(headerLine: string): CSVFormat {
   for (let i = 0; i < cols.length; i++) {
     const c = cols[i];
     if (c === "artikel" || c === "artikel nummer" || c === "artikelnr" || c === "artikelnummer") {
-      artikelCol = i;
+      // Prefer "artikel nummer" over "artikel" (the former is the SKU, the latter is a display string).
+      // If we already have a column, only overwrite for a more specific header name.
+      if (artikelCol === -1 || c === "artikel nummer" || c === "artikelnummer" || c === "artikelnr") {
+        artikelCol = i;
+      }
     } else if (c === "artikel bezeichnung" || c === "bezeichnung" || c === "artikelbezeichnung") {
       bezeichnungCol = i;
+    } else if (c === "artikelgruppe" || c === "warengruppe") {
+      artikelgruppeCol = i;
     } else if (c === "aug 2" || c === "aug2") {
       aug2Col = i;
     } else if (c === "aug 3" || c === "aug3") {
       aug3Col = i;
     } else if (c === "lagerstand" || c === "bestand" || c === "lager" || c === "menge") {
-      lagerstandCol = i;
+      // Prefer the first "Lagerstand" (main warehouse) over "Lagerstand 2" etc.
+      if (lagerstandCol === null) lagerstandCol = i;
     }
   }
 
@@ -139,7 +165,7 @@ export function detectCSVFormat(headerLine: string): CSVFormat {
   if (artikelCol === -1) artikelCol = 1;
   if (bezeichnungCol === -1) bezeichnungCol = 2;
 
-  return { artikelCol, bezeichnungCol, aug2Col, aug3Col, lagerstandCol };
+  return { artikelCol, bezeichnungCol, artikelgruppeCol, aug2Col, aug3Col, lagerstandCol };
 }
 
 /** Check if a row should be excluded based on patterns. */
@@ -147,9 +173,19 @@ function shouldExclude(bezeichnung: string): boolean {
   return EXCLUDE_PATTERNS.some((p) => p.test(bezeichnung));
 }
 
-/** Clean a Bezeichnung string for processing. */
+/** Clean a Bezeichnung string for processing.
+ *
+ * Cuts off freetext comments that WinLine operators append to the article
+ * description. Observed patterns in real exports:
+ *   - `Model Size Color; free text`               → split on ";"
+ *   - `Model Size Color, free text`               → split on ","
+ *   - `Model Size Color - Stückprüfung 21.5.2025` → strip "- …prüfung …"
+ *   - `Model Size Color ** internal note`         → strip "** …"
+ * Colors in the SWING catalogue never contain `,` or `;`, so cutting on
+ * them is safe (verified against real WinLine exports, 260+ rows).
+ */
 function cleanBezeichnung(raw: string): string {
-  let cleaned = raw.split(";")[0].trim();
+  let cleaned = raw.split(";")[0].split(",")[0].trim();
   cleaned = cleaned.replace(/\*{2,}.*$/, "").trim();
   cleaned = cleaned.replace(/\s*-\s*\w+pr[uü]fung.*$/i, "").trim();
   cleaned = cleaned.replace(/\s*-\s*St[uü]ckpr[uü]fung.*$/i, "").trim();
@@ -183,6 +219,13 @@ export function filterRelevantRows(
     if (!/-NL-/i.test(artikelNr) && !/-NE-/i.test(artikelNr)) continue;
     if (shouldExclude(bezeichnung)) continue;
 
+    const artikelgruppe = format.artikelgruppeCol !== null
+      ? (cols[format.artikelgruppeCol]?.trim() || null)
+      : null;
+
+    // Skip spare parts / components / accessories — they don't belong in the B2B portal.
+    if (artikelgruppe && SKIP_ARTIKELGRUPPE.has(artikelgruppe.toLowerCase())) continue;
+
     const aug2 = format.aug2Col !== null ? (cols[format.aug2Col]?.trim() || null) : null;
     const aug3 = format.aug3Col !== null ? (cols[format.aug3Col]?.trim() || null) : null;
     const lagerstand = format.lagerstandCol !== null
@@ -192,6 +235,7 @@ export function filterRelevantRows(
     rows.push({
       artikelNr,
       bezeichnung: cleanBezeichnung(bezeichnung),
+      artikelgruppe,
       aug2,
       aug3,
       lagerstand,
@@ -298,6 +342,44 @@ function extractSizeFromAug3(aug2: string, aug3: string): string | null {
   return null;
 }
 
+/** Pick the best model name from AUG 2 vs. parsed Bezeichnung.
+ *
+ * Three cases observed in real WinLine exports:
+ *
+ * (A) AUG 2 == parsed.model                  → either works, pick AUG 2 (ERP-canonical)
+ *     "Miura 2 RS" / "Miura 2 RS"
+ *
+ * (B) parsed.model extends AUG 2 with variant → pick parsed (more specific)
+ *     AUG 2 "Wave RS" / parsed "Wave RS D-Lite" — Bezeichnung has "D-Lite", AUG 2 is incomplete
+ *
+ * (C) AUG 2 is a category label, unrelated   → pick parsed
+ *     AUG 2 "Gurtzeugzubehr" / parsed "Airbag Brave" — AUG 2 is not in Bezeichnung at all
+ *
+ * (D) AUG 2 appears in Bezeichnung, no extension → pick AUG 2 (ERP-canonical)
+ *     AUG 2 "ESCAPE" / parsed "Escape" — AUG 2 preserves the casing
+ */
+function pickModel(aug2: string | null, parsedModel: string, bezeichnung: string): string {
+  if (!aug2) return parsedModel;
+  if (!parsedModel) return aug2;
+
+  const aug2Lower = aug2.toLowerCase();
+  const parsedLower = parsedModel.toLowerCase();
+  const bezLower = bezeichnung.toLowerCase();
+
+  // Case B: parsed model is a more specific version of AUG 2 (adds variant like "D-Lite")
+  if (parsedLower !== aug2Lower && parsedLower.startsWith(aug2Lower + " ")) {
+    return parsedModel;
+  }
+
+  // Case A or D: AUG 2 appears in Bezeichnung → trust AUG 2 (ERP-canonical spelling)
+  if (bezLower.includes(aug2Lower)) {
+    return aug2;
+  }
+
+  // Case C: AUG 2 is unrelated to Bezeichnung (category label) → ignore AUG 2
+  return parsedModel;
+}
+
 /** Extract variants from parsed CSV rows. */
 export function extractVariants(rows: CSVRow[]): ExtractedVariant[] {
   const variants: ExtractedVariant[] = [];
@@ -305,9 +387,7 @@ export function extractVariants(rows: CSVRow[]): ExtractedVariant[] {
   for (const row of rows) {
     const parsed = parseBezeichnung(row.bezeichnung);
 
-    // AUG 2 is the authoritative model name from the ERP system.
-    // Always prefer it over parsed Bezeichnung.
-    const model = row.aug2 || parsed.model;
+    const model = pickModel(row.aug2, parsed.model, row.bezeichnung);
 
     // Determine size: AUG 3 contains "model size" — extract just the size part
     let size: string;
@@ -324,6 +404,10 @@ export function extractVariants(rows: CSVRow[]): ExtractedVariant[] {
     const stock = row.lagerstand ?? 1; // fallback: each row = 1 unit
 
     if (!model || !size) continue; // safety: skip if model or size is empty
+
+    // Skip rows whose size is garbage (e.g. "(diverse)", "Zellen/24Ah").
+    // AUG 3 sometimes carries category placeholders instead of a real size.
+    if (!isValidSize(normalizeSize(size))) continue;
 
     variants.push({
       model_raw: model,

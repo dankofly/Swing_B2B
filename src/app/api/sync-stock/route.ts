@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual } from "node:crypto";
 import { parseStockCSV } from "@/lib/stock-csv-parser";
-import { stockMatchKey } from "@/lib/canonical-keys";
+import { stockMatchKey, normalizeModel } from "@/lib/canonical-keys";
 
 export const maxDuration = 60;
 
@@ -25,6 +25,11 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
  * 2. Idempotent: re-running with the same CSV produces zero updates.
  * 3. No cascade: `products`, `product_colors`, `customer_prices`, etc. are
  *    never modified by this route.
+ * 4. Family-guarded zero-out: if a portal size is missing from the CSV but
+ *    its model family (normalized model name) appears elsewhere in the CSV,
+ *    its stock is set to 0 — the missing size has sold out. If the whole
+ *    family is missing (possible WinLine export filter bug), the size is
+ *    left untouched to avoid mass zero-outs from a bad export.
  * ──────────────────────────────────────────────────────────────────────
  *
  * Auth: `Authorization: Bearer ${STOCK_SYNC_TOKEN}` header.
@@ -181,8 +186,10 @@ export async function POST(request: NextRequest) {
 
     const portalSizeIds = new Set<string>((sizes ?? []).map((s) => s.id));
     const updateBySizeId = new Map<string, number>();
+    const zeroedSizeIds = new Set<string>();
     const itemsNotInPortal: ItemNotInPortal[] = [];
 
+    // ─── Phase A: Match CSV items → stock updates ──────────────────────
     for (const item of aggregated) {
       const hit = byFullKey.get(item.match_key) ?? byModelSize.get(item.model_size_key);
       if (hit) {
@@ -196,6 +203,25 @@ export async function POST(request: NextRequest) {
           stock: item.stock_total,
           match_key: item.match_key,
         });
+      }
+    }
+
+    // ─── Phase B: Family-guarded zero-out (invariant #4) ───────────────
+    // Portal sizes whose model family appears in CSV but this specific size
+    // does not → the size sold out. Set stock to 0. Families entirely absent
+    // from the CSV stay untouched (guards against WinLine export filter bugs).
+    const seenModels = new Set<string>(aggregated.map((v) => v.model_normalized));
+    const productById = new Map<string, { id: string; name: string }>(
+      (products ?? []).map((p) => [p.id, { id: p.id, name: p.name }]),
+    );
+
+    for (const size of sizes ?? []) {
+      if (updateBySizeId.has(size.id)) continue; // already matched by CSV
+      const product = productById.get(size.product_id);
+      if (!product) continue;
+      if (seenModels.has(normalizeModel(product.name))) {
+        updateBySizeId.set(size.id, 0);
+        zeroedSizeIds.add(size.id);
       }
     }
 
@@ -235,13 +261,17 @@ export async function POST(request: NextRequest) {
       updateErrors += results.filter((r) => r.error).length;
     }
 
+    // Count how many of the actual writes were zero-outs (for admin visibility)
+    const actualZeroedCount = updates.filter((u) => zeroedSizeIds.has(u.size_id)).length;
+
     return NextResponse.json({
       success: true,
       // Portal-only accounting — only products that exist in the B2B portal:
       portal_total: portalSizeIds.size,
       portal_updated: updates.length,
+      portal_zeroed: actualZeroedCount,              // subset of updated: sold-out sizes (invariant #4)
       portal_unchanged: updateBySizeId.size - updates.length,
-      portal_untouched: portalUntouchedCount, // in portal but missing from CSV
+      portal_untouched: portalUntouchedCount,        // model family absent from CSV — stock kept as-is
       // CSV items that have no corresponding portal product — NOT updated:
       items_not_in_portal: itemsNotInPortal.length,
       items_not_in_portal_sample: itemsNotInPortal.slice(0, 50),
