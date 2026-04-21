@@ -860,7 +860,7 @@ const en: Dictionary = {
     totalPieces: "pcs. total",
     before: "before",
     unassigned: "Unassigned",
-    unassignedHint: "These items could not be matched to a catalog product. Please check if the product/size is set up in the catalog.",
+    unassignedHint: "These CSV items have no matching product in the portal and are therefore ignored — nothing is created automatically. If you want stock tracking for these, create the product/size/color in the product section first.",
     designation: "Description",
     recognizedProduct: "Recognized product",
     size: "Size",

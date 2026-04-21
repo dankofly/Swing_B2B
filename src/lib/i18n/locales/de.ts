@@ -860,7 +860,7 @@ const de: Dictionary = {
     totalPieces: "Stk. gesamt",
     before: "vorher",
     unassigned: "Nicht zugeordnet",
-    unassignedHint: "Diese Artikel konnten keinem Katalog-Produkt zugeordnet werden. Prüfen Sie ob das Produkt/die Größe im Katalog angelegt ist.",
+    unassignedHint: "Diese CSV-Artikel haben kein passendes Produkt im Portal und werden daher ignoriert — es wird nichts automatisch angelegt. Wenn Sie dafür Lagerstand führen möchten, legen Sie das Produkt/die Größe/die Farbe zuerst im Produktbereich an.",
     designation: "Bezeichnung",
     recognizedProduct: "Erkanntes Produkt",
     size: "Größe",

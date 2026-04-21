@@ -860,7 +860,7 @@ const fr: Dictionary = {
     totalPieces: "pcs. au total",
     before: "avant",
     unassigned: "Non attribués",
-    unassignedHint: "Ces articles n'ont pas pu être associés à un produit du catalogue. Vérifiez si le produit/la taille est configuré(e) dans le catalogue.",
+    unassignedHint: "Ces articles CSV n'ont pas de produit correspondant dans le portail et sont donc ignorés — rien n'est créé automatiquement. Si vous souhaitez suivre leur stock, créez d'abord le produit/la taille/la couleur dans la section produits.",
     designation: "Désignation",
     recognizedProduct: "Produit reconnu",
     size: "Taille",
