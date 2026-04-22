@@ -25,6 +25,7 @@ import { getCompanyInquiries } from "@/lib/actions/inquiries";
 import { getCompanyNotes } from "@/lib/actions/company-notes";
 import CompanyStats from "./CompanyStats";
 import InviteCustomerButton from "./InviteCustomerButton";
+import ResendInvitationButton from "./ResendInvitationButton";
 import LocalClock from "./LocalClock";
 import { getDictionary, getLocale, getDateLocale } from "@/lib/i18n";
 
@@ -264,25 +265,30 @@ export default async function KundenDetailPage({
                 <div className="mb-2 space-y-1.5">
                   {company.profiles.map(
                     (p: { id: string; email: string; full_name: string | null; role: string; last_sign_in_at: string | null }) => (
-                      <div key={p.id} className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <span className="text-xs text-swing-navy">{p.full_name || p.email}</span>
-                          {p.last_sign_in_at && (
-                            <p className="text-[10px] text-swing-navy/30">
-                              Login: {new Date(p.last_sign_in_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                            </p>
-                          )}
-                          {!p.last_sign_in_at && (
-                            <p className="text-[10px] italic text-swing-navy/20">Noch nie eingeloggt</p>
-                          )}
+                      <div key={p.id}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <span className="text-xs text-swing-navy">{p.full_name || p.email}</span>
+                            {p.last_sign_in_at && (
+                              <p className="text-[10px] text-swing-navy/30">
+                                Login: {new Date(p.last_sign_in_at).toLocaleDateString(dl, { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            )}
+                            {!p.last_sign_in_at && (
+                              <p className="text-[10px] italic text-swing-navy/20">Noch nie eingeloggt</p>
+                            )}
+                          </div>
+                          <span className="shrink-0 rounded bg-swing-navy/10 px-2 py-0.5 text-[10px] font-bold text-swing-navy">{p.role}</span>
                         </div>
-                        <span className="shrink-0 rounded bg-swing-navy/10 px-2 py-0.5 text-[10px] font-bold text-swing-navy">{p.role}</span>
+                        {!p.last_sign_in_at && p.role === "buyer" && (
+                          <ResendInvitationButton companyId={company.id} email={p.email} />
+                        )}
                       </div>
                     )
                   )}
                 </div>
               )}
-              {!company.profiles.some((p: { last_sign_in_at: string | null }) => p.last_sign_in_at) && (
+              {(!company.profiles || company.profiles.length === 0) && (
                 <InviteCustomerButton
                   companyId={company.id}
                   companyEmail={company.contact_email || ""}

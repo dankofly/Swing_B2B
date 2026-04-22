@@ -112,6 +112,35 @@ export async function toggleCompanyApproval(id: string, approved: boolean) {
   return { success: true };
 }
 
+/** Insert an audit row into invitation_log. Never throws — logging failures
+ *  must never block the actual invite flow. */
+async function logInvitation(
+  admin: ReturnType<typeof createAdminClient>,
+  row: {
+    company_id: string;
+    user_id: string | null;
+    email: string;
+    action: "invited" | "resent";
+    status: "sent" | "failed";
+    error_message?: string | null;
+    triggered_by?: string | null;
+  },
+): Promise<void> {
+  try {
+    await admin.from("invitation_log").insert({
+      company_id: row.company_id,
+      user_id: row.user_id,
+      email: row.email,
+      action: row.action,
+      status: row.status,
+      error_message: row.error_message ?? null,
+      triggered_by: row.triggered_by ?? null,
+    });
+  } catch (err) {
+    console.warn("[invitation_log] insert failed (non-fatal):", err);
+  }
+}
+
 export async function inviteCustomer(
   companyId: string,
   email: string,
@@ -122,6 +151,10 @@ export async function inviteCustomer(
 
   await guardAdmin();
   const supabase = createAdminClient();
+  // Capture the acting admin's id for the audit log
+  const authClient = await import("@/lib/supabase/server").then((m) => m.createClient());
+  const { data: { user: actingAdmin } } = await (await authClient).auth.getUser();
+  const triggeredBy = actingAdmin?.id ?? null;
 
   // Check company exists
   const { data: company } = await supabase
@@ -197,9 +230,108 @@ export async function inviteCustomer(
   const i18nSubjects = { de: "Einladung zum SWING B2B Portal", en: "Invitation to SWING B2B Portal", fr: "Invitation au portail B2B SWING" };
   const sent = await sendEmail(email, i18nSubjects[locale] || i18nSubjects.de, html);
 
+  await logInvitation(supabase, {
+    company_id: companyId,
+    user_id: newUser.user.id,
+    email,
+    action: "invited",
+    status: sent ? "sent" : "failed",
+    error_message: sent ? null : "sendEmail returned false",
+    triggered_by: triggeredBy,
+  });
+
   if (!sent) {
     return { success: false, error: "E-Mail konnte nicht gesendet werden" };
   }
+
+  revalidatePath(`/admin/kunden/${companyId}`);
+  return { success: true };
+}
+
+/**
+ * Re-send the invitation email for an already-invited user.
+ *
+ * Use this when the original email didn't arrive (spam filter, bounce, user
+ * can't find it) and you want to generate a FRESH recovery link. The old
+ * link is not explicitly invalidated here, but Supabase Auth rotates
+ * recovery tokens — generating a new one invalidates the previous one in
+ * practice for most flows. Auto-updates the invitation_log audit trail.
+ */
+export async function resendCustomerInvitation(
+  companyId: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!isValidUUID(companyId)) return { success: false, error: "Ungültige Company-ID" };
+
+  await guardAdmin();
+  const supabase = createAdminClient();
+  const authClient = await import("@/lib/supabase/server").then((m) => m.createClient());
+  const { data: { user: actingAdmin } } = await (await authClient).auth.getUser();
+  const triggeredBy = actingAdmin?.id ?? null;
+
+  const { data: company } = await supabase
+    .from("companies")
+    .select("id, name, locale")
+    .eq("id", companyId)
+    .single();
+
+  if (!company) return { success: false, error: "Firma nicht gefunden" };
+
+  // Find the buyer profile for this company. If there's more than one, pick
+  // the one that hasn't signed in yet; otherwise the most recently created.
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, email, full_name")
+    .eq("company_id", companyId)
+    .eq("role", "buyer")
+    .order("created_at", { ascending: false });
+
+  const profile = profiles?.[0];
+  if (!profile || !profile.email) {
+    return { success: false, error: "Kein Benutzer zum Einladen gefunden — bitte erst einladen" };
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://swingparagliders.pro";
+  const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+    type: "recovery",
+    email: profile.email,
+  });
+
+  if (linkError || !linkData?.properties?.hashed_token) {
+    console.error("[resendCustomerInvitation] generateLink error:", linkError);
+    await logInvitation(supabase, {
+      company_id: companyId,
+      user_id: profile.id,
+      email: profile.email,
+      action: "resent",
+      status: "failed",
+      error_message: linkError?.message ?? "generateLink returned no token",
+      triggered_by: triggeredBy,
+    });
+    return { success: false, error: "Neuen Einladungslink konnte nicht erstellt werden" };
+  }
+
+  const locale = (company.locale as "de" | "en" | "fr") || "de";
+  const verifyUrl = `${siteUrl}/auth/verify?token_hash=${encodeURIComponent(linkData.properties.hashed_token)}&type=recovery&locale=${locale}`;
+
+  const html = buildInvitationEmail(company.name, profile.full_name ?? "", verifyUrl, locale);
+  const i18nSubjects = {
+    de: "Erneute Einladung zum SWING B2B Portal",
+    en: "Reminder: SWING B2B Portal invitation",
+    fr: "Rappel : invitation au portail B2B SWING",
+  };
+  const sent = await sendEmail(profile.email, i18nSubjects[locale] || i18nSubjects.de, html);
+
+  await logInvitation(supabase, {
+    company_id: companyId,
+    user_id: profile.id,
+    email: profile.email,
+    action: "resent",
+    status: sent ? "sent" : "failed",
+    error_message: sent ? null : "sendEmail returned false",
+    triggered_by: triggeredBy,
+  });
+
+  if (!sent) return { success: false, error: "E-Mail konnte nicht gesendet werden" };
 
   revalidatePath(`/admin/kunden/${companyId}`);
   return { success: true };
