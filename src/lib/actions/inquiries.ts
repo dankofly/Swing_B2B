@@ -279,7 +279,16 @@ export async function updateInquiryTracking(
   trackingNumber: string
 ) {
   if (!isValidUUID(inquiryId)) throw new Error("Ungültige Anfrage-ID");
-  if (!carrier.trim() || !trackingNumber.trim()) throw new Error("Carrier und Trackingnummer erforderlich");
+
+  // Normalize + sanitize before doing anything else. These values flow into
+  // an outbound email subject + body; CRLF injection would allow header
+  // forgery, and oversized values would bloat logs/emails.
+  const cleanCarrier = (carrier ?? "").replace(/[\r\n]+/g, " ").trim().slice(0, 50);
+  const cleanTracking = (trackingNumber ?? "").replace(/[\r\n]+/g, " ").trim().slice(0, 100);
+  if (!cleanCarrier || !cleanTracking) throw new Error("Carrier und Trackingnummer erforderlich");
+  carrier = cleanCarrier;
+  trackingNumber = cleanTracking;
+
   await guardAdmin();
   const supabase = createAdminClient();
 

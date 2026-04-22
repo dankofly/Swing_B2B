@@ -28,37 +28,78 @@ function getTransport(): nodemailer.Transporter | null {
     return null;
   }
 
-  transport = nodemailer.createTransport({ host, port, auth: { user, pass } });
+  // `secure: false` + `requireTLS: true` means: connect in plaintext, then
+  // MANDATORILY upgrade to TLS via STARTTLS. If the server doesn't offer
+  // STARTTLS, the connection is aborted rather than silently falling back
+  // to plaintext (which would leak SMTP creds + email bodies on the wire).
+  transport = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465, // port 465 = TLS from the start; port 587 = STARTTLS
+    requireTLS: port === 587,
+    auth: { user, pass },
+  });
   return transport;
 }
 
 const MAX_RETRIES = 2;
 const RETRY_DELAYS = [2000, 5000]; // ms
 
+// RFC 5322-ish minimal check. Rejects strings with CRLF (header-injection)
+// and obvious malformations. Not a full parser — nodemailer does deeper
+// validation — but catches the most abusable shapes before we hit the wire.
+const EMAIL_RE = /^[^\s@,<>"';\r\n]+@[^\s@,<>"';\r\n]+\.[^\s@,<>"';\r\n]+$/;
+
+/** Remove CR/LF from a header-bound string. Header injection prevention. */
+function sanitizeHeader(s: string, maxLen: number): string {
+  return s.replace(/[\r\n]+/g, " ").trim().slice(0, maxLen);
+}
+
+/** Redact PII in logs — show only domain. "user@swing.de" → "***@swing.de" */
+function redactEmail(addr: string): string {
+  const at = addr.indexOf("@");
+  return at > 0 ? `***@${addr.slice(at + 1)}` : "***";
+}
+
 export async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+  // ── Input validation (defense-in-depth; callers should also validate) ──
+  if (typeof to !== "string" || !EMAIL_RE.test(to.trim())) {
+    console.error(`[email] REJECTED: malformed 'to' address`);
+    return false;
+  }
+  const cleanTo = to.trim();
+  const cleanSubject = sanitizeHeader(
+    typeof subject === "string" ? subject : "",
+    200,
+  );
+  if (!cleanSubject) {
+    console.error(`[email] REJECTED: empty subject for ${redactEmail(cleanTo)}`);
+    return false;
+  }
+
   const smtp = getTransport();
   if (!smtp) {
-    console.error(`[email] SKIPPED (no SMTP credentials): "${subject}" → ${to}`);
+    console.error(`[email] SKIPPED (no SMTP credentials): "${cleanSubject}" → ${redactEmail(cleanTo)}`);
     return false;
   }
 
   let lastError = "";
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      await smtp.sendMail({ from: FROM_EMAIL, to, subject, html });
-      console.log(`[email] ✓ Sent: "${subject}" → ${to}${attempt > 0 ? ` (attempt ${attempt + 1})` : ""}`);
+      await smtp.sendMail({ from: FROM_EMAIL, to: cleanTo, subject: cleanSubject, html });
+      console.log(`[email] ✓ Sent: "${cleanSubject}" → ${redactEmail(cleanTo)}${attempt > 0 ? ` (attempt ${attempt + 1})` : ""}`);
       return true;
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);
     }
 
     if (attempt < MAX_RETRIES) {
-      console.warn(`[email] Attempt ${attempt + 1} failed for "${subject}" → ${to}: ${lastError}. Retrying in ${RETRY_DELAYS[attempt]}ms...`);
+      console.warn(`[email] Attempt ${attempt + 1} failed for "${cleanSubject}" → ${redactEmail(cleanTo)}: ${lastError}. Retrying in ${RETRY_DELAYS[attempt]}ms...`);
       await new Promise((r) => setTimeout(r, RETRY_DELAYS[attempt]));
     }
   }
 
-  console.error(`[email] ✗ FAILED after ${MAX_RETRIES + 1} attempts: "${subject}" → ${to} — ${lastError}`);
+  console.error(`[email] ✗ FAILED after ${MAX_RETRIES + 1} attempts: "${cleanSubject}" → ${redactEmail(cleanTo)} — ${lastError}`);
   return false;
 }
 
