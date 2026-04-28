@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createAdminClient } from "@/lib/supabase/server";
 import { requireAdminUser } from "@/lib/auth-api";
@@ -7,7 +7,7 @@ import { createRateLimiter } from "@/lib/rate-limit";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 const checkLimit = createRateLimiter("gemini", 10, 60_000);
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     const guard = await requireAdminUser();
     if ("response" in guard) return guard.response;

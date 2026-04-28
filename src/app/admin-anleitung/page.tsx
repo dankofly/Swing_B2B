@@ -16,14 +16,10 @@ import {
   Eye,
   CheckCircle2,
   Search,
-  Palette,
-  Image,
   UserPlus,
   Shield,
-  Truck,
   MessageSquare,
   BarChart3,
-  Globe,
   AlertTriangle,
   DollarSign,
   Pencil,
@@ -33,7 +29,6 @@ import {
   Megaphone,
   Zap,
   ShoppingCart,
-  ArrowRight,
 } from "lucide-react";
 
 const t = {
@@ -1082,7 +1077,7 @@ export default async function AdminAnleitungPage() {
                       </>
                     ) : i === 3 ? (
                       <>
-                        {step.split('"')[0]}"{locale === 'de' ? 'Freischalten' : locale === 'en' ? 'Activate' : 'Activer'}" {step.split('"')[2] || step.split('"')[1]?.substring(step.split('"')[1].indexOf(' ') + 1)}
+                        {step.split('"')[0]}&ldquo;{locale === 'de' ? 'Freischalten' : locale === 'en' ? 'Activate' : 'Activer'}&rdquo; {step.split('"')[2] || step.split('"')[1]?.substring(step.split('"')[1].indexOf(' ') + 1)}
                       </>
                     ) : (
                       step
@@ -1328,7 +1323,7 @@ export default async function AdminAnleitungPage() {
                   <li key={i}>
                     {i === 0 ? (
                       <>
-                        <strong>{feature.split(':')[0]}:</strong> {feature.split(':')[1]?.split('"Auto"')[0]}<Languages size={10} className="inline" /> "{locale === 'de' ? 'Auto' : 'Auto'}"{feature.split('"Auto"')[1]}
+                        <strong>{feature.split(':')[0]}:</strong> {feature.split(':')[1]?.split('"Auto"')[0]}<Languages size={10} className="inline" /> &ldquo;{locale === 'de' ? 'Auto' : 'Auto'}&rdquo;{feature.split('"Auto"')[1]}
                       </>
                     ) : (
                       <>

@@ -10,6 +10,16 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { localized } from "@/lib/i18n/localized";
 import { getEffectiveCompanyId } from "@/lib/viewing-as";
 
+type RelatedProductCardProduct = Parameters<typeof RelatedProductCard>[0]["product"];
+
+function normalizeRelatedProduct(p: Record<string, unknown>): RelatedProductCardProduct {
+  const cat = p.category;
+  const category = Array.isArray(cat)
+    ? (cat[0] as RelatedProductCardProduct["category"]) ?? null
+    : (cat as RelatedProductCardProduct["category"]) ?? null;
+  return { ...(p as unknown as RelatedProductCardProduct), category };
+}
+
 
 export default async function ProduktDetailPage({
   params,
@@ -75,12 +85,16 @@ export default async function ProduktDetailPage({
 
   // Fetch related products (depends on relationsRaw)
   const relatedIds = (relationsRaw || []).map((r) => r.related_product_id);
-  let similarProducts: any[] = [];
-  let accessoryProducts: any[] = [];
+  type RelatedProductRow = Record<string, unknown> & {
+    id: string;
+    category?: unknown;
+  };
+  let similarProducts: RelatedProductRow[] = [];
+  let accessoryProducts: RelatedProductRow[] = [];
 
   // Fetch user profile + related products in parallel
-  let priceMap: Record<string, number> = {};
-  let discountMap: Record<string, number> = {};
+  const priceMap: Record<string, number> = {};
+  const discountMap: Record<string, number> = {};
   let isAdmin = false;
 
   const profilePromise = user
@@ -124,11 +138,12 @@ export default async function ProduktDetailPage({
   const viewingAsCompanyId = getEffectiveCompanyId(als, isAdmin);
 
   if (relatedIds.length > 0 && relatedRaw) {
-    const relatedMap = new Map(relatedRaw.map((p: any) => [p.id, p]));
+    const rows = relatedRaw as unknown as RelatedProductRow[];
+    const relatedMap = new Map(rows.map((p) => [p.id, p]));
     const similarIds = (relationsRaw || []).filter((r) => r.relation_type === "similar").map((r) => r.related_product_id);
     const accessoryIds = (relationsRaw || []).filter((r) => r.relation_type === "accessory").map((r) => r.related_product_id);
-    similarProducts = similarIds.map((id) => relatedMap.get(id)).filter(Boolean);
-    accessoryProducts = accessoryIds.map((id) => relatedMap.get(id)).filter(Boolean);
+    similarProducts = similarIds.map((id) => relatedMap.get(id)).filter((p): p is RelatedProductRow => Boolean(p));
+    accessoryProducts = accessoryIds.map((id) => relatedMap.get(id)).filter((p): p is RelatedProductRow => Boolean(p));
   }
 
   const enClass = product.en_class || product.tech_specs?.["EN-Zertifizierung"];
@@ -308,13 +323,10 @@ export default async function ProduktDetailPage({
         <div>
           <h2 className="swing-h2 mb-4">{dict.katalog.detail.similarProducts}</h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {similarProducts.map((p: any) => (
+            {similarProducts.map((p) => (
               <RelatedProductCard
                 key={p.id}
-                product={{
-                  ...p,
-                  category: Array.isArray(p.category) ? p.category[0] || null : p.category,
-                }}
+                product={normalizeRelatedProduct(p)}
                 viewingAsCompanyId={viewingAsCompanyId}
                 locale={locale}
               />
@@ -328,13 +340,10 @@ export default async function ProduktDetailPage({
         <div>
           <h2 className="swing-h2 mb-4">{dict.katalog.detail.accessories}</h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {accessoryProducts.map((p: any) => (
+            {accessoryProducts.map((p) => (
               <RelatedProductCard
                 key={p.id}
-                product={{
-                  ...p,
-                  category: Array.isArray(p.category) ? p.category[0] || null : p.category,
-                }}
+                product={normalizeRelatedProduct(p)}
                 viewingAsCompanyId={viewingAsCompanyId}
                 locale={locale}
               />

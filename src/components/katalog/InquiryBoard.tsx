@@ -5,7 +5,6 @@ import {
   Inbox,
   Settings,
   Truck,
-  CheckCircle,
   Package,
   ChevronRight,
   Copy,

@@ -3,6 +3,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { Plus, Package } from "lucide-react";
 import SortableProductList from "./SortableProductList";
 
+type ProductRow = Parameters<typeof SortableProductList>[0]["products"][number];
+
 
 export default async function ProduktePage() {
   const supabase = createAdminClient();
@@ -63,7 +65,7 @@ export default async function ProduktePage() {
         </div>
       ) : (
         <div className="overflow-hidden card">
-          <SortableProductList products={products as any} />
+          <SortableProductList products={products as unknown as ProductRow[]} />
         </div>
       )}
     </div>

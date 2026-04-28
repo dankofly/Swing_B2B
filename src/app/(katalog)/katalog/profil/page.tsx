@@ -1,6 +1,5 @@
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { User } from "lucide-react";
 import ProfileForm from "./ProfileForm";
 import { getDictionary } from "@/lib/i18n";
 import { getEffectiveCompanyId } from "@/lib/viewing-as";

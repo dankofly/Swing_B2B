@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { getMyInquiries, getCompanyInquiriesForDashboard } from "@/lib/actions/inquiries";
-import { FileText } from "lucide-react";
 import InquiryBoard from "@/components/katalog/InquiryBoard";
 import { getDictionary } from "@/lib/i18n";
 import { getEffectiveCompanyId } from "@/lib/viewing-as";

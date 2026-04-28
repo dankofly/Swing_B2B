@@ -311,7 +311,7 @@ export async function duplicateProduct(productId: string): Promise<{ error?: str
   if (fetchError || !original) return { error: fetchError?.message || "Produkt nicht gefunden" };
 
   // Create copy with "(Kopie)" suffix
-  const { sizes, colors, id, created_at, updated_at, slug, ...productData } = original;
+  const { sizes, colors, id: _id, created_at: _created_at, updated_at: _updated_at, slug: _slug, ...productData } = original;
   const newName = `${productData.name} (Kopie)`;
 
   const { data: newProduct, error: insertError } = await supabase

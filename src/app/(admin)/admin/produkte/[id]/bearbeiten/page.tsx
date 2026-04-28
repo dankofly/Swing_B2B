@@ -67,12 +67,22 @@ export default async function ProduktBearbeitenPage({
         product={product}
         sizes={product.sizes}
         colors={product.colors}
-        relations={(relations || []).map((r: any) => ({
-          related_product_id: r.related_product_id,
-          relation_type: r.relation_type as "similar" | "accessory",
-          sort_order: r.sort_order,
-          name: r.related?.[0]?.name || r.related?.name || r.related_product_id,
-        }))}
+        relations={(relations || []).map((r) => {
+          const related = r.related as
+            | { name: string }
+            | { name: string }[]
+            | null
+            | undefined;
+          const name = Array.isArray(related)
+            ? related[0]?.name
+            : related?.name;
+          return {
+            related_product_id: r.related_product_id,
+            relation_type: r.relation_type as "similar" | "accessory",
+            sort_order: r.sort_order,
+            name: name || r.related_product_id,
+          };
+        })}
       />
     </div>
   );

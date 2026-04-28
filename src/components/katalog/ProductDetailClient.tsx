@@ -85,7 +85,6 @@ export default function ProductDetailClient({
   const selectedColorName = colors.find((c) => c.id === selectedColor)?.color_name ?? "";
   const hasEkPrices = Object.keys(priceMap).length > 0;
   const hasUvp = uvpBrutto != null;
-  const hasPrices = hasEkPrices || hasUvp;
   const totalQty = Object.values(quantities).reduce((s, q) => s + q, 0);
 
   return (

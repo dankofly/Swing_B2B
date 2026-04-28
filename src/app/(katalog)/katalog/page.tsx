@@ -151,7 +151,9 @@ export default async function KatalogPage({
   const priceMap: Record<string, number> = {};
   try {
     if (effectiveCompanyId && products && products.length > 0) {
-      const allSizeIds = products.flatMap((p: any) => (p.sizes || []).map((s: any) => s.id));
+      const allSizeIds = products.flatMap(
+        (p: { sizes?: { id: string }[] | null }) => (p.sizes || []).map((s) => s.id)
+      );
       if (allSizeIds.length > 0) {
         // Use admin client when viewing as another company (als) to bypass RLS
         const priceClient = viewingAsCompanyId ? createAdminClient() : supabase;
@@ -462,24 +464,15 @@ export default async function KatalogPage({
             const isFadeOut = product.is_fade_out;
             const isAction = product.is_action;
 
-            const Wrapper = isComingSoon ? "div" : Link;
             const productHref = viewingAsCompanyId
               ? `/katalog/${product.slug}?als=${viewingAsCompanyId}`
               : `/katalog/${product.slug}`;
-            const wrapperProps = isComingSoon
-              ? {}
-              : { href: productHref };
+            const wrapperClass = `card group flex flex-col overflow-hidden ${
+              isComingSoon ? "opacity-75" : "card-interactive"
+            }`;
 
-            return (
-              <Wrapper
-                key={product.id}
-                {...(wrapperProps as any)}
-                className={`card group flex flex-col overflow-hidden ${
-                  isComingSoon
-                    ? "opacity-75"
-                    : "card-interactive"
-                }`}
-              >
+            const cardBody = (
+              <>
                 {/* Header band */}
                 <div className="relative flex navy-gradient">
                   {/* Badges top-left */}
@@ -620,7 +613,17 @@ export default async function KatalogPage({
                     </div>
                   )}
                 </div>
-              </Wrapper>
+              </>
+            );
+
+            return isComingSoon ? (
+              <div key={product.id} className={wrapperClass}>
+                {cardBody}
+              </div>
+            ) : (
+              <Link key={product.id} href={productHref} className={wrapperClass}>
+                {cardBody}
+              </Link>
             );
           })}
         </div>

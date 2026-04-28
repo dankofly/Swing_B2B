@@ -114,7 +114,7 @@ export default function InquiryList({ inquiries }: { inquiries: Inquiry[] }) {
     setUpdating(inquiryId);
     try {
       await updateInquiryTracking(inquiryId, carrier.trim(), trackingNumber.trim());
-    } catch (e) {
+    } catch {
       toast(ti.trackingError, "error");
     } finally {
       setUpdating(null);

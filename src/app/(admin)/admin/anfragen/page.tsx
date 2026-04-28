@@ -1,6 +1,5 @@
 import { getAllInquiries } from "@/lib/actions/inquiries";
 import InquiryList from "./InquiryList";
-import { ShoppingCart } from "lucide-react";
 
 
 export default async function AdminAnfragenPage() {

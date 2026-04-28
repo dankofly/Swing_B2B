@@ -6,55 +6,6 @@ import { useDict, useLocale } from "@/lib/i18n/context";
 import { getDateLocale } from "@/lib/i18n/shared";
 import { getCompanyStats, type CompanyStatsData } from "@/lib/actions/company-stats";
 
-function MiniSparkline({ data, color, height = 28 }: { data: number[]; color: string; height?: number }) {
-  if (data.length < 2) return null;
-
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
-  const w = 80;
-  const padding = 2;
-
-  const points = data.map((v, i) => {
-    const x = padding + (i / (data.length - 1)) * (w - padding * 2);
-    const y = padding + (1 - (v - min) / range) * (height - padding * 2);
-    return `${x},${y}`;
-  });
-
-  const areaPoints = [...points, `${padding + w - padding * 2},${height}`, `${padding},${height}`];
-
-  return (
-    <svg width={w} height={height} viewBox={`0 0 ${w} ${height}`} className="overflow-visible">
-      <defs>
-        <linearGradient id={`grad-${color}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.15" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon
-        points={areaPoints.join(" ")}
-        fill={`url(#grad-${color})`}
-      />
-      <polyline
-        points={points.join(" ")}
-        fill="none"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ filter: `drop-shadow(0 1px 2px ${color}40)` }}
-      />
-      <circle
-        cx={points[points.length - 1].split(",")[0]}
-        cy={points[points.length - 1].split(",")[1]}
-        r="2.5"
-        fill={color}
-        className="animate-pulse"
-      />
-    </svg>
-  );
-}
-
 function AnimatedNumber({ value, locale, prefix = "", suffix = "" }: { value: number; locale: string; prefix?: string; suffix?: string }) {
   const [display, setDisplay] = useState(0);
   const ref = useRef<number>(0);

@@ -365,7 +365,7 @@ export default async function KundenDashboardPage({
           </div>
         ) : (
           <div className="divide-y divide-gray-50 border-t border-gray-100">
-            {priceUploads.map((upload: any) => (
+            {priceUploads.map((upload) => (
               <a
                 key={upload.id}
                 href={upload.file_url}

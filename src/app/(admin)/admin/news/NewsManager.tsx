@@ -22,6 +22,68 @@ interface NewsItem {
   created_at: string;
 }
 
+function TabBar({
+  active,
+  onChange,
+  hasEn,
+  hasFr,
+  onTranslate,
+  translating,
+}: {
+  active: Locale;
+  onChange: (l: Locale) => void;
+  hasEn: boolean;
+  hasFr: boolean;
+  onTranslate: () => void;
+  translating: string;
+}) {
+  const tabs: { key: Locale; label: string; hasContent?: boolean }[] = [
+    { key: "de", label: "DE" },
+    { key: "en", label: "EN", hasContent: hasEn },
+    { key: "fr", label: "FR", hasContent: hasFr },
+  ];
+
+  return (
+    <div className="flex items-center gap-1">
+      {tabs.map((tab) => (
+        <button
+          key={tab.key}
+          type="button"
+          onClick={() => onChange(tab.key)}
+          className={`relative rounded px-2 py-0.5 text-[11px] font-bold tracking-wider transition-colors ${
+            active === tab.key
+              ? "bg-swing-navy text-white"
+              : "text-swing-gray-dark/40 hover:text-swing-gray-dark/70"
+          }`}
+        >
+          {tab.label}
+          {tab.key !== "de" && (
+            <span
+              className={`ml-1 inline-block h-1.5 w-1.5 rounded-full ${
+                tab.hasContent ? "bg-emerald-400" : "bg-swing-gray-dark/20"
+              }`}
+            />
+          )}
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={onTranslate}
+        disabled={translating !== "idle"}
+        className="ml-1 flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-swing-gray-dark/40 transition-colors hover:bg-swing-gold/10 hover:text-swing-navy disabled:opacity-50"
+        title="DE → EN + FR übersetzen"
+      >
+        {translating !== "idle" ? (
+          <Loader2 size={10} className="animate-spin" />
+        ) : (
+          <Languages size={10} />
+        )}
+        Auto
+      </button>
+    </div>
+  );
+}
+
 export default function NewsManager({
   initialNews,
 }: {
@@ -160,74 +222,6 @@ export default function NewsManager({
 
   const activeCount = items.filter((i) => i.is_active).length;
 
-  function TabBar({
-    active,
-    onChange,
-    item,
-    onTranslate,
-    translating,
-  }: {
-    active: Locale;
-    onChange: (l: Locale) => void;
-    item?: { message_en: string | null; message_fr: string | null };
-    onTranslate: () => void;
-    translating: string;
-  }) {
-    const tabs: { key: Locale; label: string; hasContent?: boolean }[] = [
-      { key: "de", label: "DE" },
-      {
-        key: "en",
-        label: "EN",
-        hasContent: item ? !!item.message_en : !!newEn,
-      },
-      {
-        key: "fr",
-        label: "FR",
-        hasContent: item ? !!item.message_fr : !!newFr,
-      },
-    ];
-
-    return (
-      <div className="flex items-center gap-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => onChange(tab.key)}
-            className={`relative rounded px-2 py-0.5 text-[11px] font-bold tracking-wider transition-colors ${
-              active === tab.key
-                ? "bg-swing-navy text-white"
-                : "text-swing-gray-dark/40 hover:text-swing-gray-dark/70"
-            }`}
-          >
-            {tab.label}
-            {tab.key !== "de" && (
-              <span
-                className={`ml-1 inline-block h-1.5 w-1.5 rounded-full ${
-                  tab.hasContent ? "bg-emerald-400" : "bg-swing-gray-dark/20"
-                }`}
-              />
-            )}
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={onTranslate}
-          disabled={translating !== "idle"}
-          className="ml-1 flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-swing-gray-dark/40 transition-colors hover:bg-swing-gold/10 hover:text-swing-navy disabled:opacity-50"
-          title="DE → EN + FR übersetzen"
-        >
-          {translating !== "idle" ? (
-            <Loader2 size={10} className="animate-spin" />
-          ) : (
-            <Languages size={10} />
-          )}
-          Auto
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       {/* Add new */}
@@ -239,6 +233,8 @@ export default function NewsManager({
           <TabBar
             active={newTab}
             onChange={setNewTab}
+            hasEn={!!newEn}
+            hasFr={!!newFr}
             onTranslate={handleTranslateNew}
             translating={translatingNew}
           />
@@ -324,7 +320,8 @@ export default function NewsManager({
                     <TabBar
                       active={editTab}
                       onChange={setEditTab}
-                      item={{ message_en: editEn || null, message_fr: editFr || null }}
+                      hasEn={!!editEn}
+                      hasFr={!!editFr}
                       onTranslate={handleTranslateEdit}
                       translating={translatingEdit}
                     />
