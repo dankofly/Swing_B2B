@@ -65,6 +65,22 @@ export async function guardAdmin() {
   }
 }
 
+/**
+ * Throws if the current user is not an admin/superadmin/testadmin.
+ *
+ * Use this for READ-ONLY Server Actions that are reachable from Client
+ * Components and use `createAdminClient()` (service-role, bypasses RLS).
+ * Testadmin is allowed because it is a read-only role; buyers and
+ * unauthenticated callers are blocked.
+ */
+export async function guardAdminOrTestadmin() {
+  const role = await getCurrentRole();
+  if (!role) throw new Error("Nicht angemeldet");
+  if (!["superadmin", "admin", "testadmin"].includes(role)) {
+    throw new Error("Keine Berechtigung");
+  }
+}
+
 /** Throws if the current user is not logged in. Returns the role. */
 export async function guardAuthenticated(): Promise<string> {
   const role = await getCurrentRole();

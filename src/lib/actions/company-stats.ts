@@ -1,6 +1,7 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, guardAdminOrTestadmin } from "@/lib/supabase/server";
+import { isValidUUID } from "@/lib/rate-limit";
 
 export interface CompanyStatsData {
   logins: number;
@@ -14,11 +15,18 @@ export interface CompanyStatsData {
 /**
  * Compute real statistics for a company over a given period.
  * Trend = % change vs the preceding period of equal length.
+ *
+ * AuthZ: This action is invoked from a Client Component (CompanyStats.tsx)
+ * and uses the service-role admin client (bypasses RLS). Without an explicit
+ * guard, any logged-in buyer could invoke it for an arbitrary companyId.
+ * Only admins/superadmins/testadmins are allowed; buyers are rejected.
  */
 export async function getCompanyStats(
   companyId: string,
   periodKey: string
 ): Promise<CompanyStatsData> {
+  if (!isValidUUID(companyId)) throw new Error("Ungültige Firmen-ID");
+  await guardAdminOrTestadmin();
   const supabase = createAdminClient();
 
   const now = new Date();
@@ -32,13 +40,6 @@ export async function getCompanyStats(
   const prevStart = periodDays && currentStart
     ? new Date(currentStart.getTime() - periodDays * 86400000)
     : null;
-
-  // Get user IDs belonging to this company
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("company_id", companyId);
-  const userIds = (profiles ?? []).map((p) => p.id);
 
   // --- Logins: count from login_events table if it exists, otherwise 0 ---
   // Supabase auth.audit_log_entries is not reliably queryable via PostgREST,

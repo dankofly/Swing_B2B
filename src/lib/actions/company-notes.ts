@@ -1,11 +1,12 @@
 "use server";
 
-import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
+import { createClient, createAdminClient, guardAdmin, guardAdminOrTestadmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isValidUUID } from "@/lib/rate-limit";
 
 export async function getCompanyNotes(companyId: string) {
   if (!isValidUUID(companyId)) throw new Error("Ungültige ID");
+  await guardAdminOrTestadmin();
   const supabase = createAdminClient();
 
   const { data } = await supabase
@@ -17,10 +18,29 @@ export async function getCompanyNotes(companyId: string) {
   return data ?? [];
 }
 
+/**
+ * Visible-to-customer notes. Buyers may only fetch notes for their own
+ * company; admins/testadmins may fetch for any company.
+ */
 export async function getCustomerVisibleNotes(companyId: string) {
   if (!isValidUUID(companyId)) throw new Error("Ungültige ID");
-  const supabase = createAdminClient();
 
+  // Verify caller is allowed to read notes for this company.
+  const sb = await createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error("Nicht angemeldet");
+  const { data: profile } = await sb
+    .from("profiles")
+    .select("role, company_id")
+    .eq("id", user.id)
+    .single();
+  if (!profile) throw new Error("Kein Profil");
+  const isAdmin = ["superadmin", "admin", "testadmin"].includes(profile.role);
+  if (!isAdmin && profile.company_id !== companyId) {
+    throw new Error("Keine Berechtigung");
+  }
+
+  const supabase = createAdminClient();
   const { data } = await supabase
     .from("company_notes")
     .select("id, subject, content, created_at")

@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
+import { createAdminClient, guardAdmin, guardAdminOrTestadmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isValidUUID } from "@/lib/rate-limit";
 
@@ -89,6 +89,7 @@ export async function savePriceUploadRecord(
 
 export async function getCompanyPriceUploads(companyId: string) {
   if (!isValidUUID(companyId)) return [];
+  await guardAdminOrTestadmin();
   const supabase = createAdminClient();
 
   const { data } = await supabase

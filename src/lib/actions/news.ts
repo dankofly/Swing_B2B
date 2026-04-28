@@ -1,9 +1,10 @@
 "use server";
 
-import { createAdminClient, guardAdmin } from "@/lib/supabase/server";
+import { createAdminClient, guardAdmin, guardAdminOrTestadmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isValidUUID } from "@/lib/rate-limit";
 
+/** Returns only active news. Public-by-design: shown in the news ticker to all visitors. */
 export async function getActiveNews() {
   const supabase = createAdminClient();
 
@@ -17,7 +18,9 @@ export async function getActiveNews() {
   return data ?? [];
 }
 
+/** Returns ALL news including inactive entries — admin-only. */
 export async function getAllNews() {
+  await guardAdminOrTestadmin();
   const supabase = createAdminClient();
 
   const { data } = await supabase

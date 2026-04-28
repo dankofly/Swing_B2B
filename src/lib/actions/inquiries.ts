@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient, createAdminClient, guardAdmin } from "@/lib/supabase/server";
+import { createClient, createAdminClient, guardAdmin, guardAdminOrTestadmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendEmail, buildInquiryStatusEmail, buildTrackingEmail, buildNewInquiryEmail } from "@/lib/email";
 import type { InquiryEmailItem } from "@/lib/email";
@@ -85,14 +85,34 @@ export async function submitInquiry(items: InquiryItem[], notes: string) {
 
       if (!company || !itemDetails) return;
 
-      const emailItems: InquiryEmailItem[] = itemDetails.map((item: any) => ({
-        productName: item.product_size?.product?.name ?? "—",
-        sizeLabel: item.product_size?.size_label ?? "—",
-        sku: item.product_size?.sku ?? "—",
-        colorName: item.product_color?.color_name ?? "—",
-        quantity: item.quantity,
-        unitPrice: Number(item.unit_price) || 0,
-      }));
+      type SupabaseRel<T> = T | T[] | null | undefined;
+      function unwrap<T>(rel: SupabaseRel<T>): T | null {
+        if (!rel) return null;
+        return Array.isArray(rel) ? rel[0] ?? null : rel;
+      }
+      type RawItem = {
+        quantity: number;
+        unit_price: number | string;
+        product_size: SupabaseRel<{
+          size_label: string | null;
+          sku: string | null;
+          product: SupabaseRel<{ name: string }>;
+        }>;
+        product_color: SupabaseRel<{ color_name: string }>;
+      };
+      const emailItems: InquiryEmailItem[] = (itemDetails as unknown as RawItem[]).map((item) => {
+        const size = unwrap(item.product_size);
+        const product = unwrap(size?.product);
+        const color = unwrap(item.product_color);
+        return {
+          productName: product?.name ?? "—",
+          sizeLabel: size?.size_label ?? "—",
+          sku: size?.sku ?? "—",
+          colorName: color?.color_name ?? "—",
+          quantity: item.quantity,
+          unitPrice: Number(item.unit_price) || 0,
+        };
+      });
 
       const html = buildNewInquiryEmail(
         inquiry.id,
@@ -148,6 +168,8 @@ export async function getMyInquiries() {
 }
 
 export async function getCompanyInquiriesForDashboard(companyId: string) {
+  if (!isValidUUID(companyId)) return [];
+  await guardAdminOrTestadmin();
   const supabase = createAdminClient();
 
   const { data } = await supabase
@@ -177,6 +199,7 @@ export async function getCompanyInquiriesForDashboard(companyId: string) {
 }
 
 export async function getAllInquiries() {
+  await guardAdminOrTestadmin();
   const supabase = createAdminClient();
 
   const { data } = await supabase
@@ -330,6 +353,8 @@ export async function updateInquiryTracking(
 }
 
 export async function getCompanyInquiries(companyId: string) {
+  if (!isValidUUID(companyId)) return [];
+  await guardAdminOrTestadmin();
   const supabase = createAdminClient();
 
   const { data: inquiries } = await supabase
