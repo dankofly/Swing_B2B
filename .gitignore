@@ -56,3 +56,9 @@ next-env.d.ts
 # Playwright test screenshots
 /tests/screenshots/
 
+# Windows / PowerShell stray profile folder (created by some tools at repo root)
+/Microsoft/
+
+# Claude Code lockfile
+.claude/scheduled_tasks.lock
+
