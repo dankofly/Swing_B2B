@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Lock, Loader2 } from "lucide-react";
+import { ArrowRight, Lock, Loader2, RefreshCw } from "lucide-react";
 import { useDict } from "@/lib/i18n/context";
 
 export default function LoginPage() {
@@ -21,10 +21,11 @@ export default function LoginPage() {
   const LOGIN_REQUIRED_MSG = dict.auth.login.redirectMessage;
 
   const errorMessages: Record<string, string> = {
-    token_expired: "Der Link ist abgelaufen. Bitte fordern Sie einen neuen an.",
-    invalid_token: "Ungültiger Link. Bitte fordern Sie einen neuen an.",
-    session_expired: "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+    token_expired: dict.auth.login.errorTokenExpired,
+    invalid_token: dict.auth.login.errorInvalidToken,
+    session_expired: dict.auth.login.errorSessionExpired,
   };
+  const isLinkError = urlError === "token_expired" || urlError === "invalid_token";
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -84,7 +85,16 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-5">
             {urlError && errorMessages[urlError] && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-                {errorMessages[urlError]}
+                <p>{errorMessages[urlError]}</p>
+                {isLinkError && (
+                  <Link
+                    href="/forgot-password"
+                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-swing-navy py-2.5 text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-swing-gold hover:text-swing-navy"
+                  >
+                    <RefreshCw size={14} />
+                    {dict.auth.login.requestNewLink}
+                  </Link>
+                )}
               </div>
             )}
 

@@ -81,6 +81,10 @@ const de: Dictionary = {
       invalidCredentials: "Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.",
       redirectMessage: "Bitte melden Sie sich an, um fortzufahren.",
       portalSubtitle: "B2B Händlerportal",
+      errorTokenExpired: "Ihr Einladungs- oder Passwort-Link ist abgelaufen. Fordern Sie unten einen neuen Link an.",
+      errorInvalidToken: "Der Link ist ungültig. Fordern Sie unten einen neuen Link an.",
+      errorSessionExpired: "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+      requestNewLink: "Neuen Link anfordern",
     },
     register: {
       title: "Händler-Registrierung",

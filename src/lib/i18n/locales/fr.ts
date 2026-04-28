@@ -81,6 +81,10 @@ const fr: Dictionary = {
       invalidCredentials: "Identifiants invalides. Veuillez réessayer.",
       redirectMessage: "Veuillez vous connecter pour continuer.",
       portalSubtitle: "Portail B2B Revendeurs",
+      errorTokenExpired: "Votre lien d'invitation ou de mot de passe a expiré. Demandez un nouveau lien ci-dessous.",
+      errorInvalidToken: "Le lien n'est pas valide. Demandez un nouveau lien ci-dessous.",
+      errorSessionExpired: "Votre session a expiré. Veuillez vous reconnecter.",
+      requestNewLink: "Demander un nouveau lien",
     },
     register: {
       title: "Inscription revendeur",

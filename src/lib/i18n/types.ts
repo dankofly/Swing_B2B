@@ -79,6 +79,10 @@ export interface Dictionary {
       invalidCredentials: string;
       redirectMessage: string;
       portalSubtitle: string;
+      errorTokenExpired: string;
+      errorInvalidToken: string;
+      errorSessionExpired: string;
+      requestNewLink: string;
     };
     register: {
       title: string;

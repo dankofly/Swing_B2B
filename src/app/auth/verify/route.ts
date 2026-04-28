@@ -15,8 +15,23 @@ export async function GET(request: Request) {
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as "recovery" | "email" | "invite" | undefined;
 
+  // Extract locale early so it can be applied to success AND error redirects
+  const locale = searchParams.get("locale");
+  const isValidLocale = locale && ["de", "en", "fr"].includes(locale);
+
+  /** Build a redirect that carries the locale cookie so the destination
+   *  page (login / reset-password / katalog) renders in the correct language
+   *  even when the customer hit this route from a branded invitation email. */
+  function buildRedirect(path: string): NextResponse {
+    const res = NextResponse.redirect(`${origin}${path}`);
+    if (isValidLocale) {
+      res.cookies.set("locale", locale!, { path: "/", maxAge: 365 * 24 * 60 * 60 });
+    }
+    return res;
+  }
+
   if (!tokenHash || !type) {
-    return NextResponse.redirect(`${origin}/login?error=invalid_token`);
+    return buildRedirect("/login?error=invalid_token");
   }
 
   const cookieStore = await cookies();
@@ -47,23 +62,15 @@ export async function GET(request: Request) {
 
   if (error) {
     console.error("[auth/verify] verifyOtp error:", error.message);
-    return NextResponse.redirect(`${origin}/login?error=token_expired`);
+    return buildRedirect("/login?error=token_expired");
   }
 
-  // Set locale from invitation link if provided
-  const locale = searchParams.get("locale");
-
   // Build redirect and attach session cookies
-  const redirectUrl = type === "recovery" ? `${origin}/reset-password` : `${origin}/katalog`;
-  const response = NextResponse.redirect(redirectUrl);
+  const redirectUrl = type === "recovery" ? "/reset-password" : "/katalog";
+  const response = buildRedirect(redirectUrl);
 
   for (const { name, value, options } of pendingCookies) {
     response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2]);
-  }
-
-  // Set locale cookie so the portal renders in the correct language
-  if (locale && ["de", "en", "fr"].includes(locale)) {
-    response.cookies.set("locale", locale, { path: "/", maxAge: 365 * 24 * 60 * 60 });
   }
 
   return response;

@@ -251,7 +251,7 @@ const invitationI18n = {
     status: "Status",
     activated: "Freigeschaltet",
     adminGuide: `<strong>Wichtig:</strong> Bitte lesen Sie vor dem ersten Login die <a href="${SITE_URL}/admin-anleitung" style="color:#173045; font-weight:700; text-decoration:underline;">Admin-Anleitung</a>, um sich mit allen Funktionen des Portals vertraut zu machen.`,
-    cta: `Klicken Sie auf den Button unten, um Ihr Passwort festzulegen und sich anzumelden. Der Link ist <strong>24 Stunden</strong> g&uuml;ltig.`,
+    cta: `Klicken Sie auf den Button unten, um Ihr Passwort festzulegen und sich anzumelden. Der Link ist <strong>3 Tage</strong> g&uuml;ltig.`,
     title: "Einladung zum SWING B2B Portal",
     subtitle: `Sie wurden zum SWING B2B H&auml;ndlerportal eingeladen.`,
     button: "Passwort festlegen &rarr;",
@@ -269,7 +269,7 @@ const invitationI18n = {
     status: "Status",
     activated: "Activated",
     adminGuide: `<strong>Important:</strong> Please read the <a href="${SITE_URL}/admin-anleitung" style="color:#173045; font-weight:700; text-decoration:underline;">Admin Guide</a> before your first login to familiarise yourself with all portal features.`,
-    cta: `Click the button below to set your password and log in. The link is valid for <strong>24 hours</strong>.`,
+    cta: `Click the button below to set your password and log in. The link is valid for <strong>3 days</strong>.`,
     title: "Invitation to SWING B2B Portal",
     subtitle: `You have been invited to the SWING B2B Dealer Portal.`,
     button: "Set Password &rarr;",
@@ -287,7 +287,7 @@ const invitationI18n = {
     status: "Statut",
     activated: "Activ&eacute;",
     adminGuide: `<strong>Important :</strong> Veuillez lire le <a href="${SITE_URL}/admin-anleitung" style="color:#173045; font-weight:700; text-decoration:underline;">Guide Admin</a> avant votre premi&egrave;re connexion pour vous familiariser avec toutes les fonctionnalit&eacute;s du portail.`,
-    cta: `Cliquez sur le bouton ci-dessous pour d&eacute;finir votre mot de passe et vous connecter. Le lien est valide pendant <strong>24 heures</strong>.`,
+    cta: `Cliquez sur le bouton ci-dessous pour d&eacute;finir votre mot de passe et vous connecter. Le lien est valide pendant <strong>3 jours</strong>.`,
     title: "Invitation au portail B2B SWING",
     subtitle: `Vous avez &eacute;t&eacute; invit&eacute;(e) sur le portail B2B SWING.`,
     button: "D&eacute;finir le mot de passe &rarr;",
@@ -339,7 +339,7 @@ export function buildPasswordResetEmail(resetUrl: string): string {
     </p>
     <p style="color:#414142; font-size:13px; line-height:1.7; margin:0 0 16px;">
       Klicken Sie auf den Button unten, um ein neues Passwort festzulegen.
-      Der Link ist <strong>24 Stunden</strong> g&uuml;ltig.
+      Der Link ist <strong>3 Tage</strong> g&uuml;ltig.
     </p>
     <p style="color:rgba(65,65,66,0.5); font-size:12px; line-height:1.6; margin:16px 0 0;">
       Falls Sie diese Anfrage nicht gestellt haben, k&ouml;nnen Sie diese E-Mail ignorieren.

@@ -81,6 +81,10 @@ const en: Dictionary = {
       invalidCredentials: "Invalid credentials. Please try again.",
       redirectMessage: "Please log in to continue.",
       portalSubtitle: "B2B Dealer Portal",
+      errorTokenExpired: "Your invitation or password link has expired. Request a new link below.",
+      errorInvalidToken: "The link is invalid. Request a new link below.",
+      errorSessionExpired: "Your session has expired. Please sign in again.",
+      requestNewLink: "Request new link",
     },
     register: {
       title: "Dealer Registration",
