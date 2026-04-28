@@ -29,6 +29,15 @@ export default function Header({
   const [scrolled, setScrolled] = useState(false);
   const dict = useDict();
 
+  // Reset mobile menu when route changes. Using "adjust state during render"
+  // pattern (https://react.dev/reference/react/useState#storing-information-from-previous-renders)
+  // instead of useEffect to avoid the cascading-render warning.
+  const [prevPath, setPrevPath] = useState(pathname);
+  if (pathname !== prevPath) {
+    setPrevPath(pathname);
+    setMobileOpen(false);
+  }
+
   // Track scroll for header elevation
   useEffect(() => {
     function onScroll() {
@@ -37,11 +46,6 @@ export default function Header({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
 
   // Preserve "als" param across katalog navigation
   const als = searchParams.get("als");

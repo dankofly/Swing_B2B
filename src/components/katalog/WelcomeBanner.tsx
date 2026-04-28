@@ -1,10 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { X, ShoppingBag, User, FileText } from "lucide-react";
 
 const STORAGE_KEY = "swing_welcome_dismissed";
+
+function subscribeStorage(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+function getDismissed() {
+  if (typeof window === "undefined") return true;
+  return !!window.localStorage.getItem(STORAGE_KEY);
+}
 
 export default function WelcomeBanner({
   firstName,
@@ -13,17 +24,16 @@ export default function WelcomeBanner({
   firstName: string;
   links: { catalog: string; profile: string; inquiries: string };
 }) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      setVisible(true);
-    }
-  }, []);
+  // Server snapshot returns "true" (dismissed) so the banner is hidden during SSR/hydration
+  // and only shown on the client after reading localStorage. This avoids setState-in-effect
+  // and prevents a flash for users who already dismissed.
+  const dismissedFromStorage = useSyncExternalStore(subscribeStorage, getDismissed, () => true);
+  const [dismissedLocally, setDismissedLocally] = useState(false);
+  const visible = !dismissedFromStorage && !dismissedLocally;
 
   function dismiss() {
     localStorage.setItem(STORAGE_KEY, "1");
-    setVisible(false);
+    setDismissedLocally(true);
   }
 
   if (!visible) return null;

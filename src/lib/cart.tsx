@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import { createContext, useContext, useCallback, useMemo, useSyncExternalStore } from "react";
 
 export interface CartItem {
   productId: string;
@@ -26,55 +26,88 @@ const CartContext = createContext<CartContextType | null>(null);
 
 const STORAGE_KEY = "swing-b2b-cart";
 
-function loadCart(): CartItem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+// Module-level subscribers for the cart store. Components subscribe via
+// useSyncExternalStore so the cart hydrates from localStorage on the client
+// without setState-in-effect.
+const subscribers = new Set<() => void>();
+
+function emit() {
+  for (const cb of subscribers) cb();
 }
 
-function saveCart(items: CartItem[]) {
+function subscribe(cb: () => void) {
+  subscribers.add(cb);
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", cb);
+  }
+  return () => {
+    subscribers.delete(cb);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("storage", cb);
+    }
+  };
+}
+
+let cachedSnapshot: CartItem[] = [];
+let cachedSnapshotKey: string | null = null;
+
+function getSnapshot(): CartItem[] {
+  if (typeof window === "undefined") return cachedSnapshot;
+  let raw: string | null = null;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    raw = window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return cachedSnapshot;
+  }
+  if (raw === cachedSnapshotKey) return cachedSnapshot;
+  try {
+    cachedSnapshot = raw ? (JSON.parse(raw) as CartItem[]) : [];
+  } catch {
+    cachedSnapshot = [];
+  }
+  cachedSnapshotKey = raw;
+  return cachedSnapshot;
+}
+
+function getServerSnapshot(): CartItem[] {
+  return [];
+}
+
+function writeCart(items: CartItem[]) {
+  try {
+    const json = JSON.stringify(items);
+    window.localStorage.setItem(STORAGE_KEY, json);
+    cachedSnapshot = items;
+    cachedSnapshotKey = json;
   } catch {
     // storage full or unavailable
   }
+  emit();
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    setItems(loadCart());
-    setLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (loaded) saveCart(items);
-  }, [items, loaded]);
+  const items = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const addItem = useCallback((item: CartItem) => {
-    setItems((prev) => {
-      const idx = prev.findIndex(
-        (i) => i.sizeId === item.sizeId && i.colorId === item.colorId
-      );
-      if (idx >= 0) {
-        const updated = [...prev];
-        updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + item.quantity };
-        return updated;
-      }
-      return [...prev, item];
-    });
+    const prev = getSnapshot();
+    const idx = prev.findIndex(
+      (i) => i.sizeId === item.sizeId && i.colorId === item.colorId
+    );
+    let next: CartItem[];
+    if (idx >= 0) {
+      next = [...prev];
+      next[idx] = { ...next[idx], quantity: next[idx].quantity + item.quantity };
+    } else {
+      next = [...prev, item];
+    }
+    writeCart(next);
   }, []);
 
   const removeItem = useCallback((sizeId: string, colorId: string) => {
-    setItems((prev) =>
-      prev.filter((i) => !(i.sizeId === sizeId && i.colorId === colorId))
+    const next = getSnapshot().filter(
+      (i) => !(i.sizeId === sizeId && i.colorId === colorId)
     );
+    writeCart(next);
   }, []);
 
   const updateQuantity = useCallback(
@@ -83,18 +116,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeItem(sizeId, colorId);
         return;
       }
-      setItems((prev) =>
-        prev.map((i) =>
-          i.sizeId === sizeId && i.colorId === colorId
-            ? { ...i, quantity }
-            : i
-        )
+      const next = getSnapshot().map((i) =>
+        i.sizeId === sizeId && i.colorId === colorId ? { ...i, quantity } : i
       );
+      writeCart(next);
     },
     [removeItem]
   );
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => writeCart([]), []);
 
   const itemCount = useMemo(
     () => items.reduce((sum, i) => sum + i.quantity, 0),
